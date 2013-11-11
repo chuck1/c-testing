@@ -1,0 +1,139 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<Case model="3">
+		<Parameter name="root">/scratch/rymalc/</Parameter>
+		
+		<IntVector name = "Channel Group Outlet">
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+		</IntVector>
+		
+		<IntVector name = "Channel Group Inlet">
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+			<Element>	2</Element>
+		</IntVector>
+		
+		<Pattern direction="x" type="mod ends" n="35">
+			<Spacing name = "begin">
+				<Length unit = "millimeter">	5</Length>
+				<Dim name = "begin">			40</Dim>
+				<Dim name = "mid">				40</Dim>
+				<Dim name = "end">				40</Dim>
+			</Spacing>
+			
+			<!-- channel -->
+			<Spacing name = "even">
+				<Length unit = "millimeter">	0.3</Length>
+				<Dim name = "begin">			30</Dim>
+				<Dim name = "mid">				15</Dim>
+				<Dim name = "end">				30</Dim>
+			</Spacing>
+			
+			<!-- wall -->
+			<Spacing name = "odd">
+				<Length unit = "millimeter">	0.859</Length>
+				<Dim name = "begin">			12</Dim>
+				<Dim name = "mid">				12</Dim>
+				<Dim name = "end">				12</Dim>
+			</Spacing>
+			
+			<Spacing name = "end">
+				<Length unit = "millimeter">	5</Length>
+				<Dim name = "begin">			40</Dim>
+				<Dim name = "mid">				40</Dim>
+				<Dim name = "end">				40</Dim>
+			</Spacing>
+		</Pattern>
+		
+		<Pattern direction="y" type="explicit">
+			<Spacing name = "y 0">
+				<Length unit = "millimeter">	0.25</Length>
+				<Dim name = "begin">			30</Dim>
+				<Dim name = "mid">				15</Dim>
+				<Dim name = "end">				30</Dim>
+			</Spacing>
+			
+			<Spacing name = "y 0">
+				<Length unit = "millimeter">	0.60</Length>
+				<Dim name = "begin">			30</Dim>
+				<Dim name = "mid">				15</Dim>
+				<Dim name = "end">				30</Dim>
+			</Spacing>
+			
+			<Spacing name = "y 1">
+				<Length unit = "millimeter">	7.80</Length>
+				<Dim name = "begin">			100</Dim>
+				<Dim name = "mid">				50</Dim>
+				<Dim name = "end">				100</Dim>
+			</Spacing>
+			
+			<Spacing name = "y 2">
+				<Length unit = "millimeter">	0.60</Length>
+				<Dim name = "begin">			30</Dim>
+				<Dim name = "mid">				15</Dim>
+				<Dim name = "end">				30</Dim>
+			</Spacing>
+			
+			<Spacing name = "y 3">
+				<Length unit = "millimeter">	0.5</Length>
+				<Dim name = "begin">			40</Dim>
+				<Dim name = "mid">				20</Dim>
+				<Dim name = "end">				20</Dim>
+			</Spacing>
+			
+			<Spacing name = "y 2">
+				<Length unit = "millimeter">	0.60</Length>
+				<Dim name = "begin">			30</Dim>
+				<Dim name = "mid">				15</Dim>
+				<Dim name = "end">				30</Dim>
+			</Spacing>
+		</Pattern>
+		
+		<Pattern direction="z" type="explicit">
+			<Spacing name = "z 0">
+				<Length unit = "millimeter">	0.2</Length>
+				<Dim name = "begin">			10</Dim>
+				<Dim name = "mid">				10</Dim>
+				<Dim name = "end">				10</Dim>
+			</Spacing>
+			
+			<Spacing name = "z 1">
+				<Length unit = "millimeter">	0.18</Length>
+				<Dim name = "begin">			40</Dim>
+				<Dim name = "mid">				20</Dim>
+				<Dim name = "end">				40</Dim>
+			</Spacing>
+			
+			<Spacing name = "z 2">
+				<Length unit = "millimeter">	2.00</Length>
+				<Dim name = "begin">			200</Dim>
+				<Dim name = "mid">				40</Dim>
+				<Dim name = "end">				80</Dim>
+			</Spacing>
+			
+			<Spacing name = "z 3">
+				<Length unit = "millimeter">	1.70</Length>
+				<Dim name = "begin">			80</Dim>
+				<Dim name = "mid">				40</Dim>
+				<Dim name = "end">				80</Dim>
+			</Spacing>
+		</Pattern>
+		
+		
+		
+	</Case>
+	

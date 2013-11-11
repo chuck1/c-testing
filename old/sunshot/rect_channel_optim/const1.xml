@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<design>
+		<mat>ms1</mat>
+		<el name="L" 		unit="centimeter">	1</el>
+		<el name="kf"		unit="W m-1 K-1">	0.46</el>
+		<el name="ks"		unit="W m-1 K-1">	23.0</el>
+		<el name="T0" 		unit="celsius">		300</el>
+		<el name="T1" 		unit="celsius">		550</el>
+		<el name="qpp"		unit="W m-2">		4e6</el>
+		<el name="p0" 		unit="bar">			1</el>
+		<el name="dplim" 	unit="bar">			1</el>
+	</design>
+	

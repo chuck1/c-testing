@@ -1,0 +1,25 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<Case>
+		<Parameter name="x channel" 			unit="millimeter">	0.3</Parameter>
+		<Parameter name="x wall" 				unit="millimeter">	0.931</Parameter>
+		<Parameter name="x heated" 				unit="centimeter">	2.0</Parameter>
+		<Parameter name="x header inlet ext" 	unit="millimeter">	5.0</Parameter>
+		<Parameter name="x header outlet ext" 	unit="millimeter">	5.0</Parameter>
+		
+		<Parameter name="y heated" 				unit="centimeter">	1.0</Parameter>
+		<Parameter name="y header inlet" 		unit="millimeter">	0.4</Parameter>
+		<Parameter name="y header outlet" 		unit="millimeter">	0.2</Parameter>
+		
+		<Parameter name="z flux plate" 			unit="millimeter">	0.2</Parameter>
+		<Parameter name="z channel" 			unit="millimeter">	0.18</Parameter>
+		<Parameter name="z header" 				unit="millimeter">	6.35</Parameter>
+		
+		<Parameter name="number of header plates">					2</Parameter>
+		<Parameter name="number of channels">						17</Parameter>
+		
+		<Parameter name="title">									opt_2_a_11</Parameter>
+		<Parameter name="root">										/nfs/mohr/sva/work/rymalc/bin/sunshot/ansys/full_design/option_2/opt_2_a_11/</Parameter>
+		
+	</Case>
+	

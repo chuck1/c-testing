@@ -1,0 +1,64 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<material name="carbon_dioxide">
+		<prop name="density">
+			<piece>
+				<range name="p">
+					<min>120e5</min>
+					<max>120e5</max>
+				</range>
+				<range name="T">
+					<min>700</min>
+					<max>1100</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 5.458000623473581e+02</el>
+					<el>-1.595350198741788e+00</el>
+					<el> 2.146092223828920e-03</el>
+					<el>-1.377733725581414e-06</el>
+					<el> 3.430904551592574e-10</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="specific heat">
+			<piece>
+				<range name="p">
+					<min>120e5</min>
+					<max>120e5</max>
+				</range>
+				<range name="T">
+					<min>700</min>
+					<max>1100</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 2.075204110650080e+03</el>
+					<el>-4.478165333273548e+00</el>
+					<el> 7.790720700722077e-03</el>
+					<el>-5.624953256013382e-06</el>
+					<el> 1.495433317818460e-09</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="viscosity">
+			<piece>
+				<range name="p">
+					<min>120e5</min>
+					<max>120e5</max>
+				</range>
+				<range name="T">
+					<min>700</min>
+					<max>1100</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 9.558314254326023e-06</el>
+					<el> 2.530183820039832e-08</el>
+					<el> 2.588610980950481e-11</el>
+					<el>-2.693468182741213e-14</el>
+					<el> 7.975511107119106e-18</el>
+				</equation>
+			</piece>
+		</prop>
+		
+		
+	</material>
+	

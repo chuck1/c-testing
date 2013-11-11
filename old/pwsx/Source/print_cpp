@@ -1,0 +1,9 @@
+#!/bin/bash
+here=$PWD
+echo $here
+cppfiles=$(find . -regextype sed -regex ".*\.cpp")
+echo $cpp_files
+for f in $cppfiles
+do
+	echo $f
+done

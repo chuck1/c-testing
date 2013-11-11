@@ -1,0 +1,41 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<Case model = "2a_3">
+		<Parameter name="x heated" 				unit="centimeter">	2.0</Parameter>
+		<Parameter name="x header inlet ext" 	unit="millimeter">	5.0</Parameter>
+		<Parameter name="x header outlet ext" 	unit="millimeter">	5.0</Parameter>
+		
+		<Parameter name="y heated" 				unit="centimeter">	1.0</Parameter>
+		<Parameter name="y header inlet" 		unit="millimeter">	0.22</Parameter>
+		<Parameter name="y header outlet" 		unit="millimeter">	0.11</Parameter><!-- half the width; due to symmetry -->
+		<Parameter name="y header inlet 2" 		unit="millimeter">	1.0</Parameter>
+		<Parameter name="y header outlet 2" 	unit="millimeter">	1.0</Parameter><!-- full width, unlike 'y header outlet'-->
+		
+		<Parameter name="z flux plate" 			unit="millimeter">	0.2</Parameter>
+		<Parameter name="z channel" 			unit="millimeter">	0.18</Parameter>
+		<Parameter name="z header" 				unit="millimeter">	6.35</Parameter>
+		
+		<Parameter name="number of header plates">					2</Parameter>
+		<Parameter name="number of channels">						17</Parameter>
+		
+		<Parameter name="title">									opt_2_a_20</Parameter>
+		<Parameter name="root">										/nfs/mohr/sva/work/rymalc/bin/sunshot/ansys/full_design/option_2/opt_2_a_20/</Parameter>
+		
+		<Parameter name="y- symmetry">								1</Parameter>
+		
+		<Spacing name = "x channel">
+			<Length unit = "millimeter">	0.3</Length>
+			<Dim name = "begin">			24</Dim>
+			<Dim name = "mid">				12</Dim>
+			<Dim name = "end">				24</Dim>
+		</Spacing>
+		
+		<Spacing name = "x wall">
+			<Length unit = "millimeter">	0.931</Length>
+			<Dim name = "begin">			10</Dim>
+			<Dim name = "mid">				10</Dim>
+			<Dim name = "end">				10</Dim>
+		</Spacing>
+		
+	</Case>
+	

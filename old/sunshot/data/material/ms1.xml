@@ -1,0 +1,89 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<material name="ms1">
+		<prop name="density">
+			<piece>
+				<range name="p">
+					<min>1e5</min>
+					<max>1e5</max>
+				</range>
+				<range name="T">
+					<min>500</min>
+					<max>900</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 2.0138e+03</el>
+					<el>-4.2312e-01</el>
+					<el> 3.6227e-05</el>
+					<el>-1.7058e-08</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="specific-heat">
+			<piece>
+				<range name="p">
+					<min>1e5</min>
+					<max>1e5</max>
+				</range>
+				<range name="T">
+					<min>500</min>
+					<max>900</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 2.0182e+03</el>
+					<el>-8.3028e-01</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="specific heat">
+			<piece>
+				<range name="p">
+					<min>1e5</min>
+					<max>1e5</max>
+				</range>
+				<range name="T">
+					<min>500</min>
+					<max>900</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 2.0182e+03</el>
+					<el>-8.3028e-01</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="viscosity">
+			<piece>
+				<range name="p">
+					<min>1e5</min>
+					<max>1e5</max>
+				</range>
+				<range name="T">
+					<min>500</min>
+					<max>900</max>
+				</range>
+				<equation type="poly" prop="T">
+					<el> 5.1500e-02</el>
+					<el>-1.6807e-04</el>
+					<el> 1.9397e-07</el>
+					<el>-7.8253e-11</el>
+				</equation>
+			</piece>
+		</prop>
+		<prop name="thermal-conductivity">
+			<piece>
+				<range name="p">
+					<min>1e5</min>
+					<max>1e5</max>
+				</range>
+				<range name="T">
+					<min>500</min>
+					<max>900</max>
+				</range>
+				<equation type="const">
+					<el> 0.48</el>
+				</equation>
+			</piece>
+		</prop>
+		
+	</material>
+	

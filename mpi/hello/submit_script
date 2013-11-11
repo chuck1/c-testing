@@ -1,0 +1,18 @@
+#!/bin/csh
+
+# name job
+#$ -N hello
+
+# set current working directory
+#$ -cwd
+
+# send output to starccm_job_1.log (STDOUT + STDERR)
+#$ -o job.log
+#$ -j y
+
+# number of slots requested from env
+#$ -pe mpich2 2
+
+# commands
+mpirun -nolocal -np $NSLOTS -machinefile $TMPDIR/machines ./hello
+
