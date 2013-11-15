@@ -1,15 +1,22 @@
-/scratch/a1/sge/default/spool/compute-5-12/active_jobs/3782530.1/pe_hostfile
-compute-5-12
-compute-5-12
-Segmentation fault (core dumped)
-rm: cannot remove `/tmp/3782530.1.share/rsh': No such file or directory
-/scratch/a1/sge/default/spool/compute-5-12/active_jobs/3782532.1/pe_hostfile
-compute-5-12
-compute-5-12
-Segmentation fault (core dumped)
-rm: cannot remove `/tmp/3782532.1.share/rsh': No such file or directory
-/scratch/a1/sge/default/spool/compute-5-12/active_jobs/3782575.1/pe_hostfile
-compute-5-12
-compute-5-12
-Segmentation fault (core dumped)
-rm: cannot remove `/tmp/3782575.1.share/rsh': No such file or directory
+/scratch/a1/sge/default/spool/compute-9-4/active_jobs/3847134.1/pe_hostfile
+compute-9-4
+compute-5-10
+compute-7-3l
+compute-7-7r
+NSLOTS=4
+Hello world from processor compute-9-4.hpc.engr.oregonstate.edu, rank 0 of 1 processors
+Hello world from processor compute-5-10.hpc.engr.oregonstate.edu, rank 0 of 1 processors
+Hello world from processor compute-7-3l.hpc.engr.oregonstate.edu, rank 0 of 1 processors
+Hello world from processor compute-7-7r.hpc.engr.oregonstate.edu, rank 0 of 1 processors
+rm: cannot remove `/tmp/3847134.1.share/rsh': No such file or directory
+/scratch/a1/sge/default/spool/compute-7-7r/active_jobs/3847139.1/pe_hostfile
+compute-7-7r
+compute-7-14l
+compute-7-3l
+compute-7-2l
+NSLOTS=4
+Hello world from processor compute-7-2l.hpc.engr.oregonstate.edu, rank 3 of 4 processors
+Hello world from processor compute-7-3l.hpc.engr.oregonstate.edu, rank 2 of 4 processors
+Hello world from processor compute-7-14l.hpc.engr.oregonstate.edu, rank 1 of 4 processors
+Hello world from processor compute-7-7r.hpc.engr.oregonstate.edu, rank 0 of 4 processors
+rm: cannot remove `/tmp/3847139.1.share2/rsh': No such file or directory

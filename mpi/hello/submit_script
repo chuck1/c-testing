@@ -1,7 +1,7 @@
 #!/bin/csh
 
 # name job
-#$ -N hello
+#$ -N mpi_hello
 
 # set current working directory
 #$ -cwd
@@ -11,8 +11,15 @@
 #$ -j y
 
 # number of slots requested from env
-#$ -pe mpich2 2
+#$ -pe mpich 4
 
 # commands
-mpirun -nolocal -np $NSLOTS -machinefile $TMPDIR/machines ./hello
+source /scratch/a1/sge/settings.csh
+#source /scratch/a1/sge/settings-mpich2.csh
+
+echo NSLOTS=$NSLOTS
+
+#mpirun -nolocal -np $NSLOTS -machinefile $TMPDIR/machines ./hello
+#mpirun -nolocal -np $NSLOTS -machinefile $TMPDIR/machines ./hello
+mpirun -np $NSLOTS -machinefile $TMPDIR/machines ./hello
 
