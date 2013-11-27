@@ -1,4 +1,3 @@
-
 #include <GL/glew.h>
 #include <GL/glut.h>
 
@@ -9,108 +8,204 @@
 
 #include <object.h>
 
-
 int object::load(const char * filename)
 {
 	FILE * fp;
-	size_t filesize;
-	char * data;
-	
-	file_header fh;
-	
+
+	printf("load file '%s'\n",filename);
+
 	fp = fopen(filename, "rb");
 	
-	if (!fp) return 0;
-	
+	if (fp < 0) 
+	{
+		perror("fopen");
+		return 0;
+	}
+
 	// read header
-	fread(&fh, sizeof(file_header), 1, fp);
-	
+	fread(&fh_, sizeof(file_header), 1, fp);
+
+	printf("positions: %i elements, %i vectors\n",fh_.len_positions_,fh_.len_positions_/4);
+	printf("normals:   %i elements, %i vectors\n",fh_.len_normals_,fh_.len_normals_/3);
+	printf("indices:   %i elements\n",fh_.len_indices_);
+
+	// allocate
+	vertex_positions_ = new GLfloat[fh_.len_positions_];
+	vertex_normals_ = new GLfloat[fh_.len_normals_];
+	vertex_indices_ = new GLushort[fh_.len_indices_];
+
+
 	// read positions
-	fread(vertex_positions_, sizeof(float), fh.len_positions_, fp);
-	
+	fread(vertex_positions_, sizeof(GLfloat), fh_.len_positions_, fp);
+
 	// read normals
-	fread(vertex_normals_, sizeof(float), fh.len_normals_, fp);
+	fread(vertex_normals_, sizeof(GLfloat), fh_.len_normals_, fp);
 
 	// read indices
-	fread(vertex_indices_, sizeof(float), fh.len_indices_, fp);
-	
+	fread(vertex_indices_, sizeof(GLushort), fh_.len_indices_, fp);
+
 	fclose(fp);
 
+
+	for(unsigned int a=0;a<(fh_.len_positions_/4);++a)
+	{
+		for(int b = 0; b < 4; ++b)
+		{
+			printf("% .2f ",vertex_positions_[(a*4)+b]);
+		}
+		printf("\n");
+	}
+	for(unsigned int a=0;a<(fh_.len_normals_/3);++a)
+	{
+		for(int b = 0; b < 3; ++b)
+		{
+			printf("% .2f ",vertex_normals_[(a*3)+b]);
+		}
+		printf("\n");
+	}
+	for(size_t a=0;a<(fh_.len_indices_);++a)
+	{
+		printf("%i ",vertex_indices_[a]);
+	}
+	printf("\n");
+
+	return 0;
 }
 int object::save(const char * filename)
 {
 	FILE * fp;
-	size_t filesize;
-	char * data;
-	
-	file_header fh;
-	
+
 	fp = fopen(filename, "wb");
-	
-	if (!fp) return 0;
+
+	if (!fp) 
+	{
+		perror("fopen");
+		return 0;
+	}
+
+	printf("positions: %i elements, %i vectors\n",fh_.len_positions_,fh_.len_positions_/4);
+	printf("normals:   %i elements, %i vectors\n",fh_.len_normals_,fh_.len_normals_/3);
+	printf("indices:   %i elements\n",fh_.len_indices_);
 
 
-	
 	// read header
-	fwrite(&fh, sizeof(file_header), 1, fp);
-	
+	fwrite(&fh_, sizeof(file_header), 1, fp);
+
+
+
+
+
 	// read positions
-	fwrite(vertex_positions_, sizeof(float), fh.len_positions_, fp);
-	
+	fwrite(vertex_positions_, sizeof(GLfloat), fh_.len_positions_, fp);
+
 	// read normals
-	fwrite(vertex_normals_, sizeof(float), fh.len_normals_, fp);
-	
+	fwrite(vertex_normals_, sizeof(GLfloat), fh_.len_normals_, fp);
+
 	// read indices
-	fwrite(vertex_indices_, sizeof(float), fh.len_indices_, fp);
-	
+	fwrite(vertex_indices_, sizeof(GLushort), fh_.len_indices_, fp);
+
 	fclose(fp);
 
+	return 0;
 }
 
-void object::init_buffer()
+void object::init_buffer(GLint program)
 {
-	// position
-	GLuint postion_buffer_;
-	GLuint position_location = 0;
+	char const * attribute_name = "position";
+	location_position_ = glGetAttribLocation(program, attribute_name);
+	if(location_position_==-1)
+	{
+		fprintf(stderr, "Could not bind attribute %s\n", attribute_name);
+		exit(0);
+	}
+	
+	attribute_name = "normal";
+	location_normal_ = glGetAttribLocation(program, attribute_name);
+	if(location_normal_==-1)
+	{
+		fprintf(stderr, "Could not bind attribute %s\n", attribute_name);
+		exit(0);
+	}
 
+	// position
 	glGenBuffers(1, &buffer_position_);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);
 	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(vertex_positions),
-			vertex_positions,
+			sizeof(vertex_positions_),
+			vertex_positions_,
 			GL_STATIC_DRAW);
-	glVertexAttribPointer(position_location, 4, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(position_location);
 
 	// normal
-	GLuint normal_buffer;
-	GLuint normal_location = 1;
-
-	glGenBuffers(1, &normal_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(vertex_normals),
-			vertex_normals,
-			GL_STATIC_DRAW);
-	glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(normal_location);
+	/*
+	   glGenBuffers(1, &buffer_normal_);
+	   glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
+	   glBufferData(GL_ARRAY_BUFFER,
+	   sizeof(vertex_normals_),
+	   vertex_normals_,
+	   GL_STATIC_DRAW);
+	   */
 
 	// index
-	GLuint index_buffer;
-
-	glGenBuffers(1, &index_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glGenBuffers(1, &buffer_indices_);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices_);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			sizeof(vertex_indices),
-			vertex_indices,
+			sizeof(vertex_indices_),
+			vertex_indices_,
 			GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+
+
+	printf("buffer positions: %i\n",buffer_position_);
+	printf("buffer normals:   %i\n",buffer_normal_);
+	printf("buffer indices:   %i\n",buffer_indices_);
+
 }
 void object::draw()
 {
-	//glGetFloatv(GL_MODELVIEW_MATRIX,mv_matrix);
-	
-	glUniformMatrix4fv(uniform_mv,1,GL_FALSE,matrix_mv);
-	
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
+	printf("draw\n");
+
+	glEnableVertexAttribArray(location_position_);
+	//glEnableVertexAttribArray(location_normal_);
+
+	printf("draw\n");
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);
+	glVertexAttribPointer(location_position_, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	printf("draw\n");
+
+	//glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
+	//glVertexAttribPointer(location_normal_, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices_);
+
+	printf("draw\n");
+
+	glDrawElements(GL_LINES, fh_.len_indices_, GL_UNSIGNED_SHORT, 0);
+
+	printf("draw\n");
+
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+
+	printf("draw\n");
+
+	glDisableVertexAttribArray(location_position_);
+	glDisableVertexAttribArray(location_normal_);
+
+	printf("draw\n");
+
+	if(glGetError() != GL_NO_ERROR)
+	{
+		printf("error\n");
+		exit(0);
+	}
+
 }
+
+
+
 

@@ -86,7 +86,13 @@ int main()
 	cube.vertex_positions_ = vertex_positions;
 	cube.vertex_normals_ = vertex_normals;
 	cube.vertex_indices_ = vertex_indices;
+	
+	cube.fh_.len_positions_ = sizeof(vertex_positions)/sizeof(GLfloat);
+	cube.fh_.len_normals_ = sizeof(vertex_normals)/sizeof(GLfloat);
+	cube.fh_.len_indices_ = sizeof(vertex_indices)/sizeof(GLushort);
 
+	cube.save("../hello/cube.obj");
+	
 }
 
 

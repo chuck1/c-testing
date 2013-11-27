@@ -2,5 +2,5 @@
 SRC = main.cpp ../hello/object.cpp
 
 all:
-	g++ $(SRC) -o hello -lGL -lGLU -lglut -lGLEW
+	g++ $(SRC) -o hello -I../hello -lGL -lGLU -lglut -lGLEW
 

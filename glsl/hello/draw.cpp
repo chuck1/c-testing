@@ -34,26 +34,36 @@ GLuint Load(const char * filename, GLenum shader_type, bool check_errors)
 	result = glCreateShader(shader_type);
 	if (!result)
 		return result;
-	
+
 	glShaderSource(result, 1, (const GLchar**)&data, NULL);
 
 	delete [] data;
 
 	glCompileShader(result);
 
-	if (check_errors)
+	if(check_errors)
 	{
 		GLint status = 0;
 		glGetShaderiv(result, GL_COMPILE_STATUS, &status);
-		if (!status)
+
+		char buffer[4096];
+		int len;
+		glGetShaderInfoLog(result, 4096, &len, buffer);
+
+		if(len>0)
 		{
-			char buffer[4096];
-			glGetShaderInfoLog(result, 4096, NULL, buffer);
 			fprintf(stderr, "%s: %s\n", filename, buffer);
+		}
+
+		if(!status)
+		{
 			glDeleteShader(result);
 			return 0;
 		}
+
 	}
+
+	printf("shader file '%s' loaded\n",filename);
 
 	return result;
 }
@@ -93,14 +103,12 @@ int isSupported(const char *extension)
 	if(isExtensionSupported(extension))
 	{
 		printf("%s is supported\n",extension);
+		return 1;
 	}
-	else
-	{
-		printf("%s is not supported\n",extension);
-		exit(0);
-	}
-
-
+	
+	printf("%s is not supported\n",extension);
+	exit(0);
+		
 }
 void CheckExt()
 {
@@ -109,16 +117,16 @@ void CheckExt()
 }
 void CompileProgram(GLuint &program, GLuint shaderObjects[], int numShaders)
 {
-	program = glCreateProgramObjectARB();
+	program = glCreateProgram();
 
 	for(int a=0; a<numShaders; a++)
 	{
 		// Attach The Shader Objects To The Program Object
-		glAttachObjectARB(program, shaderObjects[a]);
+		glAttachShader(program, shaderObjects[a]);
 	}
 
 	// Link The Program Object
-	glLinkProgramARB(program);
+	glLinkProgram(program);
 
 	GLint blen = 0;	
 	GLsizei slen = 0;

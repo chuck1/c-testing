@@ -1,8 +1,6 @@
 #ifndef __OBJECT_H__
 #define __OBJECT_H__
 
-static GLuint location_position = 0;
-static GLuint location_normal = 1;
 
 struct file_header
 {
@@ -14,17 +12,23 @@ struct file_header
 class object
 {
 public:
+	GLint location_position_;
+	GLint location_normal_;
+
+
 	GLuint buffer_position_;
 	GLuint buffer_normal_;
 	GLuint buffer_indices_;
 
+	file_header	fh_;
+
 	GLfloat*	vertex_positions_;
 	GLfloat*	vertex_normals_;
-	GLushort*		vertex_indices_;
+	GLushort*	vertex_indices_;
 
-
+	int	save(char const *);
 	int	load(char const *);
-	void	init_buffer();
+	void	init_buffer(GLint);
 	void	draw();
 };
 
