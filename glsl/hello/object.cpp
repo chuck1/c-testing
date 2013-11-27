@@ -7,6 +7,29 @@
 #include <string.h>
 
 #include <object.h>
+void checkerror(char const * msg)
+{
+	GLenum err = glGetError();
+	if(err != GL_NO_ERROR)
+	{
+		unsigned char const * str = gluErrorString(err);
+		printf("%s: %s\n",msg,str);
+		exit(0);
+	}
+	
+	
+}
+
+void readbuffer(GLuint buffer)
+{
+	GLfloat data[24*4];
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);	
+	checkerror("glBindBuffer");
+
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, 1*4*sizeof(GLfloat), data);
+	checkerror("glGetBufferSubData");
+}
 
 int object::load(const char * filename)
 {
@@ -16,7 +39,7 @@ int object::load(const char * filename)
 
 	fp = fopen(filename, "rb");
 	
-	if (fp < 0) 
+	if (fp <= 0) 
 	{
 		perror("fopen");
 		return 0;
@@ -128,33 +151,48 @@ void object::init_buffer(GLint program)
 	}
 
 	// position
+	GLsizeiptr size = fh_.len_positions_ * sizeof(GLfloat);// sizeof(vertex_positions_);
+
 	glGenBuffers(1, &buffer_position_);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);
-	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(vertex_positions_),
+	glBufferData(
+			GL_ARRAY_BUFFER,
+			size,
 			vertex_positions_,
-			GL_STATIC_DRAW);
+			GL_DYNAMIC_DRAW);
+
+	printf("size: %i\n",(int)size);
+
+
+	checkerror("glBufferData");
 
 	// normal
-	/*
-	   glGenBuffers(1, &buffer_normal_);
-	   glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
-	   glBufferData(GL_ARRAY_BUFFER,
-	   sizeof(vertex_normals_),
-	   vertex_normals_,
-	   GL_STATIC_DRAW);
-	   */
+	size = fh_.len_normals_ * sizeof(GLfloat);
+
+	glGenBuffers(1, &buffer_normal_);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
+	glBufferData(
+			GL_ARRAY_BUFFER,
+			size,
+			vertex_normals_,
+			GL_STATIC_DRAW);
+
 
 	// index
+	size = fh_.len_indices_ * sizeof(GLushort);
+
 	glGenBuffers(1, &buffer_indices_);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			sizeof(vertex_indices_),
+	glBufferData(
+			GL_ELEMENT_ARRAY_BUFFER,
+			size,
 			vertex_indices_,
 			GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER,0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+	checkerror("glBufferData");
+
+	//glBindBuffer(GL_ARRAY_BUFFER,0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
 
 	printf("buffer positions: %i\n",buffer_position_);
@@ -167,24 +205,35 @@ void object::draw()
 	printf("draw\n");
 
 	glEnableVertexAttribArray(location_position_);
-	//glEnableVertexAttribArray(location_normal_);
+	glEnableVertexAttribArray(location_normal_);
 
 	printf("draw\n");
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);
+
+	checkerror("glBindBuffer");
+
 	glVertexAttribPointer(location_position_, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	//checkerror();
 
 	printf("draw\n");
 
-	//glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
-	//glVertexAttribPointer(location_normal_, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
+	glVertexAttribPointer(location_normal_, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices_);
 
+	//checkerror();
+
+	//readbuffer(buffer_position_);
+
 	printf("draw\n");
 
-	glDrawElements(GL_LINES, fh_.len_indices_, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, fh_.len_indices_, GL_UNSIGNED_SHORT, 0);
+
+	//checkerror();
 
 	printf("draw\n");
 
@@ -198,11 +247,6 @@ void object::draw()
 
 	printf("draw\n");
 
-	if(glGetError() != GL_NO_ERROR)
-	{
-		printf("error\n");
-		exit(0);
-	}
 
 }
 

@@ -4,9 +4,10 @@
 
 struct file_header
 {
-	GLuint len_positions_;
-	GLuint len_normals_;
-	GLuint len_indices_;
+	GLint len_positions_;
+	GLint len_normals_;
+	GLint len_indices_;
+
 };
 
 class object

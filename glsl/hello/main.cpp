@@ -14,7 +14,7 @@
 #include <math/vec3.h>
 #include <math/mat44.h>
 
-#define VIEWING_DISTANCE_MIN  3.0
+#define VIEWING_DISTANCE_MIN  -100.0
 #define TEXTURE_ID_CUBE 1
 
 enum {
@@ -80,10 +80,6 @@ void print_mat44(GLfloat* m)
 
 void RenderObjects()
 {
-	//float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
-	//float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
-	//float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
-	//float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
 
 	printf("proj\n");	
 	print_mat44(matrix_proj);
@@ -98,53 +94,18 @@ void RenderObjects()
 	print_mat44(matrix_model);
 
 
-	//glPushMatrix();
-	{
-		// Main object (cube) ... transform to its coordinates, and render
-		//glRotatef(15, 1, 0, 0);
-		//glRotatef(45, 0, 1, 0);
-		//glRotatef(g_fTeapotAngle, 0, 1, 0);
-		//glMaterialfv(GL_FRONT, GL_DIFFUSE, colorBlue);
-		//glMaterialfv(GL_FRONT, GL_SPECULAR, colorNone);
-		//glColor4fv(colorBlue);
-		//gl/BindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
+	matrix_model.SetTranslation(math::vec3(0,0,0));
 
-		matrix_model.SetTranslation(math::vec3(0,0,0));
-		// matrix mv
-		//glGetFloatv(GL_MODELVIEW_MATRIX,matrix_mv);
-		glUniformMatrix4fv(uniform_model,1,GL_FALSE,matrix_model);
+	glUniformMatrix4fv(uniform_model,1,GL_FALSE,matrix_model);
 
-		//glutSolidCube(1.0);
-		cube0.draw();
-		//DrawCubeWithTextureCoords(1.0);
+	cube0.draw();
+	//glutSolidCube(1.0);
 
+	matrix_model.SetTranslation(math::vec3(2,0,0));
 
-		// Child object (teapot) ... relative transform, and render
-		//glPushMatrix();
-		{
-			//glRotatef(g_fTeapotAngle2*0.5, 0, 1, 0);
-			//glTranslatef(2, 0, 0);
-			//glRotatef(g_fTeapotAngle2*0.3, 1, 1, 0);
+	glUniformMatrix4fv(uniform_model,1,GL_FALSE,matrix_model);
 
-			//glMaterialfv(GL_FRONT, GL_DIFFUSE, colorBronzeDiff);
-			//glMaterialfv(GL_FRONT, GL_SPECULAR, colorBronzeSpec);
-			//glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
-			//glColor4fv(colorBronzeDiff);
-			//glBindTexture(GL_TEXTURE_2D, 0);
-
-			// matrix mv
-			//glGetFloatv(GL_MODELVIEW_MATRIX,matrix_mv);
-			matrix_model.SetTranslation(math::vec3(2,0,0));
-	
-			glUniformMatrix4fv(uniform_model,1,GL_FALSE,matrix_model);
-
-			//cube1.draw();
-			//glutSolidSphere(1.0,30,30);
-			glutSolidCube(1.0);
-		}
-		//glPopMatrix(); 
-	}
-	//glPopMatrix();
+	glutSolidCube(1.0);
 }
 void display(void)
 {
@@ -214,7 +175,7 @@ void InitGraphics(void)
 	   GL_LINEAR_MIPMAP_LINEAR);
 	   glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-*/
+	 */
 
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
@@ -253,13 +214,13 @@ void InitGraphics(void)
 
 	// drawing
 	cube0.load("cube.obj");
-	//cube1.load("cube.obj");
+	cube1.load("cube.obj");
 
 	cube0.init_buffer(gprogram);
-	//cube1.init_buffer(gprogram);
+	cube1.init_buffer(gprogram);
 
-	
-	
+
+
 }
 
 void MouseButton(int button, int state, int x, int y)
@@ -281,12 +242,12 @@ void MouseMotion(int x, int y)
 	if (g_bButton1Down)
 	{
 		g_fViewDistance = (y - g_yClick) / 3.0;
-				
+
 		if (g_fViewDistance < VIEWING_DISTANCE_MIN)
 			g_fViewDistance = VIEWING_DISTANCE_MIN;
-	
+
 		//printf("g_fViewDistacne=%f\n",g_fViewDistance);
-	
+
 		glutPostRedisplay();
 	}
 }
@@ -345,9 +306,9 @@ void SelectFromMenu(int idCommand)
 		case MENU_SHADER:
 			g_bShader = !g_bShader;
 			if(g_bShader)
-			glUseProgramObjectARB(gprogram);
+				glUseProgramObjectARB(gprogram);
 			else
-			glUseProgramObjectARB(0);
+				glUseProgramObjectARB(0);
 			break;
 		case MENU_EXIT:
 			exit (0);
