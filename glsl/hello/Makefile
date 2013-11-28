@@ -2,5 +2,5 @@
 SRC = main.cpp draw.cpp object.cpp
 
 all:
-	g++ $(SRC) -o hello -I. -lGL -lGLU -lglut -lGLEW -lmath -Wall
+	g++ $(SRC) -o hello -I. -lGL -lGLU -lglut -lGLEW -lmath -lpng -Wall -Werror
 

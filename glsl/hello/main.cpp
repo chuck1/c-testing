@@ -14,7 +14,7 @@
 #include <math/vec3.h>
 #include <math/mat44.h>
 
-#define VIEWING_DISTANCE_MIN  -100.0
+#define VIEWING_DISTANCE_MIN  2.0
 #define TEXTURE_ID_CUBE 1
 
 enum {
@@ -105,22 +105,15 @@ void RenderObjects()
 
 	glUniformMatrix4fv(uniform_model,1,GL_FALSE,matrix_model);
 
-	glutSolidCube(1.0);
+	cube1.draw();
+	//glutSolidCube(1.0);
 }
 void display(void)
 {
-
 	// Clear frame buffer and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set up viewing transformation, looking down -Z axis
-	//glLoadIdentity();
-	//gluLookAt(0, 0, -g_fViewDistance, 0, 0, -1, 0, 1, 0);
-
 	matrix_view = math::lookat(math::vec3(0,2,g_fViewDistance),math::vec3(0,0,0),math::vec3(0,1,0));
-
-	// Set up the stationary light
-	//glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
 	// Render the scene
 	RenderObjects();
@@ -150,12 +143,13 @@ void InitGraphics(void)
 	//int width, height;
 	//int nComponents;
 	//void* pTextureImage;
-
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+
+	//glShadeModel(GL_SMOOTH);
+	//glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHT0);
 
 	// Create texture for cube; load marble texture from file and bind it
 
@@ -194,23 +188,28 @@ void InitGraphics(void)
 	shaders[1] = Load("fs.glsl", GL_FRAGMENT_SHADER, true);
 
 	CompileProgram(gprogram, shaders, 2);
+	glUseProgram(gprogram);
 
 	// uniforms
 	uniform_model = glGetUniformLocation(gprogram,"model_matrix");
 	uniform_view = glGetUniformLocation(gprogram,"view_matrix");
 	uniform_proj = glGetUniformLocation(gprogram,"proj_matrix");
 
+	GLint uniform_image = glGetUniformLocation(gprogram,"image");
+
+
 	printf("uniform model_matrix: %i\n",uniform_model);
 	printf("uniform view_matrix:  %i\n",uniform_view);
 	printf("uniform proj_matrix:  %i\n",uniform_proj);
+	printf("uniform image:        %i\n",uniform_image);
 
 
 	printf("location of position: %i\n",glGetAttribLocation(gprogram, "position"));
 	printf("location of normal:   %i\n",glGetAttribLocation(gprogram, "normal"));
+	printf("location of texcoor:  %i\n",glGetAttribLocation(gprogram, "texcoor"));
 
 	printf("program:              %i\n",gprogram);
 
-	glUseProgram(gprogram);
 
 	// drawing
 	cube0.load("cube.obj");

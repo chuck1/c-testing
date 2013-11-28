@@ -5,8 +5,166 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
+#include <png.h>
 
 #include <object.h>
+
+GLuint png_texture_load(const char * file_name, int * width, int * height)
+{
+	png_byte header[8];
+
+	FILE *fp = fopen(file_name, "rb");
+	if (fp == 0)
+	{
+		perror(file_name);
+		return 0;
+	}
+
+	// read the header
+	fread(header, 1, 8, fp);
+
+	if (png_sig_cmp(header, 0, 8))
+	{
+		fprintf(stderr, "error: %s is not a PNG.\n", file_name);
+		fclose(fp);
+		return 0;
+	}
+
+	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png_ptr)
+	{
+		fprintf(stderr, "error: png_create_read_struct returned 0.\n");
+		fclose(fp);
+		return 0;
+	}
+
+	// create png info struct
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+	{
+		fprintf(stderr, "error: png_create_info_struct returned 0.\n");
+		png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+		fclose(fp);
+		return 0;
+	}
+
+	// create png info struct
+	png_infop end_info = png_create_info_struct(png_ptr);
+	if (!end_info)
+	{
+		fprintf(stderr, "error: png_create_info_struct returned 0.\n");
+		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
+		fclose(fp);
+		return 0;
+	}
+
+	// the code in this if statement gets called if libpng encounters an error
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		fprintf(stderr, "error from libpng\n");
+		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+		fclose(fp);
+		return 0;
+	}
+
+	// init png reading
+	png_init_io(png_ptr, fp);
+
+	// let libpng know you already read the first 8 bytes
+	png_set_sig_bytes(png_ptr, 8);
+
+	// read all the info up to the image data
+	png_read_info(png_ptr, info_ptr);
+
+	// variables to pass to get info
+	int bit_depth, color_type;
+	png_uint_32 temp_width, temp_height;
+
+	// get info about png
+	png_get_IHDR(png_ptr, info_ptr, &temp_width, &temp_height, &bit_depth, &color_type,
+			NULL, NULL, NULL);
+
+	if (width){ *width = temp_width; }
+	if (height){ *height = temp_height; }
+
+	// Update the png info struct.
+	png_read_update_info(png_ptr, info_ptr);
+
+	// Row size in bytes.
+	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+
+	// glTexImage2d requires rows to be 4-byte aligned
+	rowbytes += 3 - ((rowbytes-1) % 4);
+
+	// Allocate the image_data as a big block, to be given to opengl
+	png_byte * image_data;
+	image_data = (png_byte*)malloc(rowbytes * temp_height * sizeof(png_byte)+15);
+	if (image_data == NULL)
+	{
+		fprintf(stderr, "error: could not allocate memory for PNG image data\n");
+		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+		fclose(fp);
+		return 0;
+	}
+
+	// row_pointers is for pointing to image_data for reading the png with libpng
+	png_bytep * row_pointers = (png_bytep*)malloc(temp_height * sizeof(png_bytep));
+	if (row_pointers == NULL)
+	{
+		fprintf(stderr, "error: could not allocate memory for PNG row pointers\n");
+		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+		free(image_data);
+		fclose(fp);
+		return 0;
+	}
+
+	// set the individual row_pointers to point at the correct offsets of image_data
+	for (unsigned int i = 0; i < temp_height; i++)
+	{
+		row_pointers[temp_height - 1 - i] = image_data + i * rowbytes;
+	}
+
+	// read the png into image_data through row_pointers
+	png_read_image(png_ptr, row_pointers);
+
+	// Generate the OpenGL texture object
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, temp_width, temp_height, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	// clean up
+	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+	free(image_data);
+	free(row_pointers);
+	fclose(fp);
+	return texture;
+}
+void print_vector(GLfloat* v, unsigned int m, unsigned int n)
+{
+	for(unsigned int a=0;a<m;++a)
+	{
+		for(unsigned int b = 0; b < n; ++b)
+		{
+			printf("% .2f ",v[(a*n)+b]);
+		}
+		printf("\n");
+	}
+
+}
+void print_vectori(GLushort* v, unsigned int m, unsigned int n)
+{
+	for(unsigned int a=0;a<m;++a)
+	{
+		for(unsigned int b = 0; b < n; ++b)
+		{
+			printf("% 3i ",v[(a*n)+b]);
+		}
+		printf("\n");
+	}
+
+}
 void checkerror(char const * msg)
 {
 	GLenum err = glGetError();
@@ -16,8 +174,8 @@ void checkerror(char const * msg)
 		printf("%s: %s\n",msg,str);
 		exit(0);
 	}
-	
-	
+
+
 }
 
 void readbuffer(GLuint buffer)
@@ -38,7 +196,7 @@ int object::load(const char * filename)
 	printf("load file '%s'\n",filename);
 
 	fp = fopen(filename, "rb");
-	
+
 	if (fp <= 0) 
 	{
 		perror("fopen");
@@ -50,11 +208,15 @@ int object::load(const char * filename)
 
 	printf("positions: %i elements, %i vectors\n",fh_.len_positions_,fh_.len_positions_/4);
 	printf("normals:   %i elements, %i vectors\n",fh_.len_normals_,fh_.len_normals_/3);
+	printf("texcoor:   %i elements, %i vectors\n",fh_.len_texcoor_,fh_.len_texcoor_/2);
+
 	printf("indices:   %i elements\n",fh_.len_indices_);
 
 	// allocate
 	vertex_positions_ = new GLfloat[fh_.len_positions_];
 	vertex_normals_ = new GLfloat[fh_.len_normals_];
+	vertex_texcoor_ = new GLfloat[fh_.len_texcoor_];
+
 	vertex_indices_ = new GLushort[fh_.len_indices_];
 
 
@@ -63,6 +225,8 @@ int object::load(const char * filename)
 
 	// read normals
 	fread(vertex_normals_, sizeof(GLfloat), fh_.len_normals_, fp);
+	// read normals
+	fread(vertex_texcoor_, sizeof(GLfloat), fh_.len_texcoor_, fp);
 
 	// read indices
 	fread(vertex_indices_, sizeof(GLushort), fh_.len_indices_, fp);
@@ -70,27 +234,10 @@ int object::load(const char * filename)
 	fclose(fp);
 
 
-	for(unsigned int a=0;a<(fh_.len_positions_/4);++a)
-	{
-		for(int b = 0; b < 4; ++b)
-		{
-			printf("% .2f ",vertex_positions_[(a*4)+b]);
-		}
-		printf("\n");
-	}
-	for(unsigned int a=0;a<(fh_.len_normals_/3);++a)
-	{
-		for(int b = 0; b < 3; ++b)
-		{
-			printf("% .2f ",vertex_normals_[(a*3)+b]);
-		}
-		printf("\n");
-	}
-	for(size_t a=0;a<(fh_.len_indices_);++a)
-	{
-		printf("%i ",vertex_indices_[a]);
-	}
-	printf("\n");
+	print_vector(vertex_positions_, fh_.len_positions_/4, 4);
+	print_vector(vertex_normals_, fh_.len_normals_/3, 3);
+	print_vector(vertex_texcoor_, fh_.len_texcoor_/2, 2);
+	print_vectori(vertex_indices_, fh_.len_indices_/3, 3);
 
 	return 0;
 }
@@ -108,6 +255,7 @@ int object::save(const char * filename)
 
 	printf("positions: %i elements, %i vectors\n",fh_.len_positions_,fh_.len_positions_/4);
 	printf("normals:   %i elements, %i vectors\n",fh_.len_normals_,fh_.len_normals_/3);
+	printf("normals:   %i elements, %i vectors\n",fh_.len_normals_,fh_.len_normals_/3);
 	printf("indices:   %i elements\n",fh_.len_indices_);
 
 
@@ -123,6 +271,8 @@ int object::save(const char * filename)
 
 	// read normals
 	fwrite(vertex_normals_, sizeof(GLfloat), fh_.len_normals_, fp);
+	// read normals
+	fwrite(vertex_texcoor_, sizeof(GLfloat), fh_.len_texcoor_, fp);
 
 	// read indices
 	fwrite(vertex_indices_, sizeof(GLushort), fh_.len_indices_, fp);
@@ -134,21 +284,71 @@ int object::save(const char * filename)
 
 void object::init_buffer(GLint program)
 {
+	checkerror("unknown");
+
+	// attribute
+	location_image_ = glGetUniformLocation(program, "image");checkerror("glGetUniformLocation");
+	
+	int w,h;
+	texture_image_ = png_texture_load("bigtux.png",&w,&h);
+
+
+	
+	// texture
+/*
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &texture_image_);checkerror("glGenTextures");
+	glBindTexture(GL_TEXTURE_2D, texture_image_);checkerror("glBindTexture");
+
+
+	// Black/white checkerboard
+	float pixels[] = {
+		1.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f
+	};
+
+	glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGB,
+			2, 2,
+			0,
+			GL_RGB,
+			GL_FLOAT,
+			pixels);checkerror("glTexImage2D");
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);checkerror("glTexParameteri");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+*/
+	// buffers
 	char const * attribute_name = "position";
 	location_position_ = glGetAttribLocation(program, attribute_name);
 	if(location_position_==-1)
 	{
-		fprintf(stderr, "Could not bind attribute %s\n", attribute_name);
+		fprintf(stderr, "Could not bind attribute '%s'\n", attribute_name);
 		exit(0);
 	}
-	
+
 	attribute_name = "normal";
-	location_normal_ = glGetAttribLocation(program, attribute_name);
+	location_normal_ = 1;glGetAttribLocation(program, attribute_name);
 	if(location_normal_==-1)
 	{
-		fprintf(stderr, "Could not bind attribute %s\n", attribute_name);
+		fprintf(stderr, "Could not bind attribute '%s'\n", attribute_name);
 		exit(0);
 	}
+
+	attribute_name = "texcoor";
+	location_texcoor_ = glGetAttribLocation(program, attribute_name);
+	if(location_texcoor_==-1)
+	{
+		fprintf(stderr, "Could not bind attribute '%s'\n", attribute_name);
+		exit(0);
+	}
+
 
 	// position
 	GLsizeiptr size = fh_.len_positions_ * sizeof(GLfloat);// sizeof(vertex_positions_);
@@ -178,6 +378,19 @@ void object::init_buffer(GLint program)
 			GL_STATIC_DRAW);
 
 
+	// texcoor
+	size = fh_.len_texcoor_ * sizeof(GLfloat);
+
+	glGenBuffers(1, &buffer_texcoor_);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_texcoor_);
+	glBufferData(
+			GL_ARRAY_BUFFER,
+			size,
+			vertex_texcoor_,
+			GL_STATIC_DRAW);
+
+
+
 	// index
 	size = fh_.len_indices_ * sizeof(GLushort);
 
@@ -197,7 +410,9 @@ void object::init_buffer(GLint program)
 
 	printf("buffer positions: %i\n",buffer_position_);
 	printf("buffer normals:   %i\n",buffer_normal_);
+	printf("buffer texcoor:   %i\n",buffer_texcoor_);
 	printf("buffer indices:   %i\n",buffer_indices_);
+	printf("texture image:    %i\n",texture_image_);
 
 }
 void object::draw()
@@ -206,23 +421,32 @@ void object::draw()
 
 	glEnableVertexAttribArray(location_position_);
 	glEnableVertexAttribArray(location_normal_);
+	glEnableVertexAttribArray(location_texcoor_);
 
 	printf("draw\n");
 
 
-	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);
-
-	checkerror("glBindBuffer");
-
+	// position
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_position_);checkerror("glBindBuffer");
 	glVertexAttribPointer(location_position_, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
 	//checkerror();
 
-	printf("draw\n");
-
+	// normal
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_normal_);
 	glVertexAttribPointer(location_normal_, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
+	// texcoor
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_texcoor_);
+	glVertexAttribPointer(location_texcoor_, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+	// texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_image_);
+	glUniform1i(location_image_, 0);
+
+	// element
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_indices_);
 
 	//checkerror();
@@ -244,6 +468,7 @@ void object::draw()
 
 	glDisableVertexAttribArray(location_position_);
 	glDisableVertexAttribArray(location_normal_);
+	glDisableVertexAttribArray(location_texcoor_);
 
 	printf("draw\n");
 

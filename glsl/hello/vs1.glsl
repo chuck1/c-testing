@@ -2,7 +2,6 @@
 
 layout (location = 0) in vec4 position;
 layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 texcoor;
 
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
@@ -13,7 +12,6 @@ out VS_OUT
         vec3 N;
         vec3 L;
         vec3 V;
-	vec2 texcoor;
 } vs_out;
 
 uniform vec3 light_pos = vec3(10.0, 10.0, 5.0);
@@ -36,8 +34,6 @@ void main(void)
 
         // Calculate the clip-space position of each vertex
         gl_Position = proj_matrix * P;
-
-	vs_out.texcoor = texcoor;
 }
 
 
