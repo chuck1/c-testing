@@ -1,0 +1,26 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<Case>
+		<Parameter name="z channel" unit="millimeter">0.101</Parameter>
+		<Parameter name="x channel" unit="millimeter">0.2</Parameter>
+		
+		<Parameter name="x heated">0.02</Parameter>
+		<Parameter name="y heated">0.01</Parameter>
+		
+		<Parameter name="y header inlet" unit="millimeter">0.001</Parameter>
+		<Parameter name="y header outlet" unit="millimeter">0.001</Parameter>
+		
+		<Parameter name="x wall" unit="millimeter">0.2</Parameter>
+		
+		<Parameter name="z header" unit="millimeter">6.35</Parameter>
+		
+		<Parameter name="x header inlet"></Parameter>
+		<Parameter name="x header outlet"></Parameter>
+		
+		<Parameter name="number of channels">50</Parameter>
+		<Parameter name="x inlet header ext"></Parameter>
+		<Parameter name="x outlet header ext"></Parameter>
+		<Parameter name="z plate 1" unit="millimeter">0.2</Parameter>
+		
+	</Case>
+	
