@@ -7,91 +7,39 @@
 #include <sys/time.h>
 #include <string.h>
 
+#include <glutpp/vertex.h>
+
 #include "../hello/object.h"
 
-GLfloat vertex_positions[] = 
+vertex vertices[] = 
 {
-	-0.5f, -0.5f, -0.5f, 1.0f,
-	-0.5f,  0.5f, -0.5f, 1.0f,
-	 0.5f, -0.5f, -0.5f, 1.0f,
-	 0.5f,  0.5f, -0.5f, 1.0f,
-	 0.5f, -0.5f, -0.5f, 1.0f,
-	 0.5f,  0.5f, -0.5f, 1.0f,
-	 0.5f, -0.5f,  0.5f, 1.0f,
-	 0.5f,  0.5f,  0.5f, 1.0f,
-	 0.5f, -0.5f,  0.5f, 1.0f,
-	 0.5f,  0.5f,  0.5f, 1.0f,
-	-0.5f, -0.5f,  0.5f, 1.0f,
-	-0.5f,  0.5f,  0.5f, 1.0f,
-	-0.5f, -0.5f,  0.5f, 1.0f, //12
-	-0.5f,  0.5f,  0.5f, 1.0f, //13
-	-0.5f, -0.5f, -0.5f, 1.0f, //14
-	-0.5f,  0.5f, -0.5f, 1.0f, //15
-	-0.5f, -0.5f, -0.5f, 1.0f, //16
-	 0.5f, -0.5f, -0.5f, 1.0f, //17
-	 0.5f, -0.5f,  0.5f, 1.0f, //18
-	-0.5f, -0.5f,  0.5f, 1.0f, //19
-	-0.5f,  0.5f, -0.5f, 1.0f,
-	 0.5f,  0.5f, -0.5f, 1.0f,
-	 0.5f,  0.5f,  0.5f, 1.0f,
-	-0.5f,  0.5f,  0.5f, 1.0f
-};
-GLfloat vertex_normals[] = 
-{
-	 0.0f,  0.0f, -1.0f,
-	 0.0f,  0.0f, -1.0f,
-	 0.0f,  0.0f, -1.0f,
-	 0.0f,  0.0f, -1.0f,
-	 1.0f,  0.0f,  0.0f,
-	 1.0f,  0.0f,  0.0f,
-	 1.0f,  0.0f,  0.0f,
-	 1.0f,  0.0f,  0.0f,
-	 0.0f,  0.0f,  1.0f,
-	 0.0f,  0.0f,  1.0f,
-	 0.0f,  0.0f,  1.0f,
-	 0.0f,  0.0f,  1.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	 0.0f, -1.0f,  0.0f,
-	 0.0f, -1.0f,  0.0f,
-	 0.0f, -1.0f,  0.0f,
-	 0.0f, -1.0f,  0.0f,
-	 0.0f,  1.0f,  0.0f,
-	 0.0f,  1.0f,  0.0f,
-	 0.0f,  1.0f,  0.0f,
-	 0.0f,  1.0f,  0.0f
-};
-GLfloat vertex_texcoor[] = 
-{
-	 0.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  0.0f,
-	 1.0f,  1.0f,
-	 0.0f,  0.0f,
-	 1.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  1.0f,
-	 0.0f,  0.0f,
-	 1.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  1.0f,
-	 0.0f,  0.0f,
-	 1.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  1.0f,
-	 0.0f,  0.0f,
-	 1.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  1.0f,
-	 0.0f,  0.0f,
-	 1.0f,  0.0f,
-	 0.0f,  1.0f,
-	 1.0f,  1.0f
+	{vec3(-0.5f, -0.5f, -0.5f),vec3( 0.0f,  0.0f, -1.0f),vec2(1.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f, -0.5f),vec3( 0.0f,  0.0f, -1.0f),vec2(1.0f, 1.0f)},
+	{vec3( 0.5f, -0.5f, -0.5f),vec3( 0.0f,  0.0f, -1.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f, -0.5f),vec3( 0.0f,  0.0f, -1.0f),vec2(0.0f, 1.0f)},
+	{vec3( 0.5f, -0.5f, -0.5f),vec3( 1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f, -0.5f),vec3( 1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f, -0.5f,  0.5f),vec3( 1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f,  0.5f),vec3( 1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f, -0.5f,  0.5f),vec3( 0.0f,  0.0f,  1.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f,  0.5f),vec3( 0.0f,  0.0f,  1.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f, -0.5f,  0.5f),vec3( 0.0f,  0.0f,  1.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f,  0.5f),vec3( 0.0f,  0.0f,  1.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f, -0.5f,  0.5f),vec3(-1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f,  0.5f),vec3(-1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f, -0.5f, -0.5f),vec3(-1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f, -0.5f),vec3(-1.0f,  0.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f, -0.5f, -0.5f),vec3( 0.0f, -1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f, -0.5f, -0.5f),vec3( 0.0f, -1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f, -0.5f,  0.5f),vec3( 0.0f, -1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f, -0.5f,  0.5f),vec3( 0.0f, -1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f, -0.5f),vec3( 0.0f,  1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f, -0.5f),vec3( 0.0f,  1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3( 0.5f,  0.5f,  0.5f),vec3( 0.0f,  1.0f,  0.0f),vec2(0.0f, 0.0f)},
+	{vec3(-0.5f,  0.5f,  0.5f),vec3( 0.0f,  1.0f,  0.0f),vec2(0.0f, 0.0f)}
 };
 
-GLushort vertex_indices[] = 
+GLushort indices[] = 
 {
 	 0, 1, 2,
 	 2, 1, 3,
@@ -115,12 +63,10 @@ int main()
 	cube.vertex_normals_ = vertex_normals;
 	cube.vertex_indices_ = vertex_indices;
 	cube.vertex_texcoor_ = vertex_texcoor;
-
-	cube.fh_.len_positions_ = sizeof(vertex_positions)/sizeof(GLfloat);
-	cube.fh_.len_normals_ = sizeof(vertex_normals)/sizeof(GLfloat);
-	cube.fh_.len_texcoor_ = sizeof(vertex_texcoor)/sizeof(GLfloat);
-	cube.fh_.len_indices_ = sizeof(vertex_indices)/sizeof(GLushort);
-
+	
+	cube.fh_.len_vertices = 24;
+	cube.fh_.len_indices_ = 36;
+	
 	cube.save("../hello/cube.obj");
 	
 }
