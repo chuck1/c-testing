@@ -1,5 +1,5 @@
 
 
 all:
-	g++ julia.cpp -o julia -lGLEW -lglut -Wall -Werror
+	g++ julia.cpp -o julia -lGLEW -lglut -lGL -Wall -Werror
 
