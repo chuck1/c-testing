@@ -135,9 +135,7 @@ void reshape(GLint width, GLint height)
 	//glMatrixMode(GL_MODELVIEW);
 
 	matrix_proj.SetPerspective(65.0, (float)g_Width / g_Height, g_nearPlane, g_farPlane);
-
 }
-
 void InitGraphics(void)
 {
 	//int width, height;
@@ -168,7 +166,6 @@ void InitGraphics(void)
 	   glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 	   GL_LINEAR_MIPMAP_LINEAR);
 	   glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
 	 */
 
 	GLenum err = glewInit();
@@ -197,19 +194,12 @@ void InitGraphics(void)
 
 	GLint uniform_image = glGetUniformLocation(gprogram,"image");
 
-
 	printf("uniform model_matrix: %i\n",uniform_model);
 	printf("uniform view_matrix:  %i\n",uniform_view);
 	printf("uniform proj_matrix:  %i\n",uniform_proj);
 	printf("uniform image:        %i\n",uniform_image);
 
-
-	printf("location of position: %i\n",glGetAttribLocation(gprogram, "position"));
-	printf("location of normal:   %i\n",glGetAttribLocation(gprogram, "normal"));
-	printf("location of texcoor:  %i\n",glGetAttribLocation(gprogram, "texcoor"));
-
 	printf("program:              %i\n",gprogram);
-
 
 	// drawing
 	cube0.load("cube.obj");
@@ -217,11 +207,7 @@ void InitGraphics(void)
 
 	cube0.init_buffer(gprogram);
 	cube1.init_buffer(gprogram);
-
-
-
 }
-
 void MouseButton(int button, int state, int x, int y)
 {
 	// Respond to mouse button presses.
