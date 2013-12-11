@@ -268,7 +268,7 @@ void startup()
 
 	
 
-	printf("%i\n", uniforms.screen);
+	printf("screen = %i\n", uniforms.screen);
 	printf("%i\n", uniforms.num_spheres);
 	printf("%i\n", uniforms.num_planes);
 	printf("%i\n", uniforms.num_trace);
@@ -344,39 +344,10 @@ void onKey(unsigned char key, int, int)
 			case 27:
 				exit(0);
 			case ' ':
-				paused = !paused;
-				printf("pause\n");
+				render();
 				break;
-			case 'r': time_offset += 0.00001f;
-				  break;
-			case 'f': time_offset -= 0.00001f;
-				  break;
-			case 't': time_offset += 0.0001f;
-				  break;
-			case 'g': time_offset -= 0.0001f;
-				  break;
-			case 'y': time_offset += 0.01f;
-				  break;
-			case 'h': time_offset -= 0.01f;
-				  break;
-			case 'u': time_offset += 1.0f;
-				  break;
-			case 'j': time_offset -= 1.0f;
-				  break;
-			case ']': zoom *= 1.05;
-				  break;
-			case '[': zoom /= 1.05;
-				  break;
-			case 'w': y_offset -= zoom * 0.02f;
-				  break;
-			case 'a': x_offset -= zoom * 0.02f;
-				  break;
-			case 's': y_offset += zoom * 0.02f;
-				  break;
-			case 'd': x_offset += zoom * 0.02f;
-				  break;
 			default:
-				  break;
+				break;
 		};
 	}
 }
@@ -398,16 +369,14 @@ void shutdown()
 
 int main(int argc, char ** argv)
 {	
-	w = 500;
-	h = 500;
+	w = 1000;
+	h = 1000;
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(w, h);
 	glutInitWindowPosition(2300, 200);
 	glutCreateWindow("julia");
-	glutDisplayFunc(render);
-	glutIdleFunc(render);
 	glutKeyboardFunc(onKey);
 
 	printf("glewinit\n");
