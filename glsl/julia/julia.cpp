@@ -258,7 +258,9 @@ void render(/*double currentTime*/)
 
 	r = t + time_offset;
 
-	float C[2] = { (sinf(r * 0.1f) + cosf(r * 0.53f)) * 2.5f, (cosf(r * 0.13f) + sinf(r * 0.21f)) * 0.5f };
+	float C[2] = { (sinf(r * 0.1f) + cosf(r * 0.53f)) * 2.5f,
+			(cosf(r * 0.13f) + sinf(r * 0.21f)) * 0.5f };
+
 	float offset[2] = { x_offset, y_offset };
 
 	// rendering part
