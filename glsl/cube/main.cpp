@@ -7,8 +7,7 @@
 #include <sys/time.h>
 #include <string.h>
 
-#include <glutpp/window.h>
-#include <glutpp/object.h>
+#include <glutpp/mesh.h>
 
 #include <math/vec2.h>
 
@@ -19,25 +18,25 @@ glutpp::vertex vertices[] =
 	{ math::vec3( 0.5f, -0.5f, -0.5f), math::vec3( 0.0f,  0.0f, -1.0f), math::vec2(0.0f, 0.0f) },
 	{ math::vec3( 0.5f,  0.5f, -0.5f), math::vec3( 0.0f,  0.0f, -1.0f), math::vec2(0.0f, 1.0f) },
 	{ math::vec3( 0.5f, -0.5f, -0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f,  0.5f, -0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(0.0f, 0.0f) },
+	{ math::vec3( 0.5f,  0.5f, -0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(1.0f, 0.0f) },
+	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(0.0f, 1.0f) },
+	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 1.0f,  0.0f,  0.0f), math::vec2(1.0f, 1.0f) },
+	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(1.0f, 0.0f) },
+	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(1.0f, 1.0f) },
 	{ math::vec3(-0.5f, -0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f, -0.5f,  0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
+	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  0.0f,  1.0f), math::vec2(0.0f, 1.0f) },
+	{ math::vec3(-0.5f, -0.5f,  0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(0.0f, 1.0f) },
+	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(1.0f, 1.0f) },
 	{ math::vec3(-0.5f, -0.5f, -0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f,  0.5f, -0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(0.0f, 0.0f) },
+	{ math::vec3(-0.5f,  0.5f, -0.5f), math::vec3(-1.0f,  0.0f,  0.0f), math::vec2(1.0f, 0.0f) },
 	{ math::vec3(-0.5f, -0.5f, -0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f, -0.5f, -0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f, -0.5f,  0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
+	{ math::vec3( 0.5f, -0.5f, -0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(1.0f, 0.0f) },
+	{ math::vec3( 0.5f, -0.5f,  0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(1.0f, 1.0f) },
+	{ math::vec3(-0.5f, -0.5f,  0.5f), math::vec3( 0.0f, -1.0f,  0.0f), math::vec2(0.0f, 1.0f) },
 	{ math::vec3(-0.5f,  0.5f, -0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f,  0.5f, -0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(0.0f, 0.0f) },
-	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(0.0f, 0.0f) }
+	{ math::vec3( 0.5f,  0.5f, -0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(1.0f, 0.0f) },
+	{ math::vec3( 0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(1.0f, 1.0f) },
+	{ math::vec3(-0.5f,  0.5f,  0.5f), math::vec3( 0.0f,  1.0f,  0.0f), math::vec2(0.0f, 1.0f) }
 };
 
 GLushort indices[] = 
@@ -58,9 +57,7 @@ GLushort indices[] =
 
 int main()
 {
-	glutpp::window w(10,10,0,0,"cube");
-	
-	glutpp::object cube(&w);
+	glutpp::mesh cube;
 	
 	cube.vertices_ = vertices;
 	cube.indices_ = indices;
@@ -69,7 +66,6 @@ int main()
 	cube.fh_.len_indices_ = 36;
 	
 	cube.save("cube.obj");
-
 	
 }
 

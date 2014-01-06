@@ -1,8 +1,10 @@
 
 SRC = main.cpp
 CFLAGS = -std=c++0x
-LIBS = -lGL -lGLU -lglut -lGLEW -lglutpp -lpng -lgal -lmath
+LIBS = -lGL -lGLU -lglut -lGLEW -lglutpp -lpng -lgalaxy -lmath
 
 all:
-	g++ $(SRC) -o hello -I../hello $(LIBS) $(CFLAGS)
+	g++ $(SRC) -o cube -I../hello $(LIBS) $(CFLAGS) -D_DEBUG
+
+
 
