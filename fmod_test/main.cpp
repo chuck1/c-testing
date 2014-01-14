@@ -26,7 +26,12 @@ int main()
 
 	FMOD::Sound *sound;
 
-	result = system->createSound("../../fmod/fmoddesignerapi/examples/media/ambient_one_four.ogg", FMOD_DEFAULT, 0, &sound);		// FMOD_DEFAULT uses the defaults.  These are the same as FMOD_LOOP_OFF | FMOD_2D | FMOD_HARDWARE.
+	result = system->createSound("../../fmod/fmoddesignerapi/examples/media/ambient_one_four.ogg",
+			FMOD_DEFAULT,
+			0,
+			&sound);
+	// FMOD_DEFAULT uses the defaults.  These are the same as FMOD_LOOP_OFF | FMOD_2D | FMOD_HARDWARE.
+
 	errcheck(result);
 
 	int delay = 200 * 1000;
