@@ -11,39 +11,34 @@ void print_byte(void * v, int s) {
 	printf("\n");
 }
 
+struct base { /*as before */ };
 
-struct chunk {
-	void type() {
-		printf("%s\n", typeid(*this).name());
-	}
-	size_t size() {
-		return sizeof(__typeof__(*this));
-	}
+template<typename Derived, typename Base>
+struct intermediate : Base {
+	virtual size_t size() const { return sizeof(Derived); }
 };
 
-struct foo: chunk
+struct derived : intermediate<derived, base>
 {
-	foo(){}
-
-	unsigned int c;		// 4
-};
-struct bar: foo {
-	unsigned int d;
+int a[10];
 };
 
+struct further_derived : intermediate<further_derived, derived>
+{
+int b[20];
+};
 
 
 int main() {
 
-	foo f;
-	bar b;
+	derived d0;
+	further_derived d1;
 	
-	f.type();
-	b.type();
 	
-	printf("%i\n", (int)f.size());
-	printf("%i\n", (int)b.size());
+	printf("%i\n", (int)d0.size());
+	printf("%i\n", (int)d1.size());
 	
 }
+
 
 
