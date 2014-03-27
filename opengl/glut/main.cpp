@@ -24,12 +24,15 @@
 #define VIEWING_DISTANCE_MIN  3.0
 #define TEXTURE_ID_CUBE 1
 
+float g_view_yaw = 0;
+float g_view_pitch = 0;
+
 // telemetry data
 int ti = 0;
 
 FILE* file;
 
-#define TIME 14
+#define TIME 9000
 
 math::quat* g_q = new math::quat[TIME];
 math::vec3* g_x = new math::vec3[TIME];
@@ -37,9 +40,17 @@ math::vec3* g_x = new math::vec3[TIME];
 enum {
 	MENU_LIGHTING = 1,
 	MENU_POLYMODE,
-	MENU_TEXTURING,
+	MENU_CAMERA,
 	MENU_EXIT
 };
+
+enum {
+	CAM_STATIONARY = 0,
+	CAM_FOLLOW,
+	CAM_COUNT
+};
+
+int g_cam_mode = 0;
 
 typedef int BOOL;
 #define TRUE 1
@@ -47,57 +58,28 @@ typedef int BOOL;
 
 static BOOL g_bLightingEnabled = TRUE;
 static BOOL g_bFillPolygons = TRUE;
-static BOOL g_bTexture = FALSE;
 static BOOL g_bButton1Down = FALSE;
 static GLfloat g_fTeapotAngle = 0.0;
 static GLfloat g_fTeapotAngle2 = 0.0;
-static GLfloat g_fViewDistance = 3 * VIEWING_DISTANCE_MIN;
 static GLfloat g_nearPlane = 1;
 static GLfloat g_farPlane = 1000;
 static int g_Width = 600;                          // Initial window width
 static int g_Height = 600;                         // Initial window height
-static int g_yClick = 0;
-static float g_lightPos[4] = { 10, 10, -100, 1 };  // Position of light
+static float g_lightPos[4] = { 0, 10, 10, 1 };  // Position of light
 #ifdef _WIN32
 static DWORD last_idle_time;
 #else
 static struct timeval last_idle_time;
 #endif
 
-void DrawCubeFace(float fSize)
-{
-	fSize /= 2.0;
-	glBegin(GL_QUADS);
-	glVertex3f(-fSize, -fSize, fSize);    glTexCoord2f (0, 0);
-	glVertex3f(fSize, -fSize, fSize);     glTexCoord2f (1, 0);
-	glVertex3f(fSize, fSize, fSize);      glTexCoord2f (1, 1);
-	glVertex3f(-fSize, fSize, fSize);     glTexCoord2f (0, 1);
-	glEnd();
-}
-
-void DrawCubeWithTextureCoords (float fSize)
-{
-	glPushMatrix();
-	DrawCubeFace (fSize);
-	glRotatef (90, 1, 0, 0);
-	DrawCubeFace (fSize);
-	glRotatef (90, 1, 0, 0);
-	DrawCubeFace (fSize);
-	glRotatef (90, 1, 0, 0);
-	DrawCubeFace (fSize);
-	glRotatef (90, 0, 1, 0);
-	DrawCubeFace (fSize);
-	glRotatef (180, 0, 1, 0);
-	DrawCubeFace (fSize);
-	glPopMatrix();
-}
+float g_view_x = 0.5;//0.0;
+float g_view_y = 0.5;//7.5;
+float g_view_dist = 5.0;
 
 void RenderObjects(void)
 {
-	float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
-	float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
-	float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
-	float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
+	//float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
+	//float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
 
 	math::color arm_color[] = {
 		math::red,
@@ -105,11 +87,8 @@ void RenderObjects(void)
 		math::blue,
 		math::green};
 	
-	math::quat q = g_q[ti];
 	
-	math::vec3 x = g_x[ti];
-	
-	math::transform t(x,q);
+	math::transform t(g_x[ti], g_q[ti].getConjugate());
 	
 	math::mat44 m(t);
 
@@ -117,20 +96,31 @@ void RenderObjects(void)
 	float xa[] = {1,-1,0, 0};
 	float ya[] = {0, 0,1,-1};
 	float L = 1.0;
-
+	
 	glMatrixMode(GL_MODELVIEW);
+
 	glPushMatrix();
 	{
+		glTranslatef(0.0,0.0,-2.0);
+		glScalef(10.0,10.1,1.0);
+		glutSolidCube(1.0);
+	}
+	glPopMatrix();
+	
+	glPushMatrix();
+	{
+		glTranslatef(-g_view_x, -g_view_y, 0.0);
+
 		// Main object (cube) ... transform to its coordinates, and render
 		glMultMatrixf(m);
 
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, colorBlue);
-		glMaterialfv(GL_FRONT, GL_SPECULAR, colorNone);
-		glColor4fv(colorBlue);
-		glBindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
-		DrawCubeWithTextureCoords(1.0);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, math::cyan);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, math::white);
+		glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
 
-		for(int i = 0;i < 4; i++) {
+		glutSolidSphere(0.5,20,20);
+		
+		for(int i = 0;i< 4; i++) {
 			// Child object (teapot) ... relative transform, and render
 			glPushMatrix();
 			{
@@ -138,11 +128,12 @@ void RenderObjects(void)
 				//glRotatef(g_fTeapotAngle2, 1, 1, 0);
 				
 				glMaterialfv(GL_FRONT, GL_DIFFUSE, arm_color[i]);
-				glMaterialfv(GL_FRONT, GL_SPECULAR, colorBronzeSpec);
+				glMaterialfv(GL_FRONT, GL_SPECULAR, math::white);
 				glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
-				glColor4fv(colorBronzeDiff);
+				//glColor4fv(arm_color[i]);
 
-				glutSolidTorus(0.1,0.2,10,10);
+				glutSolidTorus(0.1,0.2,20,20);
+
 			}
 			glPopMatrix(); 
 		}
@@ -153,6 +144,7 @@ void RenderObjects(void)
 	if(ti == TIME) ti = 0;
 }
 
+
 void display(void)
 {
 	// Clear frame buffer and depth buffer
@@ -160,13 +152,25 @@ void display(void)
 
 	// Set up viewing transformation, looking down -Z axis
 	glLoadIdentity();
-	gluLookAt(0, 0, -g_fViewDistance, 0, 0, -1, 0, 1, 0);
+	
+	gluLookAt(
+			0.0, g_view_dist, 0.0,
+			0.0, 0.0, 0,
+			0.0, 0.0, 1);
 
-	// Set up the stationary light
-	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
+	glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
+	
+	glRotatef(-g_view_pitch/M_PI*180.0, cos(g_view_yaw), -sin(g_view_yaw), 0);
+	
+	glPushMatrix();
+	{
+		// Set up the stationary light
+		glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
-	// Render the scene
-	RenderObjects();
+		// Render the scene
+		RenderObjects();
+	}
+	glPopMatrix();
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
@@ -196,17 +200,27 @@ void InitGraphics(void)
 
 }
 
+int g_mx = 0;
+int g_my = 0;
+
 void MouseButton(int button, int state, int x, int y)
 {
 	// Respond to mouse button presses.
 	// If button1 pressed, mark this state so we know in motion function.
 
+	//printf("button\n");
+
 	if (button == GLUT_LEFT_BUTTON)
 	{
 		g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
-		g_yClick = y - 3 * g_fViewDistance;
+	
+		if(state == GLUT_DOWN) {
+			g_mx = x;
+			g_my = y;
+		}
 	}
 }
+
 
 void MouseMotion(int x, int y)
 {
@@ -214,10 +228,21 @@ void MouseMotion(int x, int y)
 
 	if (g_bButton1Down)
 	{
-		g_fViewDistance = (y - g_yClick) / 3.0;
-		if (g_fViewDistance < VIEWING_DISTANCE_MIN)
-			g_fViewDistance = VIEWING_DISTANCE_MIN;
-		glutPostRedisplay();
+		//g_fViewDistance = (y - g_yClick) / 3.0;
+		//if (g_fViewDistance < VIEWING_DISTANCE_MIN)
+		//	g_fViewDistance = VIEWING_DISTANCE_MIN;
+		//glutPostRedisplay();
+		
+		int dx = x - g_mx;
+		int dy = y - g_my;
+		
+		g_view_yaw += (float)dx * 3.14 / 300.0;
+		g_view_pitch += (float)dy * 3.14 / 300.0;
+		
+		g_mx = x;
+		g_my = y;
+
+		//printf("%i %i\n", g_mx, x);
 	}
 }
 
@@ -225,17 +250,11 @@ void AnimateScene(void)
 {
 	float dt;
 
-#ifdef _WIN32
-	DWORD time_now;
-	time_now = GetTickCount();
-	dt = (float) (time_now - last_idle_time) / 1000.0;
-#else
 	// Figure out time elapsed since last call to idle function
 	struct timeval time_now;
 	gettimeofday(&time_now, NULL);
 	dt = (float)(time_now.tv_sec  - last_idle_time.tv_sec) +
 		1.0e-6*(time_now.tv_usec - last_idle_time.tv_usec);
-#endif
 
 	// Animate the teapot by updating its angles
 	g_fTeapotAngle += dt * 30.0;
@@ -259,20 +278,13 @@ void SelectFromMenu(int idCommand)
 			else
 				glDisable(GL_LIGHTING);
 			break;
-
 		case MENU_POLYMODE:
 			g_bFillPolygons = !g_bFillPolygons;
 			glPolygonMode (GL_FRONT_AND_BACK, g_bFillPolygons ? GL_FILL : GL_LINE);
 			break;      
-
-		case MENU_TEXTURING:
-			g_bTexture = !g_bTexture;
-			if (g_bTexture)
-				glEnable(GL_TEXTURE_2D);
-			else
-				glDisable(GL_TEXTURE_2D);
-			break;    
-
+		case MENU_CAMERA:
+			g_cam_mode++;
+			if (g_cam_mode == 2) g_cam_mode = 0;
 		case MENU_EXIT:
 			exit (0);
 			break;
@@ -297,6 +309,8 @@ void Keyboard(unsigned char key, int x, int y)
 		case 'p':
 			SelectFromMenu(MENU_POLYMODE);
 			break;
+		case 'c':
+			SelectFromMenu(MENU_CAMERA);
 
 	}
 }
@@ -308,7 +322,7 @@ int BuildPopupMenu (void)
 	menu = glutCreateMenu (SelectFromMenu);
 	glutAddMenuEntry ("Toggle lighting\tl", MENU_LIGHTING);
 	glutAddMenuEntry ("Toggle polygon fill\tp", MENU_POLYMODE);
-	glutAddMenuEntry ("Toggle texturing\tt", MENU_TEXTURING);
+	glutAddMenuEntry ("Cycle camera mode\tp", MENU_CAMERA);
 	glutAddMenuEntry ("Exit demo\tEsc", MENU_EXIT);
 
 	return menu;
