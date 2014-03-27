@@ -1,0 +1,1 @@
+/usr/bin/c++       CMakeFiles/test.dir/main.cpp.o  -o test -rdynamic -L/nfs/stak/students/r/rymalc/Programming/C++/test/cmake_test/test/../libtest -llibtest -Wl,-rpath,/nfs/stak/students/r/rymalc/Programming/C++/test/cmake_test/test/../libtest 
