@@ -32,7 +32,7 @@ int ti = 0;
 
 FILE* file;
 
-#define TIME 9000
+#define TIME 400
 
 math::quat* g_q = new math::quat[TIME];
 math::vec3* g_x = new math::vec3[TIME];

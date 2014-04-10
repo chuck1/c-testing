@@ -17,10 +17,10 @@ int main() {
 	
 	while(should_exit == 0) {
 		sleep(1);
-		fprintf(stdlog, "hello\n");
+		fprintf(stdout, "hello\n");
 		
 	}
-	
+		
 	t.join();
 }
 
