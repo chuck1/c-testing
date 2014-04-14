@@ -1,7 +1,9 @@
+/*
+ * reference member variables
+ * must be assigned in constructor
+ */
 
 #include <stdio.h>
-
-
 
 class foo {
 public:
@@ -12,7 +14,7 @@ public:
 	int v[4];
 	int &x;
 
-	S s[2];
+	int s[2];
 
 	/*
 	struct Row {
@@ -32,3 +34,4 @@ int main() {
 
 	return 0;
 }
+
