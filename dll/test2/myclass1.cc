@@ -42,3 +42,5 @@ void MyClass1::DoSomething()
 	  cout << x << " " << y << endl;
 }
 
+
+
