@@ -3,12 +3,14 @@
 
 using namespace std;
 
-extern "C" MyClass* create_object()
+// custom functionality
+
+extern "C" MyClass* MyClass_create()
 {
 	  return new MyClass;
 }
 
-extern "C" void destroy_object( MyClass* object )
+extern "C" void MyClass_destroy( MyClass* object )
 {
 	  delete object;
 }
