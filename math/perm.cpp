@@ -19,16 +19,16 @@ void	permutation(int** perm, int* trans, int i, int N) {
 	
 	} else {
 		//for(int p = 0; p < n; ++p) {
-		int j = 0;
 		bool cont = false;
 		for(int j = 0; j < N; j++) {
-			//printf("j = %i\n",j);
+			printf("j = %i\n",j);
 			
 			cont = false;
+			printf("temp=%p\n",temp);
 			for(int k = 0; k < i; k++) {
 				if(j == (*temp)[k]) {
 					cont = true;
-					//printf("j=%i taken\n",j);
+					printf("j=%i taken\n",j);
 					break;
 				}
 			}
