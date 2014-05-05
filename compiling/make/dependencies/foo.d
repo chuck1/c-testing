@@ -1,4 +1,4 @@
-foo.o: foo.c foo.h foo2.h
+foo.o: foo.c foo.h dir1/foo2.h
 foo.c:
 foo.h:
-foo2.h:
+dir1/foo2.h:

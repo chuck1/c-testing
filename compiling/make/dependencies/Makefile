@@ -17,8 +17,8 @@ proggie: $(OBJS)
 #   sed:    strip leading spaces
 #   sed:    add trailing colons
 %.o: %.c
-	gcc -E $(CFLAGS) $*.c
-	gcc -c $(CFLAGS) $*.c -o $*.o
+	#gcc -E $(CFLAGS) $*.c
+	gcc -c $(CFLAGS) $*.c -o $*.o -ftime-report
 	gcc -MM $(CFLAGS) $*.c > $*.d
 	@cp -f $*.d $*.d.tmp
 	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
