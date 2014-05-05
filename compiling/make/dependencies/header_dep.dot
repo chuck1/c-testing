@@ -1,0 +1,6 @@
+digraph {
+	fooc [label="foo.c"]
+	barc [label="bar.c"]
+	barh [label="bar.h"]
+	barc -> barh
+}
