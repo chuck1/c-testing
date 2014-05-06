@@ -20,6 +20,5 @@ int main() {
 
 	printf("%f\n", f.a);
 	printf("%f\n", f.b());
-
 }
 
