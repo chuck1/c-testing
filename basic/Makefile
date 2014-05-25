@@ -1,6 +1,4 @@
 
-
-
 all:
-	g++ initializer_list.cpp -o initializer_list -std=c++0x
+	g++ main.cpp -o test -std=c++0x
 

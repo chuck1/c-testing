@@ -2,9 +2,11 @@
 #include <functional>
 #include <map>
 #include <vector>
+#include <sys/time.h>
 
 using namespace std;
 
+// simulate boost signals...
 
 struct signal {
 	typedef std::function<void()>	func;
@@ -19,6 +21,8 @@ struct signal {
 		}
 	}
 };
+
+// ========================================================================
 
 class A {
 	public:
@@ -80,7 +84,18 @@ int main () {
 	
 	A* a = d;
 	
-	a->foo();
+	timespec t1,t2;
+
+	clock_gettime(CLOCK_REALTIME, &t1);
+
+	for(int i = 0; i < 100; i++) a->foo();
+
+	clock_gettime(CLOCK_REALTIME, &t2);
+
+	cout << t2.tv_sec << endl;
+	cout << t2.tv_sec << endl;
+
+	cout << t2.tv_nsec - t1.tv_nsec << endl;
 }
 
 

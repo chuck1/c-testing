@@ -28,4 +28,7 @@ proggie: $(OBJS)
 clean:
 	rm -f proggie *.o *.d
 
+test:
+	echo $(wildcard */*.c)
+
 

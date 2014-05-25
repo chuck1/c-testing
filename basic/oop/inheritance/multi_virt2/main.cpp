@@ -1,4 +1,3 @@
-#include <sys/time.h>
 
 #define DEBUG
 
@@ -39,7 +38,7 @@ template<class Dispatcher, class... Subs> class A {
 		int	call() {
 			//cout << "A" << endl;
 
-			//PRINT(sizeof...(Subs));
+			PRINT(sizeof...(Subs));
 			
 			//call<foo, Subs...>(&a_type::foo, ((Subs*)this)...);
 			__call<Dispatcher, Subs*...>(
@@ -50,16 +49,13 @@ template<class Dispatcher, class... Subs> class A {
 
 //================================================================
 
-#define DISPATCH_ROOT(thisclass,dispatcher,x) public A< dispatcher, thisclass<x...>, x... >
-#define DISPATCH_BRANCH(thisclass,parent,x) public parent< thisclass<x...>, x... >
-
 
 struct dispatch_foo {
 	template<class T> static void call(T *t) { t->foo(); }
 };
 
 
-template<class... Subs> class B: DISPATCH_ROOT(B, dispatch_foo, Subs) {
+class B {
 	public:
 		virtual ~B() {}
 	private:
@@ -69,7 +65,7 @@ template<class... Subs> class B: DISPATCH_ROOT(B, dispatch_foo, Subs) {
 		}
 };
 
-template<class... Subs> class C: DISPATCH_BRANCH(C, B, Subs) {
+class C: virtual public B {
 	private:
 		friend class dispatch_foo;
 		int foo () {
@@ -77,7 +73,7 @@ template<class... Subs> class C: DISPATCH_BRANCH(C, B, Subs) {
 		}
 };
 
-template<class... Subs> class D: DISPATCH_BRANCH(D, B, Subs) {
+class D: virtual public B {
 	private:
 		friend class dispatch_foo;
 		int foo () {
@@ -85,11 +81,8 @@ template<class... Subs> class D: DISPATCH_BRANCH(D, B, Subs) {
 		}
 };
 
-#define DISPATCH_LEAF(thisclass,a,b) public a<b<>, thisclass>, public b<>
 
-class E: DISPATCH_LEAF(E, C, D) {
-	public:
-		typedef C<D<>, E>::a_type e_type;
+class E: public C, public D {
 	private:
 		friend class dispatch_foo;
 		int foo () {
@@ -101,27 +94,7 @@ int main() {
 
 	E* e = new E;
 	
-	
-	
-	
-	
-	
-	
-	timespec t1,t2;
-
-	clock_gettime(CLOCK_REALTIME, &t1);
-
-	for(int i = 0; i < 100; i++) e->E::e_type::call();
-
-
-	clock_gettime(CLOCK_REALTIME, &t2);
-
-	cout << t2.tv_sec << endl;
-	cout << t2.tv_sec << endl;
-
-	cout << t2.tv_nsec - t1.tv_nsec << endl;
-
-	
+	dispatch_foo::call(e);
 
 }
 

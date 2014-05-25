@@ -1,0 +1,66 @@
+Class <anonymous struct>
+   size=8 align=4
+   base size=8 base align=4
+<anonymous struct> (0x7f8398625e00) 0
+
+Class <anonymous struct>::<anonymous union>
+   size=4 align=4
+   base size=4 base align=4
+<anonymous struct>::<anonymous union> (0x7f8398625ee0) 0
+
+Class <anonymous struct>
+   size=8 align=4
+   base size=8 base align=4
+<anonymous struct> (0x7f8398625e70) 0
+
+Class <anonymous struct>
+   size=16 align=8
+   base size=16 base align=8
+<anonymous struct> (0x7f8398625f50) 0
+
+Class <anonymous struct>
+   size=16 align=8
+   base size=16 base align=8
+<anonymous struct> (0x7f8398625d90) 0
+
+Class _IO_marker
+   size=24 align=8
+   base size=24 base align=8
+_IO_marker (0x7f8398625bd0) 0
+
+Class _IO_FILE
+   size=216 align=8
+   base size=216 base align=8
+_IO_FILE (0x7f8398599000) 0
+
+Class <anonymous struct>
+   size=32 align=8
+   base size=32 base align=8
+<anonymous struct> (0x7f83985990e0) 0
+
+Vtable for A
+A::_ZTV1A: 3u entries
+0     (int (*)(...))0
+8     (int (*)(...))(& _ZTI1A)
+16    A::doit
+
+Class A
+   size=8 align=8
+   base size=8 base align=8
+A (0x7f8398599150) 0 nearly-empty
+    vptr=((& A::_ZTV1A) + 16u)
+
+Vtable for B
+B::_ZTV1B: 3u entries
+0     (int (*)(...))0
+8     (int (*)(...))(& _ZTI1B)
+16    B::doit
+
+Class B
+   size=8 align=8
+   base size=8 base align=8
+B (0x7f83985993f0) 0 nearly-empty
+    vptr=((& B::_ZTV1B) + 16u)
+  A (0x7f8398599460) 0 nearly-empty
+      primary-for B (0x7f83985993f0)
+
