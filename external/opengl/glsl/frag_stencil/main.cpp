@@ -18,7 +18,7 @@ GLint p;
 GLint loc_tex1;
 GLint loc_tex2;
 
-int mode = 0;
+int mode = 3;
 
 struct FBO {
 
@@ -147,9 +147,7 @@ static const char * vs_source[] = {
 };
 static const char * fs_source[] =
 {
-	"// Julia set renderer - Fragment Shader                                                \n"
-		"// Graham Sellers                                                                      \n"
-		"// OpenGL SuperBible                                                                   \n"
+	"// Arbitrary Frag Shader Stencil - Fragment Shader                                                \n"
 		"#version 150 core                                                                      \n"
 		"in vec2 coord;                                                                         \n"
 		"out vec4 color;                                                                        \n"
@@ -160,12 +158,16 @@ static const char * fs_source[] =
 		"    vec2 c = coord;                                        \n"
 		"    c += vec2(1.0);                                \n"
 		"    c *= 0.5;                                                \n"
+		"    vec4 color1 = texture(tex1, c);                                                              \n"
+		"    vec4 color2 = texture(tex2, c);                                                              \n"
+		"    float blend;                                                                       \n"
 		"    float x = c.x - 0.5;                                  \n"
-		"    if(c.y > (x*x*x + x*x + 0.5)) {                                          \n"
-		"        color = texture(tex1, c);                      \n"
+		"    if(c.y > (8*x*x*x - x + 0.5)) {                                          \n"
+		"        blend = 0.1;                      \n"
 		"    } else {                                                \n"
-		"        color = texture(tex2, c);                      \n"
+		"        blend = 0.9;                        \n"
 		"    }                                                         \n"
+		"    color = vec4(blend) * color1 + vec4(1.0 - blend) * color2;                                   \n"
 		"}                                                                                      \n"
 };
 
@@ -208,7 +210,7 @@ static void size_callback(GLFWwindow* window, int w, int h) {
 void		render_tri() {
 	double time = glfwGetTime();
 
-	std::cout << "time = " << time << std::endl;
+	//std::cout << "time = " << time << std::endl;
 
 	glRotatef((float)time  * 50.f, 0.f, 0.f, 1.f);
 	glBegin(GL_TRIANGLES);
@@ -223,7 +225,7 @@ void		render_tri() {
 void		render_quad() {
 	double time = glfwGetTime();
 
-	std::cout << "time = " << time << std::endl;
+	//std::cout << "time = " << time << std::endl;
 
 	glRotatef(-(float)time  * 50.f, 0.f, 0.f, 1.f);
 	glBegin(GL_QUADS);
@@ -361,7 +363,7 @@ int main(void) {
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
-	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	window = glfwCreateWindow(900, 900, "Simple example", NULL, NULL);
 	if(!window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
