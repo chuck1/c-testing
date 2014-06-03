@@ -41,7 +41,7 @@ int main() {
 
 	printf("loop\n");
 
-/*	auto it = m.begin();
+	auto it = m.begin();
 	while(it != m.end()) {
 		if(it->second->d) {
 			it = m.erase(it);
@@ -49,27 +49,7 @@ int main() {
 			it++;
 		}
 	}
-*/
-	
-	auto itc = m.begin();
-	auto itp = itc;
-	while(itc != m.end()) {
-		if(itc->second->d) {
-			if(itc == itp) {
-				m.erase(itc);
-				itc = m.begin();
-				itp = itc;
-			} else {
-				m.erase(itc);
-				itc = itp;
-				itc++;
-			}
-		} else {
-			itp = itc;
-			itc++;
-		}
-	}
-	
+
 	printf("exit\n");
 
 	return 0;

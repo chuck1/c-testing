@@ -1,0 +1,12 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+
+PROJECT(glfw-test)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
+ADD_EXECUTABLE(glfw-test main.cpp)
+
+
+TARGET_LINK_LIBRARIES(glfw-test glfw3 GL GLEW Xrandr Xcursor Xi)
+
+
