@@ -15,24 +15,11 @@
 #include <iomanip>
 #include <fstream>
 
-#include <boost/python.hpp>
+//#include <boost/python.hpp>
 
 using namespace std;
 
-template<class T> PyObject* std_vector_to_py_list(const std::vector<T>& v) {
 
-	/*
-	boost::python::object get_iter = boost::python::iterator<std::vector<T> >();
-	boost::python::object iter = get_iter(v);
-	boost::python::list* l = new boost::python::list(iter);
-	return l->ptr();
-*/
-	boost::python::list* l = new boost::python::list();
-	for(size_t i = 0; i < v.size(); i++)
-		(*l).append(v[i]);
-
-	return l->ptr();
-}
 
 struct binary_iarchive {
 	binary_iarchive(ifstream& is): m_is(is) {}
@@ -147,7 +134,14 @@ struct stat_dir {
 			string file = dir + "/" + dirp->d_name;
 
 			if(dirp->d_type == 4) {
-				dirs.push_back(stat_dir(file, dirp));
+				stat_dir sd(file, dirp);
+
+				dirs.push_back(sd);
+				//cout << dirp->d_name << endl;
+				cout << dir << endl;
+
+				sd.write(file);
+
 			} else if(dirp->d_type == 8) {
 				files.push_back(stat_file(file, dirp));
 			}
@@ -179,11 +173,17 @@ struct stat_dir {
 
 		serialize(ar);
 	}
-	PyObject*		get_dirs() {
-		return std_vector_to_py_list(dirs);
-	}
-	PyObject*		get_files() {
-		return std_vector_to_py_list(files);
+	void			write(string root) {
+		string filename = root + "/.stat";
+
+		ofstream os(filename, ofstream::binary);
+		if(!os.is_open()) {
+			exit(1);
+		}
+
+		binary_oarchive ar(os);
+
+		serialize(ar);
 	}
 
 	string			name;
