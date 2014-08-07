@@ -50,7 +50,7 @@ int main() {
 	for (unsigned int i = 0;i < ds.files.size();i++) {
 		cout
 			<< setw(32) << ds.files[i].name
-			<< setw(16) << ds.files[i].size
+			<< setw(16) << ds.files[i].m_size
 			<< endl;
 	}
 

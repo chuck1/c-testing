@@ -1,6 +1,39 @@
 
 #define DEBUG if(0)
 
+#include <errno.h>
+#include <string.h>
+#include <sys/vfs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdlib.h>
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+
+#include <boost/python.hpp>
+
+using namespace std;
+
+template<class T> PyObject* std_vector_to_py_list(const std::vector<T>& v) {
+
+	/*
+	boost::python::object get_iter = boost::python::iterator<std::vector<T> >();
+	boost::python::object iter = get_iter(v);
+	boost::python::list* l = new boost::python::list(iter);
+	return l->ptr();
+*/
+	boost::python::list* l = new boost::python::list();
+	for(size_t i = 0; i < v.size(); i++)
+		(*l).append(v[i]);
+
+	return l->ptr();
+}
+
 struct binary_iarchive {
 	binary_iarchive(ifstream& is): m_is(is) {}
 	void	operator&(string& s) {
@@ -75,16 +108,21 @@ struct stat_file {
 		}
 
 		name = dirp->d_name;
-		size = st.st_size;
+		m_size = st.st_size;
 
+	}
+	off_t		size() {
+		return m_size;
 	}
 
 	string		name;
-	off_t		size;
+	off_t		m_size;
+
+
 
 	template<typename archive> void		serialize(archive& ar) {
 		ar & name;
-		ar & size;
+		ar & m_size;
 	}
 
 };
@@ -116,8 +154,6 @@ struct stat_dir {
 		}
 
 		closedir(dp);
-
-
 	}
 	template<typename archive> void		serialize(archive& ar) {
 		ar & name;
@@ -130,9 +166,24 @@ struct stat_dir {
 			s += d.size();
 		}
 		for(auto f : files) {
-			s += f.size;
+			s += f.m_size;
 		}
 		return s;
+	}
+	void			read() {
+		ifstream is(".stat", ifstream::binary);
+		if(!is.is_open()) {
+			exit(1);
+		}
+		binary_iarchive ar(is);
+
+		serialize(ar);
+	}
+	PyObject*		get_dirs() {
+		return std_vector_to_py_list(dirs);
+	}
+	PyObject*		get_files() {
+		return std_vector_to_py_list(files);
 	}
 
 	string			name;
