@@ -30,6 +30,7 @@ void	display(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set up viewing transformation, looking down -Z axis
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	
 	gluLookAt(
@@ -37,12 +38,7 @@ void	display(void) {
 			0.0, 0.0, 0,
 			0.0, 0.0, 1);
 
-	if(g_body_focus) {
-		cout << "focus: " << g_body_focus->name_ << endl;
 
-		glm::vec3 x = g_body_focus->x(g_time);
-		glTranslatef(x[0], x[1], x[2]);
-	}
 
 	glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
 	
@@ -87,8 +83,8 @@ void		animate() {
 void		init_scene() {
 
 	// bodies
-	body* sun = new body(g_universe, "sun", 1.98855E30, 696342E3);
-	body* earth = new body(g_universe, "earth", 5.97219E+24, 6371.0E3);
+	body* sun = new body(g_universe, "sun",		1.98855E30,		6.96342E8);
+	body* earth = new body(g_universe, "earth",	5.97219E24,	6.37100E6);
 	body* ship = new body(g_universe, "ship", 1000.0, 10.0);
 
 	g_universe = new universe();
@@ -103,16 +99,16 @@ void		init_scene() {
 	
 	glm::vec3 x_e(0,	150E9,	0);
 	glm::vec3 v_e(29.78E3,	0,	0);
-
+	
 	g_universe->insert(earth, x_e, v_e, 0);
 	
-	glm::vec3 x_s(0,	6371.0E3 + 417.0E3,	0);
-	glm::vec3 v_s(7.65E3, 	0, 			0);
+	glm::vec3 x_s(0,	earth->radius_ + 417.0E3,	0);
+	glm::vec3 v_s(7.65E3, 	0, 				0);
 
-	g_universe->insert(ship, x_e + x_s, v_e+ v_s, 0);
+	g_universe->insert(ship, earth->x(0) + x_s, v_e + v_s, 0);
 
 
-	g_body_focus = earth;
+	g_body_focus = ship;
 }
 
 void		draw()
@@ -121,22 +117,21 @@ void		draw()
 	//float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
 
 
-	glm::mat4x4 m;
-
-	// arms
-	//float xa[] = {1,-1,0, 0};
-	//float ya[] = {0, 0,1,-1};
-	//float L = 1.0;
-
 	glMatrixMode(GL_MODELVIEW);
 
 
 	glPushMatrix();
 	{
-		glTranslatef(-g_view_x, -g_view_y, 0.0);
+		// focus view
+		//glTranslatef(-g_view_x, -g_view_y, 0.0);
+		if(g_body_focus) {
+			//cout << "focus: " << g_body_focus->name_ << endl;
 
-		// Main object (cube) ... transform to its coordinates, and render
-		glMultMatrixf(&m[0][0]);
+			glm::vec3 x = g_body_focus->x(g_time);
+			glTranslatef(-x[0], -x[1], -x[2]);
+		}
+
+
 
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, colorCyan);
 		glMaterialfv(GL_FRONT, GL_SPECULAR, colorWhite);

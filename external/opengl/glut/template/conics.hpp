@@ -172,18 +172,24 @@ struct ellipse: conic {
 
 		p_ = a_ * (1 - pow(e,2));
 
-		cout << c_ << endl;
 	}
 	virtual void		standard_line() {
 		generate_line(0, TAU);
 	}
 	virtual void		draw(float time) {
-		cout << "draw ellipse" << endl;
+		//cout << "draw ellipse" << endl;
 		glColor3fv(colorWhite);
 		if(line_.empty()) {
 			standard_line();
 		}
+		
+		glm::vec3 x = b2_->x(time);
+		
+		glPushMatrix();
+		glTranslatef(x[0], x[1], x[2]);
 		line_loop(line_);
+		glPopMatrix();
+		
 	}
 	float		x(float t) {
 		return a_ * cos(t) + c_;
@@ -217,7 +223,7 @@ struct ellipse: conic {
 		
 		glm::vec3 V =  glm::rotate(plane_.x_, (float)(ta + TAU / 4.0 + aov), plane_.n_) * v;
 		
-		cout << "(mu_/p_) = " << (mu_/p_) << endl;
+/*		cout << "(mu_/p_) = " << (mu_/p_) << endl;
 		cout << "cos(ta) = " << cos(ta) << endl;
 		cout << "tmp = " << tmp << endl;
 		cout << "ta = " << ta << endl;
@@ -226,7 +232,7 @@ struct ellipse: conic {
 		cout << "mu = " << mu_ << endl;
 		cout << "p = " << p_ << endl;
 		cout << "e = " << e_ << endl;
-
+*/
 		assert(!glm::any(glm::isnan(V)));
 		
 		return V;

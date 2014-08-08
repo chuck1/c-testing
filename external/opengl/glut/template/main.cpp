@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <iostream>
+
+using namespace std;
 
 #include "glut.hpp"
 
@@ -22,8 +25,8 @@ static BOOL g_bLightingEnabled = TRUE;
 static BOOL g_bFillPolygons = TRUE;
 static BOOL g_bButton1Down = FALSE;
 
-static GLfloat g_nearPlane = 1E7;
-static GLfloat g_farPlane =  1E12;
+//static GLfloat g_nearPlane = 1E7;
+//static GLfloat g_farPlane =  1E12;
 
 static int g_Width = 600;                          // Initial window width
 static int g_Height = 600;                         // Initial window height
@@ -31,8 +34,18 @@ static int g_Height = 600;                         // Initial window height
 #else
 #endif
 
+void		reset_proj() {
 
+	float zf = 2.0 * g_view_dist;
+	float zn = zf / 10000.0;
+	
+	cout << "g_view_dist = " << g_view_dist << endl;
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(65.0, (float)g_Width / g_Height, zn, zf);
+
+}
 
 
 void reshape(GLint width, GLint height)
@@ -41,9 +54,9 @@ void reshape(GLint width, GLint height)
 	g_Height = height;
 
 	glViewport(0, 0, g_Width, g_Height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(65.0, (float)g_Width / g_Height, g_nearPlane, g_farPlane);
+
+	reset_proj();
+
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -54,10 +67,13 @@ void InitGraphics(void) {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	// Create texture for cube; load marble texture from file and bind it
+	
+	reset_proj();
 }
 
 int g_mx = 0;
 int g_my = 0;
+
 
 void MouseButton(int button, int state, int x, int y)
 {
@@ -75,9 +91,11 @@ void MouseButton(int button, int state, int x, int y)
 			g_my = y;
 		}
 	} else if(button == 3) {
-		g_view_dist /= 1.2;
+		g_view_dist /= 1.1;
+		reset_proj();
 	} else if(button == 4) {
-		g_view_dist *= 1.2;
+		g_view_dist *= 1.1;
+		reset_proj();
 	}
 
 }
