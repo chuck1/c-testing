@@ -1,15 +1,3 @@
-
-//glut_example.c
-// Stanford University, CS248, Fall 2000
-//
-// Demonstrates basic use of GLUT toolkit for CS248 video game assignment.
-// More GLUT details at http://reality.sgi.com/mjk_asd/spec3/spec3.html
-// Here you'll find examples of initialization, basic viewing transformations,
-// mouse and keyboard callbacks, menus, some rendering primitives, lighting,
-// double buffering, Z buffering, and texturing.
-//
-// Matt Ginzton -- magi@cs.stanford.edu
-
 #include <GL/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,8 +133,7 @@ void RenderObjects(void)
 }
 
 
-void display(void)
-{
+void display(void) {
 	// Clear frame buffer and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -188,16 +175,13 @@ void reshape(GLint width, GLint height)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void InitGraphics(void)
-{
+void InitGraphics(void) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-
 	// Create texture for cube; load marble texture from file and bind it
-
 }
 
 int g_mx = 0;
@@ -246,8 +230,7 @@ void MouseMotion(int x, int y)
 	}
 }
 
-void AnimateScene(void)
-{
+void AnimateScene(void) {
 	float dt;
 
 	// Figure out time elapsed since last call to idle function
@@ -294,14 +277,11 @@ void SelectFromMenu(int idCommand)
 	glutPostRedisplay();
 }
 
-void Keyboard(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-		case 27:             // ESCAPE key
+void Keyboard(unsigned char key, int x, int y) {
+	switch (key) {
+		case 27: // ESCAPE
 			exit (0);
 			break;
-
 		case 'l':
 			SelectFromMenu(MENU_LIGHTING);
 			break;
@@ -315,8 +295,7 @@ void Keyboard(unsigned char key, int x, int y)
 	}
 }
 
-int BuildPopupMenu (void)
-{
+int BuildPopupMenu (void) {
 	int menu;
 
 	menu = glutCreateMenu (SelectFromMenu);
@@ -328,8 +307,7 @@ int BuildPopupMenu (void)
 	return menu;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 	file = fopen("q.txt", "r");
 
 	float w,x,y,z;
@@ -364,12 +342,12 @@ int main(int argc, char** argv)
 	InitGraphics();
 
 	// Register callbacks:
-	glutDisplayFunc (display);
-	glutReshapeFunc (reshape);
-	glutKeyboardFunc (Keyboard);
-	glutMouseFunc (MouseButton);
-	glutMotionFunc (MouseMotion);
-	glutIdleFunc (AnimateScene);
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutKeyboardFunc(Keyboard);
+	glutMouseFunc(MouseButton);
+	glutMotionFunc(MouseMotion);
+	glutIdleFunc(AnimateScene);
 
 	// Create our popup menu
 	BuildPopupMenu ();
@@ -379,7 +357,8 @@ int main(int argc, char** argv)
 	gettimeofday (&last_idle_time, NULL);
 
 	// Turn the flow of control over to GLUT
-	glutMainLoop ();
+	glutMainLoop();
+
 	return 0;
 }
 
