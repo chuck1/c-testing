@@ -17,7 +17,8 @@ using namespace std;
 
 static GLfloat g_fTeapotAngle = 0.0;
 static GLfloat g_fTeapotAngle2 = 0.0;
-static float g_lightPos[4] = { 0, 10, 10, 1 };  // Position of light
+
+static float g_lightPos[4] = {0, 0, 0, 1};  // Position of light
 
 float* colorCyan = new float[4] {0.0, 1.0, 1.0, 1.0};
 float* colorWhite = new float[4] {1.0, 1.0, 1.0, 1.0};
@@ -35,6 +36,13 @@ void	display(void) {
 			0.0, g_view_dist, 0.0,
 			0.0, 0.0, 0,
 			0.0, 0.0, 1);
+
+	if(g_body_focus) {
+		cout << "focus: " << g_body_focus->name_ << endl;
+
+		glm::vec3 x = g_body_focus->x(g_time);
+		glTranslatef(x[0], x[1], x[2]);
+	}
 
 	glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
 	
@@ -63,6 +71,8 @@ void		animate() {
 	dt = (float)(time_now.tv_sec  - last_idle_time.tv_sec) +
 		1.0e-6*(time_now.tv_usec - last_idle_time.tv_usec);
 
+	g_time += dt;
+
 	// Animate the teapot by updating its angles
 	g_fTeapotAngle += dt * 30.0;
 	g_fTeapotAngle2 += dt * 100.0;
@@ -74,23 +84,35 @@ void		animate() {
 	glutPostRedisplay();
 }
 
-void		line_strip(vector<glm::vec3> const & v) {
-	glDisable(GL_LIGHTING);
+void		init_scene() {
 
-	glBegin(GL_LINE_STRIP);
-	for(auto it = v.cbegin(); it != v.cend(); it++) glVertex3fv(&(*it)[0]);
-	glEnd();
+	// bodies
+	body* sun = new body(g_universe, "sun", 1.98855E30, 696342E3);
+	body* earth = new body(g_universe, "earth", 5.97219E+24, 6371.0E3);
+	body* ship = new body(g_universe, "ship", 1000.0, 10.0);
 
-	glEnable(GL_LIGHTING);
-}
-void		line_loop(vector<glm::vec3> const & v) {
-	glDisable(GL_LIGHTING);
+	g_universe = new universe();
+	
+	
+	g_universe->insert(
+			sun,
+			glm::vec3(0, 0, 0),
+			glm::vec3(0, 0, 0),
+			0);
 
-	glBegin(GL_LINE_LOOP);
-	for(auto it = v.cbegin(); it != v.cend(); it++) glVertex3fv(&(*it)[0]);
-	glEnd();
+	
+	glm::vec3 x_e(0,	150E9,	0);
+	glm::vec3 v_e(29.78E3,	0,	0);
 
-	glEnable(GL_LIGHTING);
+	g_universe->insert(earth, x_e, v_e, 0);
+	
+	glm::vec3 x_s(0,	6371.0E3 + 417.0E3,	0);
+	glm::vec3 v_s(7.65E3, 	0, 			0);
+
+	g_universe->insert(ship, x_e + x_s, v_e+ v_s, 0);
+
+
+	g_body_focus = earth;
 }
 
 void		draw()
@@ -98,17 +120,17 @@ void		draw()
 	//float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
 	//float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
 
-	
+
 	glm::mat4x4 m;
 
 	// arms
 	//float xa[] = {1,-1,0, 0};
 	//float ya[] = {0, 0,1,-1};
 	//float L = 1.0;
-	
+
 	glMatrixMode(GL_MODELVIEW);
 
-	
+
 	glPushMatrix();
 	{
 		glTranslatef(-g_view_x, -g_view_y, 0.0);
@@ -121,20 +143,11 @@ void		draw()
 		glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
 
 		//glutSolidSphere(0.5,20,20);
-		
 
-		// bodies
-		body earth(glm::vec3(0,0,0), glm::vec3(0,0,0), 5.97219E+24);
-		body ship(glm::vec3(6371.0E3 + 417.0E3, 0, 0), glm::vec3(0, 0, 7.65E3), 1000.0);
 
-		orbit o;
-		o.compute(ship, earth);
+		g_universe->draw(g_time);
 
-		o.conic_->standard_line();
 
-		o.draw();
-
-		
 	}
 	glPopMatrix();
 

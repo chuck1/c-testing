@@ -14,7 +14,8 @@
 
 
 
-float g_view_dist = 8.0E6;
+float g_view_dist = 3.0E11;
+
 float g_view_x = 0.5;//0.0;
 float g_view_y = 0.5;//7.5;
 float g_view_yaw = 0;
@@ -22,7 +23,7 @@ float g_view_pitch = 0;
 struct timeval last_idle_time = timeval();
 
 
-
+float g_time = 0;
 
 
 

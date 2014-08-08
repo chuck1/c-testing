@@ -22,8 +22,8 @@ static BOOL g_bLightingEnabled = TRUE;
 static BOOL g_bFillPolygons = TRUE;
 static BOOL g_bButton1Down = FALSE;
 
-static GLfloat g_nearPlane = 1E5;
-static GLfloat g_farPlane =  1E9;
+static GLfloat g_nearPlane = 1E7;
+static GLfloat g_farPlane =  1E12;
 
 static int g_Width = 600;                          // Initial window width
 static int g_Height = 600;                         // Initial window height
@@ -167,7 +167,7 @@ int BuildPopupMenu (void) {
 
 void	display();
 void	animate();
-
+void	init_scene();
 
 
 int main(int argc, char** argv) {
@@ -195,6 +195,8 @@ int main(int argc, char** argv) {
 
 	// Get the initial time, for use by animation
 	gettimeofday (&last_idle_time, NULL);
+
+	init_scene();
 
 	// Turn the flow of control over to GLUT
 	glutMainLoop();

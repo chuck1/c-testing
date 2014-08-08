@@ -21,6 +21,8 @@ extern float g_view_y;// = 0.5;//7.5;
 extern float g_view_yaw;// = 0;
 extern float g_view_pitch;// = 0;
 
+extern float g_time;
+
 extern struct timeval last_idle_time;
 
 

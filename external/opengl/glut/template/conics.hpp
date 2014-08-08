@@ -37,56 +37,105 @@ struct plane {
 	glm::vec3	y_;
 };
 
+struct body;
 struct orbit;
 struct conic;
+struct universe;
+
+extern universe*	g_universe;
+extern body*		g_body_focus;
 
 struct state {
-float true_anomaly;
-float time;
+	float true_anomaly;
+	float time;
 };
 
 struct body {
-	body(glm::vec3 x, glm::vec3 v, float m):
-		x_(x), v_(v), m_(m)
-	{
-	}
-	void		draw();
+	body(universe* u, string name, float m, float radius):
+		universe_(u), name_(name), m_(m), radius_(radius)
+	{}
+
+	glm::vec3	v(float time);
+	glm::vec3	x(float time);
+	body*		find_parent(body* b1, float time);
+	void		draw(float time);
 	float		soi();
-	universe* universe_;
-	glm::vec3	x_;
-	glm::vec3	v_;
+
+	universe*	universe_;
+	string		name_;
+
 	float		m_;
 	float		radius_;
 	orbit*		orbit_;
+	vector<body*>	children_;
 };
 struct universe {
-	void		insert(body* b1);
-	void		draw();
+	void		insert(body* b1, glm::vec3 x, glm::vec3 v, float time);
+	body*		find_parent(body* b1, float time);
+	void		draw(float time);
 	vector<body*>	bodies_;
 };
 struct orbit {
-	orbit() {}
-	static orbit* compute(body* b1, glm::vec3 x, glm::vec3 v);
-	void		draw();
-	
-	float		e_;
-	float		mu_;
-	float		specific_orbital_energy_;
-	glm::vec3	h_;
-	conic*		conic_;
-	body* b1_;
-	body* b2_;
-	state* state_escape;
-	state* state_encounter;
-	orbit* next_;
+
+	virtual void			draw(float time) = 0;
+	virtual glm::vec3		X(float time) = 0;
+	virtual glm::vec3		V(float time) = 0;
+
+};
+struct orbit_line: orbit {
+	orbit_line(glm::vec3 x, glm::vec3 v, float epoch): x_(x), v_(v), epoch_(epoch) {}
+
+	virtual void			draw(float time) {
+		//abort();
+	}
+	virtual glm::vec3		X(float time) { return x_ + v_ * (time - epoch_); }
+	virtual glm::vec3		V(float time) { return v_; }
+
+	glm::vec3	x_;
+	glm::vec3	v_;
+	float		epoch_;
+
 };
 
 
+struct conic: orbit {
+	conic(plane p, float a, float e): plane_(p), a_(a), e_(e) {}
 
-struct conic {
-	conic(plane p, float a): p_(p), a_(a) {}
+	static conic*		compute(body* b1, body* b2, glm::vec3 x, glm::vec3 v, float time);
+
 	virtual float		x(float) = 0;
 	virtual float		y(float) = 0;
+
+
+	float			mu_;
+	float			specific_orbital_energy_;
+	glm::vec3		h_;
+
+	float			epoch_;
+
+	body*			b1_;
+	body*			b2_;
+
+	state*			state_escape;
+	state*			state_encounter;
+	orbit*			next_;
+
+
+
+	// geometry
+	plane			plane_;
+	float			a_;
+	float			e_; // eccentricity
+	float			p_;
+
+
+	// equations of motion
+	virtual float		mean_anomaly_from_time_from_periapsis(float time) = 0;
+	virtual float		period() = 0;
+	virtual float		eccentric_anomaly_from_mean_anomaly(float M) = 0;
+	virtual float		mean_anomaly_from_eccentric_anomaly(float E) = 0;
+
+
 	void			generate_line(float a, float b) {
 		float t = a;
 		int n = 100;
@@ -96,7 +145,7 @@ struct conic {
 
 		for(int i = 0; i < n; i++) {
 
-			glm::vec3 point = x(t) * p_.x_ + y(t) * p_.y_;
+			glm::vec3 point = x(t) * plane_.x_ + y(t) * plane_.y_;
 
 			line_.push_back(point);
 
@@ -105,15 +154,15 @@ struct conic {
 			t += dt;
 		}
 	}
-	virtual void		draw() = 0;
+
 	virtual void		standard_line() = 0;
-	plane			p_;
-	float			a_;
+
+
 	vector<glm::vec3>	line_;
 };
 struct ellipse: conic {
-	ellipse(plane p, float a, float b):
-		conic(p, a),
+	ellipse(plane p, float a, float b, float e):
+		conic(p, a, e),
 		b_(b)
 	{
 		assert(a_ > b_);
@@ -121,13 +170,19 @@ struct ellipse: conic {
 		c_ = sqrt(a_*a_ - b_*b_);
 		per_ = a_ - c_;
 
+		p_ = a_ * (1 - pow(e,2));
+
 		cout << c_ << endl;
 	}
 	virtual void		standard_line() {
 		generate_line(0, TAU);
 	}
-	virtual void		draw() {
+	virtual void		draw(float time) {
+		cout << "draw ellipse" << endl;
 		glColor3fv(colorWhite);
+		if(line_.empty()) {
+			standard_line();
+		}
 		line_loop(line_);
 	}
 	float		x(float t) {
@@ -136,14 +191,84 @@ struct ellipse: conic {
 	float		y(float t) {
 		return b_ * sin(t);
 	}
+	glm::vec3	X(float time) {
+
+		float ta = true_anomaly_from_time(time);
+
+		float r = p_ / (1.0 + e_ * cos(ta));
+
+		glm::vec3 R = glm::rotate(plane_.x_, ta, plane_.n_) * r + plane_.c_;
+
+		return R;
+	}
+	glm::vec3	V(float time) {
+
+		float ta = true_anomaly_from_time(time);
+
+		float aov = atan(e_ * sin(ta) / (1.0 + e_ * cos(ta)));
+	
+		//float tmp = (mu_/p_)*(1.0 + pow(e_,2) - 2.0 * cos(ta));
+		
+		float r = p_ / (1.0 + e_ * cos(ta));
+
+		float tmp = mu_ * (2.0 / r - 1.0 / a_);
+
+		float v = sqrt(tmp);
+		
+		glm::vec3 V =  glm::rotate(plane_.x_, (float)(ta + TAU / 4.0 + aov), plane_.n_) * v;
+		
+		cout << "(mu_/p_) = " << (mu_/p_) << endl;
+		cout << "cos(ta) = " << cos(ta) << endl;
+		cout << "tmp = " << tmp << endl;
+		cout << "ta = " << ta << endl;
+		cout << "aov = " << aov << endl;
+		cout << "v = " << v << endl;
+		cout << "mu = " << mu_ << endl;
+		cout << "p = " << p_ << endl;
+		cout << "e = " << e_ << endl;
+
+		assert(!glm::any(glm::isnan(V)));
+		
+		return V;
+	}
+
+	virtual float		time_from_periapsis(float time) {
+		float tfp = time - epoch_;
+		while(tfp > period()) tfp -= period();
+		return tfp;
+	}
+	virtual float		mean_anomaly_from_time_from_periapsis(float time_from_periapsis) {
+		return (time_from_periapsis * TAU) / period();
+	}
+	virtual float		period() {
+		return TAU *pow(pow(a_, 3) / mu_, 0.5);
+	}
+	virtual float		mean_anomaly_from_eccentric_anomaly(float E) {
+		return E - e_ * sin(E);
+	}
+	virtual float		eccentric_anomaly_from_mean_anomaly(float M) {
+		float E = M + e_ * sin(M);
+		E = M + e_ * sin(E);
+		E = M + e_ * sin(E);
+		return E;
+	}
+	virtual float		true_anomaly_from_eccentric_anomaly(float E) {
+		return atan2(sqrt(1+e_) * sin(E/2.0), sqrt(1-e_) * cos(E/2.0));
+	}
+	virtual float		true_anomaly_from_time(float time) {
+		float M = mean_anomaly_from_time_from_periapsis(time_from_periapsis(time));
+		float E = eccentric_anomaly_from_mean_anomaly(M);
+		float true_anomaly = true_anomaly_from_eccentric_anomaly(E);
+		return true_anomaly;
+	}
 
 	float			b_;
 	float			c_; // linear eccentricity
 	float			per_; // periapsis
 };
 struct parabola: conic {
-	parabola(plane p, float a):
-		conic(p, a)
+	parabola(plane p, float a, float e):
+		conic(p, a, e)
 	{
 	}
 	virtual void		standard_line() {
@@ -151,6 +276,7 @@ struct parabola: conic {
 	}
 	virtual void		draw() {
 		glColor3fv(colorWhite);
+		abort();
 		line_strip(line_);
 	}
 	float		x(float t) {
@@ -161,8 +287,8 @@ struct parabola: conic {
 	}
 };
 struct hyperbola: conic {
-	hyperbola(plane p, float a, float b):
-		conic(p, a),
+	hyperbola(plane p, float a, float b, float e):
+		conic(p, a, e),
 		b_(b)
 	{
 	}
@@ -177,50 +303,13 @@ struct hyperbola: conic {
 	}
 	virtual void	draw() {
 		glColor3fv(colorWhite);
+		abort();
 		line_strip(line_);
 	}
 	float		b_;
 };
 
-void		universe::insert(body* b1) {
-	// determine parent
-	body* p = 0;
-	for(auto it = bodies_.cbegin(); it != bodies_.cend(); it++) {
-		body* b2 = *it;
 
-		glm::vec3 r = b1->x_ - b2->x_;
-
-		if(glm::length(r) < b2->soi()) {
-			if(p) {
-				if(b2->soi() > p->soi()) continue;
-			}
-			p = b2;
-		}
-	}
-	b1->parent_ = p;
-
-	// insert
-	bodies_.push_back(b1);
-}
-void		universe::draw() {
-	for(auto it = bodies_.cbegin(); it != bodies_.cend(); it++) {
-		body* b = *it;
-		b->draw();
-	}
-}
-void		body::draw() {
-	glPushMatrix();
-	{
-		glTranslate3fv(&x_[0]);
-		glutSolidSphere(radius_, 10, 10);
-	}
-	glPopMatrix();
-	
-	if(orbit_) {
-		orbit_->draw();
-	}
-
-}
 
 #endif
 
