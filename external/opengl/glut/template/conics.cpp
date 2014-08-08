@@ -1,9 +1,15 @@
 
 #include "conics.hpp"
 
-void		orbit::compute(body b1, body b2) {
-	glm::vec3 v = b1.v_ - b2.v_;
-	glm::vec3 r = b1.x_ - b2.x_;
+orbit*		orbit::compute(body* b1, glm::vec3 x, glm::vec3 v, float time) {
+
+body b2 = b1->universe_->find_parent(b1);
+if(b2 == 0) {
+   return new orbit_line(x, v, time);
+}
+
+	glm::vec3 v = v - b2.v(time);
+	glm::vec3 r = x - b2.x(time);
 	h_ = glm::cross(r, v);
 
 	mu_ = 6.67E-11 * (b1.m_ + b2.m_);

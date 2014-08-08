@@ -40,6 +40,11 @@ struct plane {
 struct orbit;
 struct conic;
 
+struct state {
+float true_anomaly;
+float time;
+};
+
 struct body {
 	body(glm::vec3 x, glm::vec3 v, float m):
 		x_(x), v_(v), m_(m)
@@ -47,11 +52,11 @@ struct body {
 	}
 	void		draw();
 	float		soi();
+	universe* universe_;
 	glm::vec3	x_;
 	glm::vec3	v_;
 	float		m_;
 	float		radius_;
-	body*		parent_;
 	orbit*		orbit_;
 };
 struct universe {
@@ -61,13 +66,19 @@ struct universe {
 };
 struct orbit {
 	orbit() {}
-	void		compute(body b1, body b2);
+	static orbit* compute(body* b1, glm::vec3 x, glm::vec3 v);
 	void		draw();
+	
 	float		e_;
 	float		mu_;
 	float		specific_orbital_energy_;
 	glm::vec3	h_;
 	conic*		conic_;
+	body* b1_;
+	body* b2_;
+	state* state_escape;
+	state* state_encounter;
+	orbit* next_;
 };
 
 
