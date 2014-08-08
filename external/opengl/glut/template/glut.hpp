@@ -1,6 +1,8 @@
 #ifndef MAIN
 #define MAIN
 
+#include <glm/glm.hpp>
+
 enum {
 	MENU_LIGHTING = 1,
 	MENU_POLYMODE,
@@ -14,12 +16,14 @@ enum {
 	CAM_COUNT
 };
 
+// view
+extern float		g_view_dist;
 
-extern float g_view_dist;// = 5.0;
-extern float g_view_x;// = 0.5;//0.0;
-extern float g_view_y;// = 0.5;//7.5;
-extern float g_view_yaw;// = 0;
-extern float g_view_pitch;// = 0;
+extern float		g_view_yaw;
+extern float		g_view_pitch;
+
+extern glm::vec3	g_eye_off;
+
 
 extern float g_time;
 

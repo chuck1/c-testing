@@ -1,5 +1,7 @@
 
+#include "universe.hpp"
 #include "conics.hpp"
+#include "body.hpp"
 
 int	main() {
 

@@ -13,6 +13,8 @@ using namespace std;
 #include <glm/glm.hpp>
 
 #include "conics.hpp"
+#include "body.hpp"
+#include "universe.hpp"
 #include "glut.hpp"
 
 static GLfloat g_fTeapotAngle = 0.0;
@@ -33,21 +35,31 @@ void	display(void) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	
-	gluLookAt(
-			0.0, g_view_dist, 0.0,
-			0.0, 0.0, 0,
-			0.0, 0.0, 1);
-
-
-
-	glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
+	//eye, center, up
 	
-	glRotatef(-g_view_pitch/M_PI*180.0, cos(g_view_yaw), -sin(g_view_yaw), 0);
+
+	glm::vec3 center;
+	if(g_body_focus) center = g_body_focus->x(g_time);
+	
+	
+	glm::vec3 eye = center + g_eye_off;
+	
+	gluLookAt(
+			eye[0], eye[1], eye[2],
+			center[0], center[1], center[2],
+			0.0, 0.0, 1.0);
+	
+	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
+
+	
+	//glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
+	
+	//glRotatef(-g_view_pitch/M_PI*180.0, cos(g_view_yaw), -sin(g_view_yaw), 0);
 	
 	glPushMatrix();
 	{
 		// Set up the stationary light
-		glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
+		//glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
 		// Render the scene
 		draw();
@@ -127,8 +139,8 @@ void		draw()
 		if(g_body_focus) {
 			//cout << "focus: " << g_body_focus->name_ << endl;
 
-			glm::vec3 x = g_body_focus->x(g_time);
-			glTranslatef(-x[0], -x[1], -x[2]);
+			//glm::vec3 x = g_body_focus->x(g_time);
+			//glTranslatef(-x[0], -x[1], -x[2]);
 		}
 
 

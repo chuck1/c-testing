@@ -3,15 +3,20 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <iostream>
+#include <iomanip>
+#include <cmath>
 
 using namespace std;
 
 #include "glut.hpp"
 
+#define GLM_FORCE_RADIANS
+#include <glm/gtx/rotate_vector.hpp>
+
 #define VIEWING_DISTANCE_MIN  3.0
 #define TEXTURE_ID_CUBE 1
 
-
+#define TAU (2.0 * M_PI)
 
 int g_cam_mode = 0;
 
@@ -34,6 +39,28 @@ static int g_Height = 600;                         // Initial window height
 #else
 #endif
 
+glm::vec3 yaxis(0,1,0);
+glm::vec3 zaxis(0,0,1);
+
+glm::vec3 g_eye_off;
+
+void		reset_eye_off() {
+
+
+	g_eye_off = glm::vec3(g_view_dist,0,0);
+
+	g_eye_off = glm::rotate(g_eye_off, -g_view_yaw, zaxis);
+
+	glm::vec3 yaxis2 = glm::rotate(yaxis, -g_view_yaw, zaxis);
+
+	g_eye_off = glm::rotate(g_eye_off, -g_view_pitch, yaxis2);
+
+	cout
+		<< setw(16) << g_eye_off[0]
+		<< setw(16) << g_eye_off[1]
+		<< setw(16) << g_eye_off[2]
+		<< endl;
+}
 void		reset_proj() {
 
 	float zf = 2.0 * g_view_dist;
@@ -92,9 +119,13 @@ void MouseButton(int button, int state, int x, int y)
 		}
 	} else if(button == 3) {
 		g_view_dist /= 1.1;
+
+		reset_eye_off();
 		reset_proj();
 	} else if(button == 4) {
 		g_view_dist *= 1.1;
+
+		reset_eye_off();
 		reset_proj();
 	}
 
@@ -118,12 +149,26 @@ void MouseMotion(int x, int y)
 		g_view_yaw += (float)dx * 3.14 / 300.0;
 		g_view_pitch += (float)dy * 3.14 / 300.0;
 		
+		// clamp
+		//if(g_view_yaw > (TAU /4.0)) g_view_yaw = TAU / 4.0;
+		//
+		double l = 0.95 * TAU / 4.0;
+		
+		if(g_view_pitch > l) g_view_pitch = l;
+		if(g_view_pitch < -l) g_view_pitch = -l;
+
+		cout << "yaw   = " << g_view_yaw << endl;
+		cout << "pitch = " << g_view_pitch << endl;
+
 		g_mx = x;
 		g_my = y;
+
+		reset_eye_off();
 
 		//printf("%i %i\n", g_mx, x);
 	}
 }
+
 
 
 void SelectFromMenu(int idCommand)
