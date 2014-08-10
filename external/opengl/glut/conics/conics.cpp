@@ -139,10 +139,10 @@ void		universe::insert(body* b1, glm::vec3 x, glm::vec3 v, float time) {
 		bodies_.push_back(b1);
 	}
 }
-void		universe::draw(float time) {
+void		universe::draw(float time, glm::vec3 center) {
 	for(auto it = bodies_.cbegin(); it != bodies_.cend(); it++) {
 		body* b = *it;
-		b->draw(time);
+		b->draw(time, center);
 	}
 }
 

@@ -26,7 +26,7 @@ struct conic;
 struct universe {
 	void			insert(body* b1, glm::vec3 x, glm::vec3 v, float time);
 	body*			find_parent(body* b1, float time);
-	void			draw(float time);
+	void			draw(float time, glm::vec3 center);
 
 	vector<body*>		bodies_;
 };

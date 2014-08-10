@@ -9,12 +9,11 @@
 using namespace std;
 
 #include "glut.hpp"
+#include "conics.hpp"
+#include "body.hpp"
 
 #define GLM_FORCE_RADIANS
 #include <glm/gtx/rotate_vector.hpp>
-
-#define VIEWING_DISTANCE_MIN  3.0
-#define TEXTURE_ID_CUBE 1
 
 #define TAU (2.0 * M_PI)
 
@@ -62,12 +61,23 @@ void		reset_eye_off() {
 		<< endl;
 }
 void		reset_proj() {
-
-	float zf = 2.0 * g_view_dist;
-	float zn = zf / 10000.0;
+	
+	float spread = 1E6;
+	
+	float zf = 100.0 * g_view_dist;
+	
+	if(g_body_focus) {
+		conic* c = dynamic_cast<conic*>(g_body_focus->orbit_);
+		if(c) {
+			zf = max(zf, c->a_);
+		}
+	}
+	
+	
+	float zn = zf / spread;
 	
 	cout << "g_view_dist = " << g_view_dist << endl;
-
+	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(65.0, (float)g_Width / g_Height, zn, zf);
