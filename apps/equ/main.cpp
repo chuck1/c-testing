@@ -1,79 +1,105 @@
+#include <stdlib.h>
 #include <stdio.h>
 
-
+struct add;
+struct op;
+struct eq;
+struct ptr;
 
 struct node {
+	protected:
+		friend struct op;
+		friend struct ptr;
 
-	node(char const *);
-	virtual ~node() {}
+		node(char const *);
+		node(node const & n) {}
+		node(node&& n) {}
+		node&	operator=(node const & n) { return *this; }
 
-	virtual void print() {
-		printf("%s",str_);
-	}
+		virtual ~node() {}
 
-	char const * str_;
-	
-	
+		virtual void print()
+		{
+			printf("%s",str_);
+		}
+
+		char const * str_;
+
+		// math
+		add	operator+(node* n);
+		eq	operator=(node* n);
 };
 
-struct op: node {
+struct op: public node
+{
 
-	op(char const *, node*, node*);
+	op(char const * str, node* l, node* r): node(str), l_(l), r_(r) {}
+
 	virtual ~op() {}
-	
-	virtual void print() {
+
+	virtual node*	New(node*, node*) = 0;
+
+	virtual void print()
+	{
 		printf("(");
-		if(l_) l_->print();
+		l_->print();
 		node::print();
-		if(r_) r_->print();
+		r_->print();
 		printf(")");
 	}
-	
+
+	node*		ldist()
+	{
+		op* o = dynamic_cast<op*>(l_);
+		if(o)
+		{
+			node* ret = o->New(New(o->l_, r_), New(o->r_, r_));
+			return ret;
+		}
+		return 0;
+	}
+
+
 	node*	l_;
 	node*	r_;
 };
+
 struct add: op {
 	add(node*, node*); 
+	virtual node*	New(node* a, node* b) { return new add(a,b); }
 };
-struct sub: op {
-	sub(node*, node*);
-};
-struct mul: op {
-	mul(node*, node*);
-};
-struct div: op {
-	div(node*, node*);
-};
+/*struct sub: op {
+  sub(node&, node&);
+  };
+  struct mul: op {
+  mul(node&, node&);
+  };
+  struct div: op {
+  div(node&, node&);
+  };*/
 
 add::add(node* l, node* r): op("+", l, r) {}
-sub(node* l, node* r): op("-", l, r) {}
-mul(node* l, node* r): op("*", l, r) {}
-div(node* l, node* r): op("/", l, r) {}
+/*sub::sub(node& l, node& r): op("-", l, r) {}
+  mul::mul(node& l, node& r): op("*", l, r) {}
+  div::div(node& l, node& r): op("/", l, r) {}
+  */
+struct eq: op {
 
-struct eq {
-	
 	eq(node*, node*);
 
-	virtual void print() {
-		if(l_) l_->print();
-		printf("=");
-		if(r_) r_->print();
-		printf("\n");
-	}
+	virtual node*	New(node* a, node* b) { return new eq(a,b); }
 
-	void mul_post(node* n) {
-		mul* l = new mul(e->l_, n);
-		mul* r = new mul(e->r_, n);
-		
-		e->l_ = l;
-		e->r_ = r;
-	}
 
-	node*	l_;
-	node*	r_;
+	/*	void mul_post(node* n) {
+		mul* l = new mul(l_, n);
+		mul* r = new mul(r_, n);
+
+		l_ = l;
+		r_ = r;
+		}*/
 };
 
-eq::eq(node* l, node* r): l_(l), r_(r)
+eq::eq(node* l, node* r): op("=", l, r)
 {
 }
 
@@ -81,29 +107,91 @@ node::node(char const * str):str_(str)
 {
 }
 
-op::op(char const * str, node* l, node* r): node(str), l_(l), r_(r)
-{
-}
 
 void apply(eq* e, char const * str, node* n) {
 }
 
+add	node::operator+(node* n)
+{
+	return add(this, n);
+}
+eq	node::operator=(node* n)
+{
+	return eq(this, n);
+}
+
+/*add	operator+(node& n0, node& n1)
+  {
+  add ret(n0, n1);
+  return ret;
+  }*/
+
+struct ptr
+{
+	public:
+		ptr(char const * s): n_(new node(s)) {}
+
+		ptr(ptr p0, ptr p1)
+		{
+			n_ = new eq(p0.n_, p1.n_);
+		}
+	private:
+		ptr(node* n): n_(n) {}
+	public:
+		void	print()
+		{
+			n_->print();
+		}
+
+		// math
+		ptr	operator+(ptr& p)
+		{
+			return ptr(new add(n_, p.n_));
+		}
+		ptr	operator=(ptr& p)
+		{
+			return ptr(new eq(n_, p.n_));
+		}
+
+		void	operator+=(ptr& p)
+		{
+			n_ = new add(n_, p.n_);
+		}
+		void	operator+=(ptr&& p)
+		{
+			n_ = new add(n_, p.n_);
+		}
+		// manip
+		ptr	ldist()
+		{
+
+			op* o = dynamic_cast<op*>(n_);
+			if(o == 0) abort();
+			
+			return ptr(o->ldist());
+
+		}
+
+		node*	n_;
+};
+
 int main() {
 
-	node n0("1");
-	node n1("2");
-	node n2("3");
-	node n4("4");
+	ptr n0("1");
+	ptr n1("2");
+	ptr n2("3");
 
-	op o("+",&n0,&n1);
+	ptr e = ((n0 + n1) = n2);
 
-	eq e(&o,&n2);
+	e.print(); printf("\n");
 
-	e.print();
+	e += ptr("4");
 
-	apply(&e, "*", &n4);
+	e.print(); printf("\n");
 
-	e.print();
+	ptr d(e.ldist());
+	
+	d.print(); printf("\n");
 
 	return 0;
 }
