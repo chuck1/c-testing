@@ -4,7 +4,7 @@
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 
-int main() {
+int main(int ac, char ** av) {
 
 	// RAII cleanup
 	curlpp::Cleanup myCleanup;
@@ -19,10 +19,10 @@ int main() {
 	//std::string url("http://people.oregonstate.edu/~rymalc/");
 	//std::string url("http://people.oregonstate.edu/~rymalc/test/post/post.php");
 	//std::string url("http://people.oregonstate.edu/~rymalc/test/");
-	std::string url("http://people.oregonstate.edu/~rymalc/test/test.py");
+	//std::string url("http://people.oregonstate.edu/~rymalc/test/test.py");
+	//std::string url(av[1]);
 
-
-
+	std::string url("http://www.corvallistransit.com/rtt/public/utility/file.aspx?contenttype=SQLXML&Name=RoutePositionET.xml&PlatformTag=145");
 
 	// Set the URL.
 	myRequest.setOpt(new curlpp::options::Url(url));
@@ -30,8 +30,8 @@ int main() {
 
 
 	std::string test = "hello=1"; 
-	myRequest.setOpt(new curlpp::options::PostFields(test)); 
-	myRequest.setOpt(new curlpp::options::PostFieldSize(test.length()));
+	//myRequest.setOpt(new curlpp::options::PostFields(test)); 
+	//myRequest.setOpt(new curlpp::options::PostFieldSize(test.length()));
 
 
 
