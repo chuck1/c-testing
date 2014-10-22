@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory>
 
 struct add;
 struct op;
@@ -14,6 +15,8 @@ struct ptr;
 #include "add.hpp"
 #include "sub.hpp"
 #include "eq.hpp"
+
+typedef std::shared_ptr<node> snode;
 
 
 /** @brief pointer
@@ -28,10 +31,11 @@ struct ptr
 
 		ptr(ptr p0, ptr p1)
 		{
-			n_ = new eq(p0.n_, p1.n_);
+			n_ = snode(new eq(p0.n_, p1.n_));
 		}
 	private:
 		ptr(node* n): n_(n) {}
+		ptr(snode n): n_(n) {}
 	public:
 		void	print()
 		{
@@ -58,26 +62,26 @@ struct ptr
 
 		void	operator+=(ptr& p)
 		{
-			n_ = new add(n_, p.n_);
+			n_ = snode(new add(n_, p.n_));
 		}
 		void	operator+=(ptr&& p)
 		{
-			n_ = new add(n_, p.n_);
+			n_ = snode(new add(n_, p.n_));
 		}
 		void	operator-=(ptr& p)
 		{
-			n_ = new sub(n_, p.n_);
+			n_ = snode(new sub(n_, p.n_));
 		}
 		void	operator-=(ptr&& p)
 		{
-			n_ = new sub(n_, p.n_);
+			n_ = snode(new sub(n_, p.n_));
 		}
 		// manip
 		ptr	get_ldist()
 		{
 
-			op* o = dynamic_cast<op*>(n_);
-			if(o == 0) abort();
+			sop o = std::dynamic_pointer_cast<op>(n_);
+			if(!o) abort();
 			
 			return ptr(o->ldist());
 
@@ -85,7 +89,7 @@ struct ptr
 		void	ldist()
 		{
 
-			op* o = dynamic_cast<op*>(n_);
+			sop o = std::dynamic_pointer_cast<op>(n_);
 			if(o == 0) abort();
 			
 			n_ = o->ldist();
@@ -93,7 +97,7 @@ struct ptr
 		}
 
 
-		node*	n_;
+		snode	n_;
 };
 
 

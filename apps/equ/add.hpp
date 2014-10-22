@@ -14,8 +14,8 @@ struct ptr;
 
 
 struct add: op {
-	add(node*, node*); 
-	virtual node*	New(node* a, node* b) { return new add(a,b); }
+	add(snode, snode); 
+	virtual snode		New(snode a, snode b) { return snode(new add(a,b)); }
 };
 
 

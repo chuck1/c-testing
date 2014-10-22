@@ -14,8 +14,8 @@ struct ptr;
 
 
 struct sub: op {
-	sub(node*, node*); 
-	virtual node*	New(node* a, node* b) { return new sub(a,b); }
+	sub(snode, snode); 
+	virtual snode	New(snode a, snode b) { return snode(new sub(a,b)); }
 };
 
 

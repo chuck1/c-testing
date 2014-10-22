@@ -5,9 +5,9 @@
 
 struct eq: op {
 
-	eq(node*, node*);
+	eq(snode, snode);
 
-	virtual node*	New(node* a, node* b) { return new eq(a,b); }
+	virtual snode	New(snode a, snode b) { return snode(new eq(a,b)); }
 
 
 	/*	void mul_post(node* n) {
