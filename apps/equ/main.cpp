@@ -70,6 +70,13 @@ ptr::ptr(int i): n_(new numerical<int>(i))
 {
 }
 
+class Value
+{
+	public:
+		float			value_;
+		std::shared_ptr<ptr>	units_;
+};
+
 int main() {
 
 	ptr n0(1);
