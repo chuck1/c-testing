@@ -3,13 +3,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory>
 
 struct add;
 struct op;
 struct eq;
 struct ptr;
 
-struct node {
+struct node;
+
+typedef std::shared_ptr<node> snode;
+
+struct node: public std::enable_shared_from_this<node>
+{
+	public:
+		virtual ~node() {}
 	protected:
 		friend struct op;
 		friend struct ptr;
@@ -19,7 +27,6 @@ struct node {
 		node(node&& n) {}
 		node&	operator=(node const & n) { return *this; }
 
-		virtual ~node() {}
 
 		virtual void print()
 		{
@@ -33,8 +40,8 @@ struct node {
 		char const * str_;
 
 		// math
-		add	operator+(node* n);
-		eq	operator=(node* n);
+		add	operator+(snode n);
+		eq	operator=(snode n);
 };
 
 

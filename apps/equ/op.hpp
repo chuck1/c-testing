@@ -11,14 +11,18 @@ struct ptr;
 
 #include "node.hpp"
 
+struct op;
+
+typedef std::shared_ptr<op> sop;
+
 struct op: public node
 {
 
-	op(char const * str, node* l, node* r): node(str), l_(l), r_(r) {}
+	op(char const * str, snode l, snode r): node(str), l_(l), r_(r) {}
 
 	virtual ~op() {}
 
-	virtual node*	New(node*, node*) = 0;
+	virtual snode	New(snode, snode) = 0;
 
 	virtual void print()
 	{
@@ -37,20 +41,20 @@ struct op: public node
 		printf(")");
 	}
 
-	node*		ldist()
+	snode		ldist()
 	{
-		op* o = dynamic_cast<op*>(l_);
+		sop o = std::dynamic_pointer_cast<op>(l_);
 		if(o)
 		{
-			node* ret = o->New(New(o->l_, r_), New(o->r_, r_));
+			snode ret = o->New(New(o->l_, r_), New(o->r_, r_));
 			return ret;
 		}
-		return 0;
+		return snode();
 	}
 
 
-	node*	l_;
-	node*	r_;
+	snode	l_;
+	snode	r_;
 };
 
 #endif

@@ -24,15 +24,15 @@ struct ptr;
 
 
 
-add::add(node* l, node* r): op("+", l, r) {}
-sub::sub(node* l, node* r): op("-", l, r) {}
+add::add(snode l, snode r): op("+", l, r) {}
+sub::sub(snode l, snode r): op("-", l, r) {}
 
 /*  mul::mul(node& l, node& r): op("*", l, r) {}
   div::div(node& l, node& r): op("/", l, r) {}
   */
 
 
-eq::eq(node* l, node* r): op("=", l, r)
+eq::eq(snode l, snode r): op("=", l, r)
 {
 }
 

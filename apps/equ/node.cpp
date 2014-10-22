@@ -6,13 +6,13 @@ node::node(char const * str):str_(str)
 {
 }
 
-add	node::operator+(node* n)
+add	node::operator+(snode n)
 {
-	return add(this, n);
+	return add(shared_from_this(), n);
 }
-eq	node::operator=(node* n)
+eq	node::operator=(snode n)
 {
-	return eq(this, n);
+	return eq(shared_from_this(), n);
 }
 
 
