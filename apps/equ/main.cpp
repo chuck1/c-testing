@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 
 struct add;
 struct op;
@@ -47,13 +48,31 @@ void apply(eq* e, char const * str, node* n) {
   return ret;
   }*/
 
+template<typename T> struct numerical: public node
+{
+	numerical(T t): node(""), value_(t) {}
+
+	virtual void	print()
+	{
+		std::cout << " " << value_ << " ";
+	}
+	virtual void	print_type()
+	{
+		printf(" numerical ");
+	}
+
+	T	value_;
+};
+
 #include "ptr.hpp"
 
-
+ptr::ptr(int i): n_(new numerical<int>(i))
+{
+}
 
 int main() {
 
-	ptr n0("1");
+	ptr n0(1);
 	ptr n1("2");
 	ptr n2("3");
 
@@ -61,7 +80,7 @@ int main() {
 
 	e.print(); printf("\n");
 
-	e += ptr("4");
+	e += ptr(4);
 
 	e.ldist(); e.print(); printf("\n");
 
@@ -74,6 +93,7 @@ int main() {
 	d.print(); printf("\n");
 
 	d.print_type(); printf("\n");
+	d.printp(); printf("\n");
 
 	return 0;
 }

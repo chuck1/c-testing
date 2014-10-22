@@ -40,6 +40,14 @@ struct op: public node
 		r_->print_type();
 		printf(")");
 	}
+	virtual void	printp()
+	{
+		printf("(");
+		l_->printp();
+		node::print();
+		r_->printp();
+		printf(")");
+	}
 
 	snode		ldist()
 	{
