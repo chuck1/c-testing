@@ -28,7 +28,10 @@ struct ptr
 {
 	public:
 		ptr(char const * s): n_(new node(s)) {}
-
+		
+		ptr(int i);
+		ptr(float i);
+		
 		ptr(ptr p0, ptr p1)
 		{
 			n_ = snode(new eq(p0.n_, p1.n_));
@@ -40,6 +43,10 @@ struct ptr
 		void	print()
 		{
 			n_->print();
+		}
+		void	printp()
+		{
+			n_->printp();
 		}
 		void	print_type()
 		{

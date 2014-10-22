@@ -32,6 +32,10 @@ struct node: public std::enable_shared_from_this<node>
 		{
 			printf(" %s ",str_);
 		}
+		virtual void printp()
+		{
+			printf(" %p ", this);
+		}
 		virtual void	print_type()
 		{
 			printf(" node ");
