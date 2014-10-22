@@ -1,5 +1,3 @@
-
 all:
-	g++ -g main.cpp -o equ -std=c++0x -Wall -Werror
-
+	g++ -o test.out main.cpp node.cpp -std=c++0x -g -Wall -Werror
 
