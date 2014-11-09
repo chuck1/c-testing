@@ -38,12 +38,12 @@ body*		body::find_parent(body* b1, float time) {
 
 	return 0;
 }
-void		body::draw(float time) {
+void		body::draw(float time, glm::vec3 center) {
 
-	glm::vec3 X(x(time));
-
+	glm::vec3 X(x(time) - center);
+	
 	//cout << "body radius = " << radius_ << endl;
-
+	
 	glPushMatrix();
 	{
 		glTranslatef(X[0], X[1], X[2]);
@@ -52,12 +52,12 @@ void		body::draw(float time) {
 	glPopMatrix();
 
 	if(orbit_) {
-		orbit_->draw(time);
+		orbit_->draw(time, center);
 	}
 
 	for(auto it = children_.cbegin(); it != children_.cend(); it++) {
 		body* b = *it;
-		b->draw(time);
+		b->draw(time, center);
 	}
 
 }

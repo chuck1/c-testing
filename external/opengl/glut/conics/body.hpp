@@ -29,7 +29,7 @@ struct body {
 	glm::vec3	v(float time);
 	glm::vec3	x(float time);
 	body*		find_parent(body* b1, float time);
-	void		draw(float time);
+	void		draw(float time, glm::vec3 center);
 	float		soi();
 
 	universe*	universe_;
