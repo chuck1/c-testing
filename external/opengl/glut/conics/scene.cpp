@@ -20,10 +20,11 @@ using namespace std;
 static GLfloat g_fTeapotAngle = 0.0;
 static GLfloat g_fTeapotAngle2 = 0.0;
 
-static float g_lightPos[4] = {0, 0, 0, 1};  // Position of light
+//static float g_lightPos[4] = {0, 0, 0, 1};  // Position of light
 
 float* colorCyan = new float[4] {0.0, 1.0, 1.0, 1.0};
 float* colorWhite = new float[4] {1.0, 1.0, 1.0, 1.0};
+float* colorGray = new float[4] {0.2, 0.2, 0.2, 1.0};
 
 void	draw();
 
@@ -39,8 +40,7 @@ void	display(void) {
 	
 
 	glm::vec3 center;
-	if(g_body_focus) center = g_body_focus->x(g_time);
-	
+	//if(g_body_focus) center = g_body_focus->x(g_time);
 	
 	glm::vec3 eye = center + g_eye_off;
 	
@@ -49,7 +49,7 @@ void	display(void) {
 			center[0], center[1], center[2],
 			0.0, 0.0, 1.0);
 	
-	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
+	
 
 	
 	//glRotatef(g_view_yaw/M_PI*180.0,   0, 0, 1);
@@ -135,28 +135,30 @@ void		draw()
 	glPushMatrix();
 	{
 		// focus view
-		//glTranslatef(-g_view_x, -g_view_y, 0.0);
+		glm::vec3 x;
 		if(g_body_focus) {
-			//cout << "focus: " << g_body_focus->name_ << endl;
-
-			//glm::vec3 x = g_body_focus->x(g_time);
+			x = g_body_focus->x(g_time);
 			//glTranslatef(-x[0], -x[1], -x[2]);
 		}
-
-
-
+		
+		glm::vec4 o(-x, 1.0);
+		glLightfv(GL_LIGHT0, GL_POSITION, &o[0]);
+		
+		
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, colorCyan);
-		glMaterialfv(GL_FRONT, GL_SPECULAR, colorWhite);
-		glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
-
+		glMaterialfv(GL_FRONT, GL_SPECULAR, colorGray);
+		glMaterialf(GL_FRONT, GL_SHININESS, 10.0);
+		
 		//glutSolidSphere(0.5,20,20);
-
-
-		g_universe->draw(g_time);
+		
+		
+		g_universe->draw(g_time, x);
 
 
 	}
 	glPopMatrix();
 
 }
+
+
 

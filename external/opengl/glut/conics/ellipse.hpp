@@ -21,7 +21,7 @@ struct ellipse: conic {
 	ellipse(plane p, float a, float b, float e);
 
 	virtual void		standard_line();
-	virtual void		draw(float time);
+	virtual void		draw(float time, glm::vec3 center);
 	float			x(float t);
 	float			y(float t);
 	glm::vec3		X(float time);

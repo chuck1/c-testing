@@ -20,7 +20,7 @@ using namespace std;
 
 struct orbit {
 
-	virtual void			draw(float time) = 0;
+	virtual void			draw(float time, glm::vec3 center) = 0;
 	virtual glm::vec3		X(float time) = 0;
 	virtual glm::vec3		V(float time) = 0;
 
@@ -28,7 +28,7 @@ struct orbit {
 struct orbit_line: orbit {
 	orbit_line(glm::vec3 x, glm::vec3 v, float epoch): x_(x), v_(v), epoch_(epoch) {}
 
-	virtual void			draw(float time) {
+	virtual void			draw(float time, glm::vec3 center) {
 		//abort();
 	}
 	virtual glm::vec3		X(float time) { return x_ + v_ * (time - epoch_); }

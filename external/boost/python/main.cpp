@@ -190,7 +190,6 @@ int main() {
 	catch(bp::error_already_set const &)
 	{
 		std::cout << "unhandled execption\n";
-		// print all other errors to stderr
 		PyErr_Print();
 	}
 

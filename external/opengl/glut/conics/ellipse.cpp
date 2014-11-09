@@ -16,15 +16,15 @@ ellipse::ellipse(plane p, float a, float b, float e):
 void		ellipse::standard_line() {
 	generate_line(0, TAU);
 }
-void		ellipse::draw(float time) {
+void		ellipse::draw(float time, glm::vec3 center) {
 	//cout << "draw ellipse" << endl;
 	glColor3fv(colorWhite);
 	if(line_.empty()) {
 		standard_line();
 	}
-
-	glm::vec3 x = b2_->x(time);
-
+	
+	glm::vec3 x = b2_->x(time) - center;
+	
 	glPushMatrix();
 	glTranslatef(x[0], x[1], x[2]);
 	line_loop(line_);
