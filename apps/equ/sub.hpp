@@ -4,18 +4,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct add;
-struct op;
-struct eq;
-struct ptr;
 
 #include "node.hpp"
 #include "op.hpp"
 
 
-struct sub: op {
-	sub(snode, snode); 
-	virtual snode	New(snode a, snode b) { return snode(new sub(a,b)); }
+class sub: public Op<A,B>
+{
+	public:
+	sub(A a, B b): Op<A,B>("-", a, b) {}
+	
+	virtual Node_s	New(Node_s a, Node_s b)
+	{
+		return Node_s(new sub(a,b));
+	}
 };
 
 
