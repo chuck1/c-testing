@@ -11,7 +11,6 @@ int main( int argc, char** argv )
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	int world_size;
-
 	int world_rank;
 
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
