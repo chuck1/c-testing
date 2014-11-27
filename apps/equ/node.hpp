@@ -5,50 +5,53 @@
 #include <stdio.h>
 #include <memory>
 
-struct add;
-struct op;
-struct eq;
-struct ptr;
+#include "decl.hpp"
 
-struct node;
+#include "add.hpp"
+#include "eq.hpp"
+#include "NodeBase.hpp"
 
-typedef std::shared_ptr<node> snode;
 
-struct node: public std::enable_shared_from_this<node>
+class Float: public NodeBase
 {
 	public:
-		virtual ~node() {}
-	protected:
-		friend struct op;
-		friend struct ptr;
+		virtual ~Float() {}
 
-		node(char const *);
-		node(node const & n) {}
-		node(node&& n) {}
-		node&	operator=(node const & n) { return *this; }
+	public:
+		friend class ptr;
 
+		Float(float f): f_(f) {}
 
+	public:
 		virtual void print()
 		{
-			printf(" %s ",str_);
+			printf(" %f ", f_);
 		}
-		virtual void printp()
-		{
-			printf(" %p ", this);
-		}
-		virtual void	print_type()
-		{
-			printf(" node ");
-		}
-
-		char const * str_;
-
+	public:
 		// math
-		add	operator+(snode n);
-		eq	operator=(snode n);
+		Node_s		operator+(Node_s r)
+		{
+			auto rf = std::dynamic_pointer_cast<Float>(r);
+			if(rf)
+			{
+				return Node_s(new Float(f_ + rf->f_));
+			}
+
+			throw 0;
+			return Node_s();
+		}
+
+		template<typename B> Eq		operator=(B b)
+		{
+			return Eq(shared_from_this(), b);
+		}
+
+		
+
+	private:
+		float		f_;
+
 };
-
-
 
 
 
