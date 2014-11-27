@@ -87,11 +87,12 @@ int main(int argc, char ** argv)
 
 	MPI_Status stat;
 	
-
+	int r = 1000;
 
 	for(int i = 0; i < num_bodies; i++)
 	{
-		position[i] = glm::vec3(float(rand()), float(rand()), float(rand()));
+		printf("%f\n", float(rand() % r));
+		position[i] = glm::vec3(float(rand() % r), float(rand() % r), float(rand() % r));
 		velocity[i] = glm::vec3();
 		mass[i] = 1000;
 		//velocity[i] = glm::vec3(float(rand()), float(rand()), float(rand()))
@@ -152,10 +153,13 @@ int main(int argc, char ** argv)
 		fwrite(velocity, sizeof(glm::vec3), num_bodies, fp);
 		fwrite(mass, sizeof(float), num_bodies, fp);
 		fclose(fp);
+
+		printf("write\n");
 	}
 
 	delete[] position;
 	delete[] velocity;
+	delete[] mass;
 
 	MPI_Finalize();
 

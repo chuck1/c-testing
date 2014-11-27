@@ -1,11 +1,48 @@
+#include <float.h>
 #include <glm/glm.hpp>
+#include <algorithm>
 
 glm::vec3* position = 0;
 glm::vec3* velocity = 0;
 float* mass = 0;
 int num_bodies = 100;
 
+glm::vec3 body_center;
 
+void print(glm::vec3 v)
+{
+	printf("%f %f %f\n", v.x, v.y, v.z);
+}
+
+glm::vec3 body_max()
+{
+	glm::vec3 e(FLT_MIN);
+	
+	for(int i = 0; i < num_bodies; i++)
+	{
+		print(position[i]);
+
+		e.x = std::max(e.x, position[i].x);
+		e.y = std::max(e.y, position[i].y);
+		e.z = std::max(e.z, position[i].z);
+	}
+
+	return e;
+}
+
+glm::vec3 body_min()
+{
+	glm::vec3 e(FLT_MAX);
+	
+	for(int i = 0; i < num_bodies; i++)
+	{
+		e.x = std::min(e.x, position[i].x);
+		e.y = std::min(e.y, position[i].y);
+		e.z = std::min(e.z, position[i].z);
+	}
+
+	return e;
+}
 
 // glut_example.c
 // Stanford University, CS248, Fall 2000
@@ -120,6 +157,20 @@ void RenderObjects(void)
 	glPopMatrix();
 }
 
+void RenderObjects2()
+{
+	glBegin(GL_POINTS);
+
+	for(int i = 0; i < num_bodies; i++)
+	{
+		
+		glVertex3f(position[i].x, position[i].y, position[i].z);
+
+	}
+
+	glEnd();
+}
+
 void display(void)
 {
 	// Clear frame buffer and depth buffer
@@ -127,13 +178,17 @@ void display(void)
 
 	// Set up viewing transformation, looking down -Z axis
 	glLoadIdentity();
-	gluLookAt(0, 0, -g_fViewDistance, 0, 0, -1, 0, 1, 0);
+	
+	gluLookAt(
+			body_center.x, body_center.y, body_center.z - g_fViewDistance,
+			body_center.x, body_center.y, body_center.z,
+			0, 1, 0);
 
 	// Set up the stationary light
 	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
 	// Render the scene
-	RenderObjects();
+	RenderObjects2();
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
@@ -160,8 +215,9 @@ void InitGraphics(void)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glShadeModel(GL_SMOOTH);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+
+	//glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHT0);
 
 	// Create texture for cube; load marble texture from file and bind it
 /*
@@ -305,13 +361,26 @@ int BuildPopupMenu (void)
 
 int main(int argc, char** argv)
 {
-	FILE* fp = fopen("bodies.dat", "w");
+	FILE* fp = fopen("bodies.dat", "r");
 	fread(&num_bodies, sizeof(int), 1, fp);
+
+	position = new glm::vec3[num_bodies];
+	velocity = new glm::vec3[num_bodies];
+	mass = new float[num_bodies];
+
 	fread(position, sizeof(glm::vec3), num_bodies, fp);
 	fread(velocity, sizeof(glm::vec3), num_bodies, fp);
 	fread(mass, sizeof(float), num_bodies, fp);
 	fclose(fp);
 
+	auto emin = body_min();
+	auto emax = body_max();
+	
+	body_center = (emax + emin) * 0.5f;
+
+	printf("num_bodies: %i\n", num_bodies);
+	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
+	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);
 
 
 	// GLUT Window Initialization:
@@ -339,11 +408,14 @@ int main(int argc, char** argv)
 #ifdef _WIN32
 	last_idle_time = GetTickCount();
 #else
-	gettimeofday (&last_idle_time, NULL);
+	gettimeofday(&last_idle_time, NULL);
 #endif
 
 	// Turn the flow of control over to GLUT
-	glutMainLoop ();
+	glutMainLoop();
+
+
+
 	return 0;
 }
 
