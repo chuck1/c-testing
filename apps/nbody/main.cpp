@@ -2,13 +2,14 @@
 #include <mpi.h>
 #include <glm/glm.hpp>
 
-glm::vec3* position = 0;
-glm::vec3* velocity = 0;
-float* mass = 0;
+glm::vec3** position = 0;
+glm::vec3** velocity = 0;
+float** mass = 0;
 int num_bodies = 100;
+int num_step = 100;
 float G = 6.674e-11;
 
-void	update(int me, float dt)
+void	update(int me, float dt, int t)
 {
 	glm::vec3 a;
 
@@ -17,24 +18,21 @@ void	update(int me, float dt)
 
 	for(int i = 0; i < me; i++)
 	{
-		r = position[i] - position[me];
+		r = position[t-1][i] - position[t-1][me];
 		d = r.length();
-		a += r * (float)(G * mass[i] / pow(d,3.0f));
+		a += r * (float)(G * mass[t-1][i] / pow(d,3.0f));
 	}
 	for(int i = me + 1; i < num_bodies; i++)
 	{
-		r = position[i] - position[me];
+		r = position[t-1][i] - position[t-1][me];
 		d = r.length();
-		a += r * (float)(G * mass[i] / pow(d,3.0f));
+		a += r * (float)(G * mass[t-1][i] / pow(d,3.0f));
 	}
 
-	velocity[me] += a * dt;
-	position[me] += velocity[me] * dt;
+	velocity[t][me] = velocity[t-1][me] + a * dt;
+	position[t][me] = position[t-1][me] + velocity[t][me] * dt;
+	mass[t][me] = mass[t-1][me];
 }
-
-
-
-
 
 
 int main(int argc, char ** argv)
@@ -78,12 +76,20 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	printf("Hello world from processor %s, rank %i of %i processors, block: %i to %i\n", processor_name, world_rank, world_size, start[world_rank], end[world_rank]);
+	printf("Hello world from processor %s, rank %i of %i processors, block: %i to %i\n",
+			processor_name,
+			world_rank,
+			world_size,
+			start[world_rank],
+			end[world_rank]);
 
 	// data
-	position = new glm::vec3[num_bodies];
-	velocity = new glm::vec3[num_bodies];
-	mass = new float[num_bodies];
+	for(int t = 0; t < num_step; t++)
+	{
+		position[t] = new glm::vec3[num_bodies];
+		velocity[t] = new glm::vec3[num_bodies];
+		mass[t] = new float[num_bodies];
+	}
 
 	MPI_Status stat;
 	
@@ -92,15 +98,15 @@ int main(int argc, char ** argv)
 	for(int i = 0; i < num_bodies; i++)
 	{
 		printf("%f\n", float(rand() % r));
-		position[i] = glm::vec3(float(rand() % r), float(rand() % r), float(rand() % r));
-		velocity[i] = glm::vec3();
-		mass[i] = 1000;
+		position[0][i] = glm::vec3(float(rand() % r), float(rand() % r), float(rand() % r));
+		velocity[0][i] = glm::vec3();
+		mass[0][i] = 1000;
 		//velocity[i] = glm::vec3(float(rand()), float(rand()), float(rand()))
 	}
 
 	float dt = 1.0;
 
-	for(int t = 0; t < 100; t++)
+	for(int t = 0; t < num_step; t++)
 	{
 		if(world_rank == 0)
 		{
@@ -110,7 +116,7 @@ int main(int argc, char ** argv)
 		for(int i = start[world_rank]; i < end[world_rank]; i++)
 		{
 			//printf("update %i\n", i);
-			update(i, dt);
+			update(i, dt, t);
 		}
 
 
@@ -119,13 +125,26 @@ int main(int argc, char ** argv)
 			for(int i = 1; i < world_size; i++)
 			{
 				//printf("recv %i %i\n", world_rank, i);
-				MPI_Recv(&position[start[i]], end[i] - start[i], MPI_FLOAT, i, 1, MPI_COMM_WORLD, &stat);
+				MPI_Recv(
+						&position[t][start[i]],
+						end[i] - start[i],
+						MPI_FLOAT,
+						i,
+						1,
+					       	MPI_COMM_WORLD,
+						&stat);
 			}
 		}
 		else // slave
 		{
 			//printf("send %i %i\n", world_rank, 0);
-			MPI_Send(&position[start[world_rank]], end[world_rank] - start[world_rank], MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+			MPI_Send(
+					&position[t][start[world_rank]],
+					end[world_rank] - start[world_rank],
+					MPI_FLOAT,
+					0,
+					1,
+					MPI_COMM_WORLD);
 		}
 
 		if(world_rank == 0) // master
@@ -133,13 +152,26 @@ int main(int argc, char ** argv)
 			for(int i = 1; i < world_size; i++)
 			{
 				//printf("send %i %i\n", world_rank, i);
-				MPI_Send(position, num_bodies, MPI_FLOAT, i, 1, MPI_COMM_WORLD);
+				MPI_Send(
+						position[t],
+						num_bodies,
+						MPI_FLOAT,
+						i,
+						1,
+						MPI_COMM_WORLD);
 			}
 		}
 		else // slave
 		{
 			//printf("recv %i %i\n", world_rank, 0);
-			MPI_Recv(position, num_bodies, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, &stat);
+			MPI_Recv(
+					position,
+					num_bodies,
+					MPI_FLOAT,
+					0,
+					1,
+					MPI_COMM_WORLD,
+					&stat);
 		}
 
 
@@ -149,9 +181,10 @@ int main(int argc, char ** argv)
 	{
 		FILE* fp = fopen("bodies.dat", "w");
 		fwrite(&num_bodies, sizeof(int), 1, fp);
-		fwrite(position, sizeof(glm::vec3), num_bodies, fp);
-		fwrite(velocity, sizeof(glm::vec3), num_bodies, fp);
-		fwrite(mass, sizeof(float), num_bodies, fp);
+		fwrite(&num_step, sizeof(int), 1, fp);
+		fwrite(position, sizeof(glm::vec3), num_step * num_bodies, fp);
+		fwrite(velocity, sizeof(glm::vec3), num_step * num_bodies, fp);
+		fwrite(mass, sizeof(float), num_step * num_bodies, fp);
 		fclose(fp);
 
 		printf("write\n");
