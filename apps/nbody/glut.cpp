@@ -2,10 +2,9 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 
-glm::vec3* position = 0;
-glm::vec3* velocity = 0;
-float* mass = 0;
-int num_bodies = 100;
+#include "nbody.hpp"
+
+Universe u;
 
 glm::vec3 body_center;
 
@@ -14,17 +13,19 @@ void print(glm::vec3 v)
 	printf("%f %f %f\n", v.x, v.y, v.z);
 }
 
+int ct = 0;
+
 glm::vec3 body_max()
 {
 	glm::vec3 e(FLT_MIN);
 	
-	for(int i = 0; i < num_bodies; i++)
+	for(int i = 0; i < u.num_bodies; i++)
 	{
-		print(position[i]);
+		print(u.p(0, i));
 
-		e.x = std::max(e.x, position[i].x);
-		e.y = std::max(e.y, position[i].y);
-		e.z = std::max(e.z, position[i].z);
+		e.x = std::max(e.x, u.p(0, i).x);
+		e.y = std::max(e.y, u.p(0, i).y);
+		e.z = std::max(e.z, u.p(0, i).z);
 	}
 
 	return e;
@@ -34,11 +35,11 @@ glm::vec3 body_min()
 {
 	glm::vec3 e(FLT_MAX);
 	
-	for(int i = 0; i < num_bodies; i++)
+	for(int i = 0; i < u.num_bodies; i++)
 	{
-		e.x = std::min(e.x, position[i].x);
-		e.y = std::min(e.y, position[i].y);
-		e.z = std::min(e.z, position[i].z);
+		e.x = std::min(e.x, u.p(0, i).x);
+		e.y = std::min(e.y, u.p(0, i).y);
+		e.z = std::min(e.z, u.p(0, i).z);
 	}
 
 	return e;
@@ -83,7 +84,7 @@ static GLfloat g_fTeapotAngle = 0.0;
 static GLfloat g_fTeapotAngle2 = 0.0;
 static GLfloat g_fViewDistance = 3 * VIEWING_DISTANCE_MIN;
 static GLfloat g_nearPlane = 1;
-static GLfloat g_farPlane = 1000;
+static GLfloat g_farPlane = 5000;
 static int g_Width = 600;                          // Initial window width
 static int g_Height = 600;                         // Initial window height
 static int g_yClick = 0;
@@ -157,14 +158,17 @@ void RenderObjects(void)
 	glPopMatrix();
 }
 
-void RenderObjects2()
+void RenderObjects2(int t)
 {
 	glBegin(GL_POINTS);
 
-	for(int i = 0; i < num_bodies; i++)
+	for(int i = 0; i < u.num_bodies; i++)
 	{
 		
-		glVertex3f(position[i].x, position[i].y, position[i].z);
+		glVertex3f(
+				u.p(t, i).x,
+				u.p(t, i).y,
+				u.p(t, i).z);
 
 	}
 
@@ -188,7 +192,9 @@ void display(void)
 	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
 	// Render the scene
-	RenderObjects2();
+	RenderObjects2(ct);
+	//ct++;
+	if(ct == u.num_step) ct = 0;
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
@@ -361,27 +367,23 @@ int BuildPopupMenu (void)
 
 int main(int argc, char** argv)
 {
-	FILE* fp = fopen("bodies.dat", "r");
-	fread(&num_bodies, sizeof(int), 1, fp);
+	u.read();
 
-	position = new glm::vec3[num_bodies];
-	velocity = new glm::vec3[num_bodies];
-	mass = new float[num_bodies];
-
-	fread(position, sizeof(glm::vec3), num_bodies, fp);
-	fread(velocity, sizeof(glm::vec3), num_bodies, fp);
-	fread(mass, sizeof(float), num_bodies, fp);
-	fclose(fp);
+	printf("num_step:   %i\n", u.num_step);
+	printf("num_bodies: %i\n", u.num_bodies);
 
 	auto emin = body_min();
 	auto emax = body_max();
-	
+
 	body_center = (emax + emin) * 0.5f;
 
-	printf("num_bodies: %i\n", num_bodies);
 	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
 	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);
 
+	for(int t = 0; t < u.num_step; t++)
+	{
+		print(u.p(t,0));
+	}
 
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
