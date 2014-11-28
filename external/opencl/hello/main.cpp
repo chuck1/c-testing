@@ -8,12 +8,12 @@ int main()
 {
 	//get all platforms (drivers)
 	
-	cl_platform_id*		platforms;
-	cl_uint			num_platforms;
+	cl_platform_id		platforms[10];
+	cl_uint			num_platforms = 0;
 	cl_uint			num_entries = 10;
 	
 	cl_int result = clGetPlatformIDs(num_entries, platforms, &num_platforms);
-	
+
 	printf("%i platforms\n",num_platforms);
 	
 	if(num_platforms==0)
@@ -21,10 +21,12 @@ int main()
 		printf(" No platforms found. Check OpenCL installation!\n");
 		exit(1);
 	}
-	
+
+	//printf("%p\n",platforms);
+
 	for(int i = 0;i < num_platforms;++i) printf("%p\n",platforms[i]);
 	
-	/*
+	
 	cl::Platform default_platform=all_platforms[0];
 	std::cout << "Using platform: "<<default_platform.getInfo<CL_PLATFORM_NAME>()<<"\n";
 
@@ -84,7 +86,7 @@ int main()
 			cl::NullRange);
 
 	simple_add(buffer_A,buffer_B,buffer_C);
-	*/
+	
 	//alternative way to run the kernel
 	/*cl::Kernel kernel_add=cl::Kernel(program,"simple_add");
 	  kernel_add.setArg(0,buffer_A);

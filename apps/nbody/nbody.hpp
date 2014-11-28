@@ -6,6 +6,15 @@ struct Body
 		glm::vec3	v;
 		float		m;
 		float		r;
+		bool		alive;
+};
+
+struct Pair
+{
+	public:
+		Pair(int a, int b): a_(a), b_(b) {}
+		int a_;
+		int b_;
 };
 
 struct Universe
@@ -38,40 +47,32 @@ struct Universe
 			fread(bodies, sizeof(Body), num_step * num_bodies, fp);
 
 			fclose(fp);
+
 		}
 
-		void			setp(int t, int i, glm::vec3 && x)
+
+		void list(int t)
 		{
-			bodies[t * num_bodies + i].p = x;
+			for(int i = 0; i < num_bodies; i++)
+			{
+				printf("%4i alive = %i, r = %f, x = %f %f %f\n",
+						i,
+						alive(t, i),
+						r(t, i),
+						p(t, i).x,
+						p(t, i).y,
+						p(t, i).z);
+			}
 		}
-		void			setv(int t, int i, glm::vec3 && x)
+
+
+
+
+		Body*			body(int t, int i)
 		{
-			bodies[t * num_bodies + i].v = x;
+			return &bodies[t * num_bodies + i];
 		}
-		void			setm(int t, int i, float && x)
-		{
-			bodies[t * num_bodies + i].m = x;
-		}
-		void			setr(int t, int i, float && x)
-		{
-			bodies[t * num_bodies + i].r = x;
-		}
-		void			setp(int t, int i, glm::vec3 const & x)
-		{
-			bodies[t * num_bodies + i].p = x;
-		}
-		void			setv(int t, int i, glm::vec3 const & x)
-		{
-			bodies[t * num_bodies + i].v = x;
-		}
-		void			setm(int t, int i, float const & x)
-		{
-			bodies[t * num_bodies + i].m = x;
-		}
-		void			setr(int t, int i, float const & x)
-		{
-			bodies[t * num_bodies + i].r = x;
-		}
+
 		glm::vec3 const &	p(int t, int i) const
 		{
 			return bodies[t * num_bodies + i].p;
@@ -88,6 +89,11 @@ struct Universe
 		{
 			return bodies[t * num_bodies + i].r;
 		}
+		bool const &		alive(int t, int i) const
+		{
+			return bodies[t * num_bodies + i].alive;
+		}
+
 		glm::vec3 &		p(int t, int i)
 		{
 			return bodies[t * num_bodies + i].p;
@@ -104,16 +110,22 @@ struct Universe
 		{
 			return bodies[t * num_bodies + i].r;
 		}
+		bool &			alive(int t, int i)
+		{
+			return bodies[t * num_bodies + i].alive;
+		}
 
 	private:
 		Body*		bodies;	
-/*		glm::vec3*	bodies;
-		glm::vec3*	bodies;
-		float*		bodies;
-		float*		radius;*/
+		/*		glm::vec3*	bodies;
+				glm::vec3*	bodies;
+				float*		bodies;
+				float*		radius;*/
 	public:
 		int		num_bodies;
 		int		num_step;
 
 };
+
+
 
