@@ -140,6 +140,8 @@ int main()
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj1, CL_TRUE, 0, u->num_bodies_ * sizeof(Body), u->bodies, 0, NULL, NULL);
 	check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj2, CL_TRUE, 0, u->num_pairs_ * sizeof(Pair), u->pairs, 0, NULL, NULL);
+	check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj3, CL_TRUE, 0, sizeof(int), &u->num_bodies_, 0, NULL, NULL);
 	check(__LINE__, ret);
 
@@ -161,31 +163,30 @@ int main()
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
-	ret = clEnqueueTask(
-			command_queue,
-			kernel,
-			0,
-			NULL,
-			NULL);
-	check(__LINE__, ret);
-
-
-
-	/*	
-		size_t global_size = 2;
-		size_t local_size = 1;
-
-		ret = clEnqueueNDRangeKernel(
+	/*	ret = clEnqueueTask(
 		command_queue,
 		kernel,
-		1,
-		NULL,
-		&global_size,
-		&local_size,
 		0,
 		NULL,
 		NULL);
 		*/
+
+
+	size_t global_size = 2;
+	size_t local_size = 1;
+
+	ret = clEnqueueNDRangeKernel(
+			command_queue,
+			kernel,
+			1,
+			NULL,
+			&global_size,
+			&local_size,
+			0,
+			NULL,
+			NULL);
+
+	check(__LINE__, ret);
 
 	/* Copy results from the memory buffer */
 	ret = clEnqueueReadBuffer(
@@ -198,20 +199,39 @@ int main()
 			0,
 			NULL,
 			NULL);
+	check(__LINE__, ret);
 
 	/* Display Result */
 	puts(string);
+
+	ret = clEnqueueReadBuffer(
+			command_queue,
+			memobj2,
+			CL_TRUE,
+			0,
+			u->num_pairs_ * sizeof(Pair),
+			u->pairs,
+			0,
+			NULL,
+			NULL);
+	check(__LINE__, ret);
+
 
 	/* Finalization */
 	ret = clFlush(command_queue);
 	ret = clFinish(command_queue);
 	ret = clReleaseKernel(kernel);
 	ret = clReleaseProgram(program);
+
 	ret = clReleaseMemObject(memobj0);
 	ret = clReleaseMemObject(memobj1);
+	ret = clReleaseMemObject(memobj2);
+	ret = clReleaseMemObject(memobj3);
+
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
 
+	universe_free(u);
 
 	return 0;
 }

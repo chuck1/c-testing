@@ -3,7 +3,7 @@
 struct Body
 {
 	//float3 x;
-	float x[3];
+	float3 x;
 	float v[3];
 	float mass;
 	float radius;
@@ -16,7 +16,7 @@ struct Pair
 	int	b1;
 	
 	//float3	u;
-	float	u[3];
+	float3	u;
 	float	d;
 	float	f;
 };
@@ -37,18 +37,18 @@ if(get_global_id(0) == (get_global_size(0) - 1)) p1 = *num_pairs;
 
 //barrier(CLK_LOCAL_MEM_FENCE);
 
-/*
+
 for(int p = p0; p < p1; p++)
 {
 	__global struct Body* b0 = &bodies[pairs[p].b0];
 	__global struct Body* b1 = &bodies[pairs[p].b1];
 
 	//float3 r;
-	//r = b0->x - b1->x;
-
-	//pairs[p].u = r;
+	//float3 r = b0->x - b1->x;
+	
+	pairs[p].u = b0->x - b1->x;
 }
-*/
+
 
 
 string[0] = 'H';

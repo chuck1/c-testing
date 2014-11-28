@@ -36,4 +36,9 @@ void universe_alloc(Universe* u, int num_bodies)
 	}
 }
 
+void universe_free(Universe* u)
+{
+	free(u->bodies);
+	free(u->pairs);
+}
 
