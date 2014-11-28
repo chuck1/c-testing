@@ -22,6 +22,11 @@ glm::vec3 body_max()
 	
 	for(int i = 0; i < u.num_bodies; i++)
 	{
+<<<<<<< HEAD
+=======
+		print(u.p(0, i));
+
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 		e.x = std::max(e.x, u.p(0, i).x);
 		e.y = std::max(e.y, u.p(0, i).y);
 		e.z = std::max(e.z, u.p(0, i).z);
@@ -159,6 +164,7 @@ void RenderObjects(void)
 
 void RenderObjects2(int t)
 {
+<<<<<<< HEAD
 	//glBegin(GL_POINTS);
 
 	for(int i = 0; i < u.num_bodies; i++)
@@ -175,6 +181,21 @@ void RenderObjects2(int t)
 	}
 
 	//glEnd();
+=======
+	glBegin(GL_POINTS);
+
+	for(int i = 0; i < u.num_bodies; i++)
+	{
+		
+		glVertex3f(
+				u.p(t, i).x,
+				u.p(t, i).y,
+				u.p(t, i).z);
+
+	}
+
+	glEnd();
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 }
 
 void display(void)
@@ -186,7 +207,11 @@ void display(void)
 	glLoadIdentity();
 	
 	gluLookAt(
+<<<<<<< HEAD
 			body_center.x, body_center.y, body_center.z - g_fViewDistance,
+=======
+			body_center.x, body_center.y, body_center.z - body_extent.z,
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 			body_center.x, body_center.y, body_center.z,
 			0, 1, 0);
 
@@ -380,8 +405,11 @@ int main(int argc, char** argv)
 	body_center = (emax + emin) * 0.5f;
 	body_extent = emax - emin;
 
+<<<<<<< HEAD
 	g_fViewDistance = body_extent.z;
 	
+=======
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
 	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);
 
@@ -390,8 +418,11 @@ int main(int argc, char** argv)
 		//print(u.p(t,0));
 	}
 
+<<<<<<< HEAD
 	u.list(u.num_step-100);
 
+=======
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);
 	glutInitWindowSize (g_Width, g_Height);

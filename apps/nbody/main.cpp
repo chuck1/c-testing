@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 #include <vector>
+=======
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 #include <cstdlib>
 #include <mpi.h>
 #include <glm/glm.hpp>
@@ -9,6 +12,7 @@ Universe u;
 
 float G = 6.674e-11;
 float dt = 100.0;
+<<<<<<< HEAD
 int nb = 1000;
 int ns = 20000;
 int num_collision = 0;
@@ -123,11 +127,36 @@ void	update_pair(glm::vec3& a, int t, int me, int i)
 		}
 		*/
 	
+=======
+int nb = 100;
+int ns = 1000;
+int num_collision = 0;
+
+float min_d = FLT_MAX;
+
+void	update_pair(glm::vec3& a, int t, int me, int i)
+{
+	glm::vec3 r;
+	float d;
+
+	r = u.p(t-1, i) - u.p(t-1, me);
+	d = glm::length(r);
+
+	if(d < (u.r(t-1,me) + u.r(t-1,i)))
+	{
+		//printf("collision\n");
+		num_collision++;
+	}
+
+	min_d = std::min(min_d, d);
+
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 	a += r * (float)(G * u.m(t-1, i) / pow(d,3.0f));
 }
 
 void	update(int me, float dt, int t)
 {
+<<<<<<< HEAD
 	u.alive(t, me) = u.alive(t-1, me);
 
 	if(!u.alive(t-1, me)) return;
@@ -143,6 +172,17 @@ void	update(int me, float dt, int t)
 	u.p(t, me) = u.p(t-1, me) + u.v(t, me) * dt;
 	u.m(t, me) = u.m(t-1, me);
 	u.r(t, me) = u.r(t-1, me);
+=======
+	glm::vec3 a;
+
+	for(int i = 0; i < me; i++) update_pair(a, t, me, i);
+	
+	for(int i = me + 1; i < u.num_bodies; i++) update_pair(a, t, me, i);
+	
+	u.setv(t, me, u.v(t-1, me) + a * dt);
+	u.setp(t, me, u.p(t-1, me) + u.v(t, me) * dt);
+	u.setm(t, me, u.m(t-1, me));
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 
 	if(me == 0)
 	{
@@ -208,14 +248,22 @@ int main(int argc, char ** argv)
 
 	MPI_Status stat;
 
+<<<<<<< HEAD
 	// initial values
 	int r = 1000;
 
+=======
+	int r = 1000;
+
+	//float density = 7874; // iron
+	float density = 934; // water ice at 93 K
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 
 	for(int i = 0; i < u.num_bodies; i++)
 	{
 		//printf("%f\n", float(rand() % r));
 
+<<<<<<< HEAD
 		u.p(0, i) = glm::vec3(float(rand() % r), float(rand() % r), float(rand() % r));
 		u.v(0, i) = glm::vec3();
 		// mass
@@ -290,6 +338,20 @@ int main(int argc, char ** argv)
 		}
 
 		// update on each node
+=======
+		u.setp(0, i, glm::vec3(float(rand() % r), float(rand() % r), float(rand() % r)));
+		u.setv(0, i, glm::vec3());
+		// mass
+		u.setm(0, i, 1e6);
+		// radius
+		u.setr(0, i, pow(u.m(0,i) / density * 3.0 / 4.0 / M_PI, 0.33333));
+	}
+
+
+	for(int t = 1; t < u.num_step; t++)
+	{
+
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 		for(int i = start[world_rank]; i < end[world_rank]; i++)
 		{
 			//printf("update %i\n", i);
@@ -307,14 +369,22 @@ int main(int argc, char ** argv)
 			   */
 		}
 
+<<<<<<< HEAD
 		// collect data at master
+=======
+
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 		if(world_rank == 0) // master
 		{
 			for(int i = 1; i < world_size; i++)
 			{
 				//printf("recv %i %i\n", world_rank, i);
 				MPI_Recv(
+<<<<<<< HEAD
 						u.body(t, start[i]),
+=======
+						&u.p(t, start[i]),
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 						(end[i] - start[i]) * sizeof(Body),
 						MPI_BYTE,
 						i,
@@ -327,7 +397,11 @@ int main(int argc, char ** argv)
 		{
 			//printf("send %i %i\n", world_rank, 0);
 			MPI_Send(
+<<<<<<< HEAD
 					u.body(t, start[world_rank]),
+=======
+					&u.p(t, start[world_rank]),
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 					(end[world_rank] - start[world_rank]) * sizeof(Body),
 					MPI_BYTE,
 					0,
@@ -335,6 +409,35 @@ int main(int argc, char ** argv)
 					MPI_COMM_WORLD);
 		}
 
+<<<<<<< HEAD
+=======
+		if(world_rank == 0) // master
+		{
+			for(int i = 1; i < world_size; i++)
+			{
+				//printf("send %i %i\n", world_rank, i);
+				MPI_Send(
+						&u.p(t, 0),
+						u.num_bodies * sizeof(Body),
+						MPI_BYTE,
+						i,
+						1,
+						MPI_COMM_WORLD);
+			}
+		}
+		else // slave
+		{
+			//printf("recv %i %i\n", world_rank, 0);
+			MPI_Recv(
+					&u.p(t,0),
+					u.num_bodies * sizeof(Body),
+					MPI_BYTE,
+					0,
+					1,
+					MPI_COMM_WORLD,
+					&stat);
+		}
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 
 
 	}
@@ -346,12 +449,17 @@ int main(int argc, char ** argv)
 		printf("write\n");
 
 		printf("collisions: %i\n", num_collision);
+<<<<<<< HEAD
 		//printf("min_d:      %f\n", min_d);
 		//printf("radius:     %f\n", u.r(0,0));
 		//
 
 		u.list(u.num_step-1);
 
+=======
+		printf("min_d:      %f\n", min_d);
+		printf("radius:     %f\n", u.r(0,0));
+>>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 	}
 
 
