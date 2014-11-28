@@ -7,6 +7,7 @@
 Universe u;
 
 glm::vec3 body_center;
+glm::vec3 body_extent;
 
 void print(glm::vec3 v)
 {
@@ -184,7 +185,7 @@ void display(void)
 	glLoadIdentity();
 	
 	gluLookAt(
-			body_center.x, body_center.y, body_center.z - g_fViewDistance,
+			body_center.x, body_center.y, body_center.z - body_extent.z,
 			body_center.x, body_center.y, body_center.z,
 			0, 1, 0);
 
@@ -193,7 +194,7 @@ void display(void)
 
 	// Render the scene
 	RenderObjects2(ct);
-	//ct++;
+	ct++;
 	if(ct == u.num_step) ct = 0;
 
 	// Make sure changes appear onscreen
@@ -376,13 +377,14 @@ int main(int argc, char** argv)
 	auto emax = body_max();
 
 	body_center = (emax + emin) * 0.5f;
+	body_extent = emax - emin;
 
 	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
 	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);
 
 	for(int t = 0; t < u.num_step; t++)
 	{
-		print(u.p(t,0));
+		//print(u.p(t,0));
 	}
 
 	// GLUT Window Initialization:
