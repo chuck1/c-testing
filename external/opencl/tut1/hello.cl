@@ -7,7 +7,7 @@ __kernel void step_bodies(
 		    __global struct Body * bodies,
 		    __global struct Pair * pairs,
 		    __global struct BodyMap * bodymaps,
-		    __global float * dt
+		    float dt
 		   )
 {
 	float f[3];
@@ -40,16 +40,14 @@ __kernel void step_bodies(
 			f[2] += pp->u[2] * pp->f * pbm->f_sign[p];
 		}
 		
-		pb->v[0] += *dt * f[0] / pb->mass;
-		pb->v[1] += *dt * f[1] / pb->mass;
-		pb->v[2] += *dt * f[2] / pb->mass;
+		pb->v[0] += dt * f[0] / pb->mass;
+		pb->v[1] += dt * f[1] / pb->mass;
+		pb->v[2] += dt * f[2] / pb->mass;
 
-		pb->x[0] += *dt * pb->v[0];
-		pb->x[1] += *dt * pb->v[1];
-		pb->x[2] += *dt * pb->v[2];
+		pb->x[0] += dt * pb->v[0];
+		pb->x[1] += dt * pb->v[1];
+		pb->x[2] += dt * pb->v[2];
 	}
-	
-	
 }
 
 __kernel void step_pairs(
@@ -69,11 +67,13 @@ __kernel void step_pairs(
 	
 	for(int p = p0; p < p1; p++)
 	{
-		__global struct Body* b0 = &bodies[pairs[p].b0];
-		__global struct Body* b1 = &bodies[pairs[p].b1];
+		__global struct Pair* pp = pairs + p;
+
+		__global struct Body* b0 = &bodies[pp->b0];
+		__global struct Body* b1 = &bodies[pp->b1];
 		
-		__global float * x0 = bodies[pairs[p].b0].x;
-		__global float * x1 = bodies[pairs[p].b1].x;
+		__global float * x0 = bodies[pp->b0].x;
+		__global float * x1 = bodies[pp->b1].x;
 	
 		float r[3];
 		
@@ -82,14 +82,16 @@ __kernel void step_pairs(
 		r[2] = x0[2] - x1[2];
 	
 		float d2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
-	
-		pairs[p].d = sqrt(d2);
+
+		float dr = rsqrt(d2);
+
+		pp->d = sqrt(d2);
 		
-		pairs[p].u[0] = r[0] / pairs[p].d;
-		pairs[p].u[1] = r[1] / pairs[p].d;
-		pairs[p].u[2] = r[2] / pairs[p].d;
+		pp->u[0] = r[0] * dr;
+		pp->u[1] = r[1] * dr;
+		pp->u[2] = r[2] * dr;
 		
-		pairs[p].f = 6.67384E-11 * b0->mass * b1->mass / d2;
+		pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
 	}
 
 }

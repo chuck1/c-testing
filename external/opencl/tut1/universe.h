@@ -14,7 +14,7 @@ struct Universe
 {
 	Body*		b(int t)
 	{
-		return bodies + t * num_bodies_;
+		return bodies + (t * num_bodies_);
 	}
 	Body&		b(int t, int i)
 	{
@@ -26,7 +26,7 @@ struct Universe
 		num_steps_ = num_steps;
 		num_pairs_ = (num_bodies * (num_bodies - 1)) / 2;
 
-		bodies = (Body*)malloc(sizeof(Body) * num_bodies_ * num_steps);
+		bodies = (Body*)malloc(sizeof(Body) * num_bodies_ * num_steps_);
 		bodymaps = (BodyMap*)malloc(sizeof(BodyMap) * num_bodies_);
 		pairs = (Pair*)malloc(sizeof(Pair) * num_pairs_);
 
@@ -40,8 +40,9 @@ struct Universe
 		{
 			for(int j = i + 1; j < num_bodies; j++)
 			{
-				pairs[k].b0 = i;
-				pairs[k].b0 = j;
+				Pair * pp = pairs + k;
+				pp->b0 = i;
+				pp->b1 = j;
 
 				bodymaps[i].pair[p[i]] = k;
 				bodymaps[j].pair[p[j]] = k;
@@ -63,7 +64,7 @@ struct Universe
 		{
 			b->x[0] = (float)(rand() % 1000);
 			b->x[1] = (float)(rand() % 1000);
-			b->x[2] = (float)(rand() % 1000);
+			b->x[2] = 0; //(float)(rand() % 1000);
 
 			b->v[0] = 0;
 			b->v[1] = 0;
@@ -76,11 +77,12 @@ struct Universe
 	void		free()
 	{
 		::free(bodies);
+		::free(bodymaps);
 		::free(pairs);
 	}
 	void write()
 	{
-		FILE* fp = fopen("bodies.dat", "w");
+		FILE* fp = fopen("data.dat", "w");
 
 		fwrite(&num_bodies_, sizeof(int), 1, fp);
 		fwrite(&num_steps_, sizeof(int), 1, fp);
@@ -91,7 +93,7 @@ struct Universe
 	}
 	void read()
 	{
-		FILE* fp = fopen("bodies.dat", "r");
+		FILE* fp = fopen("data.dat", "r");
 
 		fread(&num_bodies_, sizeof(int), 1, fp);
 		fread(&num_steps_, sizeof(int), 1, fp);

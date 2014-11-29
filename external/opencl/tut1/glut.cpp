@@ -381,7 +381,7 @@ int main(int argc, char** argv)
 	body_center = (emax + emin) * 0.5f;
 	body_extent = emax - emin;
 
-	g_fViewDistance = body_extent.z;
+	g_fViewDistance = body_extent.x;
 	
 	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
 	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);

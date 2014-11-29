@@ -4,7 +4,6 @@
 #include <CL/cl.h>
 
 #define NUM_FILE (1)
-#define MEM_SIZE (128)
 #define MAX_SOURCE_SIZE (0x100000)
 
 #include "universe.h"
@@ -113,7 +112,6 @@ int main()
 	cl_mem memobj_bodies = NULL;
 	cl_mem memobj_bodymaps = NULL;
 	cl_mem memobj_pairs = NULL;
-	cl_mem memobj_dt = NULL;
 	
 	cl_program program = NULL;
 
@@ -125,7 +123,6 @@ int main()
 	cl_uint ret_num_platforms;
 	cl_int ret;
 
-	char string[MEM_SIZE];
 
 	/* Get Platform and Device Info */
 	puts("hello");
@@ -154,7 +151,6 @@ int main()
 	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(Body), NULL, &ret);
 	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
 	memobj_bodymaps = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(BodyMap), NULL, &ret);
-	memobj_dt       = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float), NULL, &ret);
 	check(__LINE__, ret);
 	
 	/* Write to buffers */
@@ -162,7 +158,7 @@ int main()
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodymaps, CL_TRUE, 0, u->num_bodies_ * sizeof(BodyMap), u->bodymaps, 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
 	
 	/* Create Kernel Program from the source */
@@ -183,18 +179,20 @@ int main()
 	ret = clSetKernelArg(kernel_bodies, 0, sizeof(cl_mem), (void *)&memobj_bodies);
 	ret = clSetKernelArg(kernel_bodies, 1, sizeof(cl_mem), (void *)&memobj_pairs);
 	ret = clSetKernelArg(kernel_bodies, 2, sizeof(cl_mem), (void *)&memobj_bodymaps);
-	ret = clSetKernelArg(kernel_bodies, 3, sizeof(cl_mem), (void *)&memobj_dt);
+	ret = clSetKernelArg(kernel_bodies, 3, sizeof(float), (void *)&timestep);
 	check(__LINE__, ret);
 
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
 
-	size_t global_size = 4;
+	size_t global_size = 2;
 	size_t local_size = 1;
 
 	for(int t = 1; t < NUM_STEPS; t++)
 	{
+		if((t % (NUM_STEPS / 10)) == 0) printf("t = %5i\n", t);
+		
 		//cl_event event;
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
@@ -207,6 +205,7 @@ int main()
 				NULL,
 				NULL);//&event);
 		check(__LINE__, ret);
+		if(ret) break;
 
 		//clWaitForEvents(1, &event);
 
@@ -225,6 +224,7 @@ int main()
 				NULL,
 				NULL);//&event);
 		check(__LINE__, ret);
+		if(ret) break;
 
 		clFinish(command_queue);
 
@@ -240,6 +240,7 @@ int main()
 				NULL,
 				NULL);
 		check(__LINE__, ret);
+		if(ret) break;
 
 		clFinish(command_queue);
 	}
@@ -249,24 +250,20 @@ int main()
 
 	/* Copy results from the memory buffer */
 	/* Finalization */
-	ret = clFlush(command_queue);
-	ret = clFinish(command_queue);
+	ret = clFlush(command_queue);check(__LINE__, ret);
+	ret = clFinish(command_queue);check(__LINE__, ret);
 
-	ret = clReleaseKernel(kernel_pairs);
-	ret = clReleaseKernel(kernel_bodies);
+	ret = clReleaseKernel(kernel_pairs);check(__LINE__, ret);
+	ret = clReleaseKernel(kernel_bodies);check(__LINE__, ret);
 
-	ret = clReleaseProgram(program);
+	ret = clReleaseProgram(program);check(__LINE__, ret);
 
 	ret = clReleaseMemObject(memobj_bodies);
 	ret = clReleaseMemObject(memobj_pairs);
 	ret = clReleaseMemObject(memobj_bodymaps);
-	ret = clReleaseMemObject(memobj_dt);
 
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
-
-	/* Display Result */
-	puts(string);
 
 	/* Display Universe Data */
 	printf("u = %f %f %f\n",
@@ -276,9 +273,9 @@ int main()
 	printf("f = %f\n",
 			u->pairs[0].f);
 	printf("x = %f %f %f\n",
-			u->b(NUM_STEPS - 1)[0].x[0],
-			u->b(NUM_STEPS - 1)[0].x[1],
-			u->b(NUM_STEPS - 1)[0].x[2]);
+			u->b(NUM_STEPS - 1, 0).x[0],
+			u->b(NUM_STEPS - 1, 0).x[1],
+			u->b(NUM_STEPS - 1, 0).x[2]);
 
 
 	u->write();

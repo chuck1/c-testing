@@ -1,7 +1,7 @@
 
-#define NUM_BODIES (100)
+#define NUM_BODIES (200)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
-#define NUM_STEPS  (1000)
+#define NUM_STEPS  (2000)
 
 struct Body
 {
