@@ -64,7 +64,7 @@ struct Universe
 		{
 			b->x[0] = (float)(rand() % 1000);
 			b->x[1] = (float)(rand() % 1000);
-			b->x[2] = 0; //(float)(rand() % 1000);
+			b->x[2] = (float)(rand() % 1000);
 
 			b->v[0] = 0;
 			b->v[1] = 0;

@@ -8,7 +8,7 @@
 
 #include "universe.h"
 
-float timestep = 200.0;
+float timestep = 100.0;
 float mass = 1e6;
 
 void check(int line, int ret)
@@ -27,7 +27,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 	
 
 	FILE *fp;
-	char const * fileName[] = {"./hello.cl","./body.h"};
+	char const * fileName[] = {"./hello.cl"};
 	char *source_str[NUM_FILE];
 	size_t source_size[NUM_FILE];
 	
@@ -94,16 +94,13 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 
 int main()
 {
-	puts("hello");
+	puts("Create Universe");
 
 	Universe* u = (Universe*)malloc(sizeof(Universe));
 	u->alloc(NUM_BODIES, NUM_STEPS);
 	u->random(mass);
 
-	printf("x = %f %f %f\n",
-			u->bodies[0].x[0],
-			u->bodies[0].x[1],
-			u->bodies[0].x[2]);
+	//printf("x = %f %f %f\n", u->bodies[0].x[0], u->bodies[0].x[1], u->bodies[0].x[2]);
 
 	cl_device_id device_id = NULL;
 	cl_context context = NULL;
@@ -125,7 +122,7 @@ int main()
 
 
 	/* Get Platform and Device Info */
-	puts("hello");
+	puts("Get Platform and Device Info");
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
 	check(__LINE__, ret);
@@ -165,35 +162,30 @@ int main()
 	program = create_program_from_file(context, device_id);
 
 	/* Create OpenCL Kernel */
-	kernel_pairs = clCreateKernel(program, "step_pairs", &ret);
-	check(__LINE__, ret);
-	kernel_bodies = clCreateKernel(program, "step_bodies", &ret);
-	check(__LINE__, ret);
+	kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
+	kernel_bodies = clCreateKernel(program, "step_bodies", &ret); check(__LINE__, ret);
 
 	/* Set OpenCL Kernel Parameters */
 	ret = clSetKernelArg(kernel_pairs, 0, sizeof(cl_mem), (void *)&memobj_bodies);
-	ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs);
-	check(__LINE__, ret);
+	ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs); check(__LINE__, ret);
 
 	/* Set OpenCL Kernel Parameters */
 	ret = clSetKernelArg(kernel_bodies, 0, sizeof(cl_mem), (void *)&memobj_bodies);
 	ret = clSetKernelArg(kernel_bodies, 1, sizeof(cl_mem), (void *)&memobj_pairs);
 	ret = clSetKernelArg(kernel_bodies, 2, sizeof(cl_mem), (void *)&memobj_bodymaps);
-	ret = clSetKernelArg(kernel_bodies, 3, sizeof(float), (void *)&timestep);
-	check(__LINE__, ret);
+	ret = clSetKernelArg(kernel_bodies, 3, sizeof(float), (void *)&timestep); check(__LINE__, ret);
 
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
 
-	size_t global_size = 2;
+	size_t global_size = 4;
 	size_t local_size = 1;
 
 	for(int t = 1; t < NUM_STEPS; t++)
 	{
 		if((t % (NUM_STEPS / 10)) == 0) printf("t = %5i\n", t);
 		
-		//cl_event event;
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
 				kernel_pairs,
@@ -203,16 +195,14 @@ int main()
 				&local_size,
 				0,
 				NULL,
-				NULL);//&event);
+				NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		//clWaitForEvents(1, &event);
-
-		/* Execute "step_bodies" kernel */
-
 		clFinish(command_queue);
-
+		check(__LINE__, ret);
+		
+		/* Execute "step_bodies" kernel */
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
 				kernel_bodies,
@@ -222,11 +212,12 @@ int main()
 				&local_size,
 				0,
 				NULL,
-				NULL);//&event);
+				NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
 		clFinish(command_queue);
+		check(__LINE__, ret);
 
 		/* Store data for timestep */
 		ret = clEnqueueReadBuffer(
@@ -243,12 +234,9 @@ int main()
 		if(ret) break;
 
 		clFinish(command_queue);
+		check(__LINE__, ret);
 	}
 
-	//clWaitForEvents(1, &event);
-
-
-	/* Copy results from the memory buffer */
 	/* Finalization */
 	ret = clFlush(command_queue);check(__LINE__, ret);
 	ret = clFinish(command_queue);check(__LINE__, ret);
@@ -258,14 +246,15 @@ int main()
 
 	ret = clReleaseProgram(program);check(__LINE__, ret);
 
-	ret = clReleaseMemObject(memobj_bodies);
-	ret = clReleaseMemObject(memobj_pairs);
-	ret = clReleaseMemObject(memobj_bodymaps);
+	ret = clReleaseMemObject(memobj_bodies);check(__LINE__, ret);
+	ret = clReleaseMemObject(memobj_pairs);check(__LINE__, ret);
+	ret = clReleaseMemObject(memobj_bodymaps);check(__LINE__, ret);
 
-	ret = clReleaseCommandQueue(command_queue);
-	ret = clReleaseContext(context);
+	ret = clReleaseCommandQueue(command_queue);check(__LINE__, ret);
+	ret = clReleaseContext(context);check(__LINE__, ret);
 
 	/* Display Universe Data */
+	/*
 	printf("u = %f %f %f\n",
 			u->pairs[0].u[0],
 			u->pairs[0].u[1],
@@ -276,8 +265,8 @@ int main()
 			u->b(NUM_STEPS - 1, 0).x[0],
 			u->b(NUM_STEPS - 1, 0).x[1],
 			u->b(NUM_STEPS - 1, 0).x[2]);
-
-
+	*/
+	puts("Write");
 	u->write();
 
 	u->free();

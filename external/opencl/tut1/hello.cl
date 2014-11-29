@@ -12,6 +12,8 @@ __kernel void step_bodies(
 {
 	float f[3];
 
+	/* global index */
+	
 	int block = NUM_BODIES / get_global_size(0);
 	
 	int b0 = get_global_id(0) * block;
@@ -19,10 +21,21 @@ __kernel void step_bodies(
 	
 	if(get_global_id(0) == (get_global_size(0) - 1)) b1 = NUM_BODIES;
 	
+	/* local index */
+
+	int local_block = (b1 - b0) / get_local_size(0);
+	
+	int b_local0 = b0 + get_local_id(0) * local_block;
+	int b_local1 = b_local0 + local_block;
+	
+	if(get_local_id(0) == (get_local_size(0) - 1)) b_local1 = b1;
+	
+	/* */
+
 	__global struct BodyMap * pbm = 0;
 	__global struct Body * pb = 0;
 	
-	for(int b = b0; b < b1; b++)
+	for(int b = b_local0; b < b_local1; b++)
 	{
 		pbm = bodymaps + b;
 		pb = bodies + b;
@@ -62,10 +75,19 @@ __kernel void step_pairs(
 	int p1 = p0 + block;
 	
 	if(get_global_id(0) == (get_global_size(0) - 1)) p1 = NUM_PAIRS;
+
+	/* local index */
+	
+	int local_block = (p1 - p0) / get_local_size(0);
+	
+	int p_local0 = p0 + get_local_id(0) * local_block;
+	int p_local1 = p_local0 + local_block;
+	
+	if(get_local_id(0) == (get_local_size(0) - 1)) p_local1 = p1;
 	
 	//barrier(CLK_LOCAL_MEM_FENCE);
 	
-	for(int p = p0; p < p1; p++)
+	for(int p = p_local0; p < p_local1; p++)
 	{
 		__global struct Pair* pp = pairs + p;
 

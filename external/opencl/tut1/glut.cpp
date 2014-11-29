@@ -75,6 +75,7 @@ typedef int BOOL;
 #define TRUE 1
 #define FALSE 0
 
+static int g_t_skip = 1;
 static BOOL g_bLightingEnabled = TRUE;
 static BOOL g_bFillPolygons = TRUE;
 static BOOL g_bTexture = FALSE;
@@ -196,8 +197,8 @@ void display(void)
 
 	// Render the scene
 	RenderObjects2(ct);
-	ct++;
-	if(ct == u.num_steps_) ct = 0;
+	ct += g_t_skip;
+	if(ct > u.num_steps_) ct = 0;
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
@@ -351,6 +352,13 @@ void Keyboard(unsigned char key, int x, int y)
 
 		case 't':
 			SelectFromMenu(MENU_TEXTURING);
+			break;
+		case ',':
+			g_t_skip--;
+			g_t_skip = (g_t_skip < 1) ? 1 : g_t_skip;
+			break;
+		case '.':
+			g_t_skip++;
 			break;
 	}
 }
