@@ -7,13 +7,10 @@
 #define MEM_SIZE (128)
 #define MAX_SOURCE_SIZE (0x100000)
 
-#define NUM_BODIES (100)
-
 #include "universe.h"
 
-float timestep = 100.0;
+float timestep = 200.0;
 float mass = 1e6;
-int num_step = 2;
 
 void check(int line, int ret)
 {
@@ -23,7 +20,6 @@ void check(int line, int ret)
 		//exit(1);
 	}
 }
-
 cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 {
 
@@ -81,15 +77,17 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 		// check build log
 		clGetProgramBuildInfo(program, device_id,
 				CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
+	
 		programLog = (char*) calloc (logSize+1, sizeof(char));
+	
 		clGetProgramBuildInfo(program, device_id,
 				CL_PROGRAM_BUILD_LOG, logSize+1, programLog, NULL);
+	
 		printf("Build failed; error=%d, status=%d, programLog:nn%s",
 				ret, status, programLog);
+	
 		free(programLog);
-
 	}
-
 
 	return program;
 }
@@ -100,8 +98,8 @@ int main()
 	puts("hello");
 
 	Universe* u = (Universe*)malloc(sizeof(Universe));
-	universe_alloc(u, NUM_BODIES);
-	universe_random(u, mass);
+	u->alloc(NUM_BODIES, NUM_STEPS);
+	u->random(mass);
 
 	printf("x = %f %f %f\n",
 			u->bodies[0].x[0],
@@ -111,15 +109,16 @@ int main()
 	cl_device_id device_id = NULL;
 	cl_context context = NULL;
 	cl_command_queue command_queue = NULL;
-	cl_mem memobj0 = NULL;
-	cl_mem memobj1 = NULL;
-	cl_mem memobj2 = NULL;
-	cl_mem memobj3 = NULL;
-	cl_mem memobj4 = NULL;
+	
+	cl_mem memobj_bodies = NULL;
+	cl_mem memobj_bodymaps = NULL;
+	cl_mem memobj_pairs = NULL;
+	cl_mem memobj_dt = NULL;
+	
 	cl_program program = NULL;
 
-	cl_kernel kernel0 = NULL;
-	cl_kernel kernel1 = NULL;
+	cl_kernel kernel_pairs = NULL;
+	cl_kernel kernel_bodies = NULL;
 
 	cl_platform_id platform_id = NULL;
 	cl_uint ret_num_devices;
@@ -134,6 +133,12 @@ int main()
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
 	check(__LINE__, ret);
 
+	cl_uint max_compute_units;
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, NULL);
+
+	printf("gpu:\n");
+	printf("max_compute_units = %i\n", max_compute_units);
+
 	/* Create OpenCL context */
 	puts("create context");
 	context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
@@ -146,59 +151,54 @@ int main()
 
 	/* Create Memory Buffer */
 	puts("create buffer");
-	memobj0 = clCreateBuffer(context, CL_MEM_READ_WRITE, MEM_SIZE * sizeof(char), NULL, &ret);
-	memobj1 = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(Body), NULL, &ret);
-	memobj2 = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
-	memobj3 = clCreateBuffer(context, CL_MEM_READ_WRITE, 1 * sizeof(int), NULL, &ret);
-	memobj4 = clCreateBuffer(context, CL_MEM_READ_WRITE, 1 * sizeof(float), NULL, &ret);
+	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(Body), NULL, &ret);
+	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
+	memobj_bodymaps = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(BodyMap), NULL, &ret);
+	memobj_dt       = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float), NULL, &ret);
 	check(__LINE__, ret);
 	
 	/* Write to buffers */
 	puts("write buffers");
-	ret = clEnqueueWriteBuffer(command_queue, memobj1, CL_TRUE, 0, u->num_bodies_ * sizeof(Body), u->bodies, 0, NULL, NULL);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_bodymaps, CL_TRUE, 0, u->num_bodies_ * sizeof(BodyMap), u->bodymaps, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj2, CL_TRUE, 0, u->num_pairs_ * sizeof(Pair), u->pairs, 0, NULL, NULL);
-	check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj3, CL_TRUE, 0, sizeof(int), &u->num_pairs_, 0, NULL, NULL);
-	check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj4, CL_TRUE, 0, sizeof(float), &timestep, 0, NULL, NULL);
-	check(__LINE__, ret);
-
+	
 	/* Create Kernel Program from the source */
 	program = create_program_from_file(context, device_id);
 
 	/* Create OpenCL Kernel */
-	kernel0 = clCreateKernel(program, "hello", &ret);
+	kernel_pairs = clCreateKernel(program, "step_pairs", &ret);
 	check(__LINE__, ret);
-	kernel1 = clCreateKernel(program, "step_bodies", &ret);
-	check(__LINE__, ret);
-
-	/* Set OpenCL Kernel Parameters */
-	ret = clSetKernelArg(kernel0, 0, sizeof(cl_mem), (void *)&memobj0);
-	ret = clSetKernelArg(kernel0, 1, sizeof(cl_mem), (void *)&memobj1);
-	ret = clSetKernelArg(kernel0, 2, sizeof(cl_mem), (void *)&memobj2);
-	ret = clSetKernelArg(kernel0, 3, sizeof(cl_mem), (void *)&memobj3);
+	kernel_bodies = clCreateKernel(program, "step_bodies", &ret);
 	check(__LINE__, ret);
 
 	/* Set OpenCL Kernel Parameters */
-	ret = clSetKernelArg(kernel1, 0, sizeof(cl_mem), (void *)&memobj1);
-	ret = clSetKernelArg(kernel1, 1, sizeof(cl_mem), (void *)&memobj2);
-	ret = clSetKernelArg(kernel1, 2, sizeof(cl_mem), (void *)&memobj4);
+	ret = clSetKernelArg(kernel_pairs, 0, sizeof(cl_mem), (void *)&memobj_bodies);
+	ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs);
+	check(__LINE__, ret);
+
+	/* Set OpenCL Kernel Parameters */
+	ret = clSetKernelArg(kernel_bodies, 0, sizeof(cl_mem), (void *)&memobj_bodies);
+	ret = clSetKernelArg(kernel_bodies, 1, sizeof(cl_mem), (void *)&memobj_pairs);
+	ret = clSetKernelArg(kernel_bodies, 2, sizeof(cl_mem), (void *)&memobj_bodymaps);
+	ret = clSetKernelArg(kernel_bodies, 3, sizeof(cl_mem), (void *)&memobj_dt);
 	check(__LINE__, ret);
 
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
 
-	size_t global_size = 2;
+	size_t global_size = 4;
 	size_t local_size = 1;
 
-	for(int t = 1; t < num_step; t++)
+	for(int t = 1; t < NUM_STEPS; t++)
 	{
 		//cl_event event;
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
-				kernel0,
+				kernel_pairs,
 				1,
 				NULL,
 				&global_size,
@@ -216,7 +216,7 @@ int main()
 
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
-				kernel1,
+				kernel_bodies,
 				1,
 				NULL,
 				&global_size,
@@ -231,7 +231,7 @@ int main()
 		/* Store data for timestep */
 		ret = clEnqueueReadBuffer(
 				command_queue,
-				memobj1,
+				memobj_bodies,
 				CL_TRUE,
 				0,
 				u->num_bodies_ * sizeof(Body),
@@ -240,66 +240,27 @@ int main()
 				NULL,
 				NULL);
 		check(__LINE__, ret);
+
+		clFinish(command_queue);
 	}
 
 	//clWaitForEvents(1, &event);
 
 
-
-
 	/* Copy results from the memory buffer */
-	puts("read");
-	ret = clEnqueueReadBuffer(
-			command_queue,
-			memobj0,
-			CL_TRUE,
-			0,
-			MEM_SIZE * sizeof(char),
-			string,
-			0,
-			NULL,
-			NULL);
-	check(__LINE__, ret);
-
-
-	ret = clEnqueueReadBuffer(
-			command_queue,
-			memobj1,
-			CL_TRUE,
-			0,
-			u->num_bodies_ * sizeof(Body),
-			u->bodies,
-			0,
-			NULL,
-			NULL);
-	check(__LINE__, ret);
-
-	ret = clEnqueueReadBuffer(
-			command_queue,
-			memobj2,
-			CL_TRUE,
-			0,
-			u->num_pairs_ * sizeof(Pair),
-			u->pairs,
-			0,
-			NULL,
-			NULL);
-	check(__LINE__, ret);
-
 	/* Finalization */
 	ret = clFlush(command_queue);
 	ret = clFinish(command_queue);
 
-	ret = clReleaseKernel(kernel0);
-	ret = clReleaseKernel(kernel1);
+	ret = clReleaseKernel(kernel_pairs);
+	ret = clReleaseKernel(kernel_bodies);
 
 	ret = clReleaseProgram(program);
 
-	ret = clReleaseMemObject(memobj0);
-	ret = clReleaseMemObject(memobj1);
-	ret = clReleaseMemObject(memobj2);
-	ret = clReleaseMemObject(memobj3);
-	ret = clReleaseMemObject(memobj4);
+	ret = clReleaseMemObject(memobj_bodies);
+	ret = clReleaseMemObject(memobj_pairs);
+	ret = clReleaseMemObject(memobj_bodymaps);
+	ret = clReleaseMemObject(memobj_dt);
 
 	ret = clReleaseCommandQueue(command_queue);
 	ret = clReleaseContext(context);
@@ -315,12 +276,14 @@ int main()
 	printf("f = %f\n",
 			u->pairs[0].f);
 	printf("x = %f %f %f\n",
-			u->bodies[0].x[0],
-			u->bodies[0].x[1],
-			u->bodies[0].x[2]);
+			u->b(NUM_STEPS - 1)[0].x[0],
+			u->b(NUM_STEPS - 1)[0].x[1],
+			u->b(NUM_STEPS - 1)[0].x[2]);
 
 
-	universe_free(u);
+	u->write();
+
+	u->free();
 
 	return 0;
 }

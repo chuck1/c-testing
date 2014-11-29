@@ -1,4 +1,8 @@
 
+#define NUM_BODIES (100)
+#define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
+#define NUM_STEPS  (1000)
+
 struct Body
 {
 	float	x[3];

@@ -16,8 +16,6 @@ struct Pair
 		Pair(int a, int b): a_(a), b_(b) {}
 		int a_;
 		int b_;
-=======
->>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 };
 
 struct Universe
@@ -50,7 +48,6 @@ struct Universe
 			fread(bodies, sizeof(Body), num_step * num_bodies, fp);
 
 			fclose(fp);
-<<<<<<< HEAD
 
 		}
 
@@ -77,42 +74,6 @@ struct Universe
 			return &bodies[t * num_bodies + i];
 		}
 
-=======
-		}
-
-		void			setp(int t, int i, glm::vec3 && x)
-		{
-			bodies[t * num_bodies + i].p = x;
-		}
-		void			setv(int t, int i, glm::vec3 && x)
-		{
-			bodies[t * num_bodies + i].v = x;
-		}
-		void			setm(int t, int i, float && x)
-		{
-			bodies[t * num_bodies + i].m = x;
-		}
-		void			setr(int t, int i, float && x)
-		{
-			bodies[t * num_bodies + i].r = x;
-		}
-		void			setp(int t, int i, glm::vec3 const & x)
-		{
-			bodies[t * num_bodies + i].p = x;
-		}
-		void			setv(int t, int i, glm::vec3 const & x)
-		{
-			bodies[t * num_bodies + i].v = x;
-		}
-		void			setm(int t, int i, float const & x)
-		{
-			bodies[t * num_bodies + i].m = x;
-		}
-		void			setr(int t, int i, float const & x)
-		{
-			bodies[t * num_bodies + i].r = x;
-		}
->>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 		glm::vec3 const &	p(int t, int i) const
 		{
 			return bodies[t * num_bodies + i].p;
@@ -129,14 +90,10 @@ struct Universe
 		{
 			return bodies[t * num_bodies + i].r;
 		}
-<<<<<<< HEAD
 		bool const &		alive(int t, int i) const
 		{
 			return bodies[t * num_bodies + i].alive;
 		}
-
-=======
->>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 		glm::vec3 &		p(int t, int i)
 		{
 			return bodies[t * num_bodies + i].p;
@@ -153,7 +110,6 @@ struct Universe
 		{
 			return bodies[t * num_bodies + i].r;
 		}
-<<<<<<< HEAD
 		bool &			alive(int t, int i)
 		{
 			return bodies[t * num_bodies + i].alive;
@@ -161,27 +117,9 @@ struct Universe
 
 	private:
 		Body*		bodies;	
-		/*		glm::vec3*	bodies;
-				glm::vec3*	bodies;
-				float*		bodies;
-				float*		radius;*/
-=======
-
-	private:
-		Body*		bodies;	
-/*		glm::vec3*	bodies;
-		glm::vec3*	bodies;
-		float*		bodies;
-		float*		radius;*/
->>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
 	public:
 		int		num_bodies;
 		int		num_step;
 
 };
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> d01d9a711bebb92e0cc29e47bf901a6575265c77
