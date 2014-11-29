@@ -12,6 +12,8 @@
 #include "universe.h"
 
 float timestep = 100.0;
+float mass = 1e6;
+int num_step = 2;
 
 void check(int line, int ret)
 {
@@ -99,7 +101,7 @@ int main()
 
 	Universe* u = (Universe*)malloc(sizeof(Universe));
 	universe_alloc(u, NUM_BODIES);
-	universe_random(u);
+	universe_random(u, mass);
 
 	printf("x = %f %f %f\n",
 			u->bodies[0].x[0],
@@ -191,27 +193,27 @@ int main()
 	size_t global_size = 2;
 	size_t local_size = 1;
 
-	//cl_event event;
-	ret = clEnqueueNDRangeKernel(
-			command_queue,
-			kernel0,
-			1,
-			NULL,
-			&global_size,
-			&local_size,
-			0,
-			NULL,
-			NULL);//&event);
-	check(__LINE__, ret);
-
-	//clWaitForEvents(1, &event);
-
-	/* Execute "step_bodies" kernel */
-
-	clFinish(command_queue);
-
-	if(1)
+	for(int t = 1; t < num_step; t++)
 	{
+		//cl_event event;
+		ret = clEnqueueNDRangeKernel(
+				command_queue,
+				kernel0,
+				1,
+				NULL,
+				&global_size,
+				&local_size,
+				0,
+				NULL,
+				NULL);//&event);
+		check(__LINE__, ret);
+
+		//clWaitForEvents(1, &event);
+
+		/* Execute "step_bodies" kernel */
+
+		clFinish(command_queue);
+
 		ret = clEnqueueNDRangeKernel(
 				command_queue,
 				kernel1,
@@ -223,11 +225,27 @@ int main()
 				NULL,
 				NULL);//&event);
 		check(__LINE__, ret);
+
+		clFinish(command_queue);
+
+		/* Store data for timestep */
+		ret = clEnqueueReadBuffer(
+				command_queue,
+				memobj1,
+				CL_TRUE,
+				0,
+				u->num_bodies_ * sizeof(Body),
+				u->b(t),
+				0,
+				NULL,
+				NULL);
+		check(__LINE__, ret);
 	}
 
 	//clWaitForEvents(1, &event);
 
-	clFinish(command_queue);
+
+
 
 	/* Copy results from the memory buffer */
 	puts("read");

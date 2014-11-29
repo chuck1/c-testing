@@ -5,20 +5,27 @@
 
 struct Universe
 {
-	
+	Body*	b(int t)
+	{
+		return bodies + t * num_bodies_;
+	}
+
+
 	Body*	bodies;
-	Pair*	pairs;
+
+	BodyMap*	body_map;
+	Pair*		pairs;
 	
 	int	num_bodies_;
 	int	num_pairs_;
 };
 
-void universe_alloc(Universe* u, int num_bodies)
+void universe_alloc(Universe* u, int num_bodies, int num_steps)
 {
 	u->num_bodies_ = num_bodies;
 	u->num_pairs_ = (num_bodies * (num_bodies - 1)) / 2;
 
-	u->bodies = (Body*)malloc(sizeof(Body) * u->num_bodies_);
+	u->bodies = (Body*)malloc(sizeof(Body) * u->num_bodies_ * num_steps);
 	u->pairs = (Pair*)malloc(sizeof(Pair) * u->num_pairs_);
 
 	int k = 0;
@@ -54,19 +61,19 @@ float radius(float m)
 }
 
 
-void universe_random(Universe* u)
+void universe_random(Universe* u, float m)
 {
 	for(Body * b = u->bodies; b < (u->bodies + u->num_bodies_); b++)
 	{
-		b->x[0] = rand() % 1000;
-		b->x[1] = rand() % 1000;
-		b->x[2] = rand() % 1000;
+		b->x[0] = (float)(rand() % 1000);
+		b->x[1] = (float)(rand() % 1000);
+		b->x[2] = (float)(rand() % 1000);
 
 		b->v[0] = 0;
 		b->v[1] = 0;
 		b->v[2] = 0;
 
-		b->mass = 1e6;
+		b->mass = m;
 		b->radius = radius(b->mass);
 	}
 }

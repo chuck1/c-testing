@@ -1,13 +1,16 @@
 
 struct Body
 {
-	float x[3];
-	float v[3];
-	float mass;
-	float radius;
+	float	x[3];
+	float	v[3];
+	float	mass;
+	float	radius;
+};
 
-	int pair[NUM_BODIES-1];
-	float f_sign[NUM_BODIES-1];
+struct BodyMap
+{
+	int	pair[NUM_BODIES-1];
+	float	f_sign[NUM_BODIES-1];
 };
 
 struct Pair
