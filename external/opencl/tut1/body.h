@@ -5,7 +5,9 @@ struct Body
 	float v[3];
 	float mass;
 	float radius;
-	int pair;
+
+	int pair[NUM_BODIES-1];
+	float f_sign[NUM_BODIES-1];
 };
 
 struct Pair
