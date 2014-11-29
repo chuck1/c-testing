@@ -178,6 +178,12 @@ int main()
 	ret = clSetKernelArg(kernel0, 3, sizeof(cl_mem), (void *)&memobj3);
 	check(__LINE__, ret);
 
+	/* Set OpenCL Kernel Parameters */
+	ret = clSetKernelArg(kernel1, 0, sizeof(cl_mem), (void *)&memobj1);
+	ret = clSetKernelArg(kernel1, 1, sizeof(cl_mem), (void *)&memobj2);
+	ret = clSetKernelArg(kernel1, 2, sizeof(cl_mem), (void *)&memobj4);
+	check(__LINE__, ret);
+
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
@@ -185,7 +191,7 @@ int main()
 	size_t global_size = 2;
 	size_t local_size = 1;
 
-	cl_event event;
+	//cl_event event;
 	ret = clEnqueueNDRangeKernel(
 			command_queue,
 			kernel0,
@@ -195,17 +201,12 @@ int main()
 			&local_size,
 			0,
 			NULL,
-			&event);
+			NULL);//&event);
 	check(__LINE__, ret);
 
-	clWaitForEvents(1, &event);
+	//clWaitForEvents(1, &event);
 
 	/* Execute "step_bodies" kernel */
-	/* Set OpenCL Kernel Parameters */
-	ret = clSetKernelArg(kernel1, 0, sizeof(cl_mem), (void *)&memobj1);
-	ret = clSetKernelArg(kernel1, 1, sizeof(cl_mem), (void *)&memobj2);
-	ret = clSetKernelArg(kernel1, 2, sizeof(cl_mem), (void *)&memobj4);
-	check(__LINE__, ret);
 
 	ret = clEnqueueNDRangeKernel(
 			command_queue,
@@ -216,10 +217,12 @@ int main()
 			&local_size,
 			0,
 			NULL,
-			NULL);
+			NULL);//&event);
 	check(__LINE__, ret);
 
+	//clWaitForEvents(1, &event);
 
+	clFinish(command_queue);
 
 	/* Copy results from the memory buffer */
 	puts("read");
