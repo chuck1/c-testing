@@ -208,17 +208,22 @@ int main()
 
 	/* Execute "step_bodies" kernel */
 
-	ret = clEnqueueNDRangeKernel(
-			command_queue,
-			kernel1,
-			1,
-			NULL,
-			&global_size,
-			&local_size,
-			0,
-			NULL,
-			NULL);//&event);
-	check(__LINE__, ret);
+	clFinish(command_queue);
+
+	if(1)
+	{
+		ret = clEnqueueNDRangeKernel(
+				command_queue,
+				kernel1,
+				1,
+				NULL,
+				&global_size,
+				&local_size,
+				0,
+				NULL,
+				NULL);//&event);
+		check(__LINE__, ret);
+	}
 
 	//clWaitForEvents(1, &event);
 
@@ -289,6 +294,8 @@ int main()
 			u->pairs[0].u[0],
 			u->pairs[0].u[1],
 			u->pairs[0].u[2]);
+	printf("f = %f\n",
+			u->pairs[0].f);
 	printf("x = %f %f %f\n",
 			u->bodies[0].x[0],
 			u->bodies[0].x[1],

@@ -9,8 +9,8 @@ struct Body
 	float mass;
 	float radius;
 
-	int pair[NUM_BODIES];
-	float f_sign[NUM_BODIES];
+	int pair[NUM_BODIES - 1];
+	float f_sign[NUM_BODIES - 1];
 };
 
 struct Pair

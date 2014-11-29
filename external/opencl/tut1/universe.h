@@ -66,7 +66,7 @@ void universe_random(Universe* u)
 		b->v[1] = 0;
 		b->v[2] = 0;
 
-		b->mass = 1e5;
+		b->mass = 1e6;
 		b->radius = radius(b->mass);
 	}
 }
