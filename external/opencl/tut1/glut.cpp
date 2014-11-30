@@ -164,7 +164,7 @@ void RenderObjects2(int t)
 
 	for(int i = 0; i < u.num_bodies_; i++)
 	{
-		//if(!u.b(t,i).alive) continue;
+		if(!u.b(t,i).alive) continue;
 		
 		glPushMatrix();
 		glTranslatef(
@@ -198,7 +198,7 @@ void display(void)
 	// Render the scene
 	RenderObjects2(ct);
 	ct += g_t_skip;
-	if(ct > u.num_steps_) ct = 0;
+	if(ct >= u.num_steps_) ct = 0;
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();

@@ -36,6 +36,19 @@ struct Universe
 		int p[num_bodies];
 		for(int i = 0; i < num_bodies; i++) p[i] = 0;
 
+		
+		for(int i = 0; i < num_bodies_; i++)
+		{
+			bodies[i].alive = 1;
+			bodies[i].num_collisions = 0;
+		}
+		for(int i = 0; i < num_pairs_; i++)
+		{
+			pairs[i].alive = 1;
+			pairs[i].collision = 0;
+		}
+
+
 		for(int i = 0; i < num_bodies; i++)
 		{
 			for(int j = i + 1; j < num_bodies; j++)
@@ -60,15 +73,31 @@ struct Universe
 
 	void		random(float m)
 	{
+		int w = 1000;
+		
+		// universe mass
+		float umass = num_bodies_ * m;
+		
 		for(Body * b = bodies; b < (bodies + num_bodies_); b++)
 		{
-			b->x[0] = (float)(rand() % 1000);
-			b->x[1] = (float)(rand() % 1000);
-			b->x[2] = (float)(rand() % 1000);
+			b->x[0] = (float)(rand() % w) - (float)w * 0.5;
+			b->x[1] = (float)(rand() % w) - (float)w * 0.5;
+			b->x[2] = (float)(rand() % w) - (float)w * 0.5;
+			
+			float r = sqrt(b->x[0] * b->x[0] + b->x[1] * b->x[1] + b->x[2] * b->x[2]);
 
+			float rxz = sqrt(b->x[0] * b->x[0] + b->x[2] * b->x[2]);
+			
+			float v = sqrt(6.67384E-11 * umass / r) * 0.5;
+
+/*			
 			b->v[0] = 0;
 			b->v[1] = 0;
 			b->v[2] = 0;
+			*/
+			b->v[0] = -b->x[2] / rxz * v;
+			b->v[1] = 0;
+			b->v[2] = b->x[0] / rxz * v;
 
 			b->mass = m;
 			b->radius = radius(b->mass);

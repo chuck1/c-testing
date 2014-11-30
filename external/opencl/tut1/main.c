@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <chrono>
 #include <CL/cl.h>
 
 #define NUM_FILE (1)
@@ -109,11 +109,14 @@ int main()
 	cl_mem memobj_bodies = NULL;
 	cl_mem memobj_bodymaps = NULL;
 	cl_mem memobj_pairs = NULL;
+	cl_mem memobj_flag_multi_coll = NULL;
 	
 	cl_program program = NULL;
 
 	cl_kernel kernel_pairs = NULL;
 	cl_kernel kernel_bodies = NULL;
+	cl_kernel kernel_collisions = NULL;
+	cl_kernel kernel_clear_bodies_num_collisions = NULL;
 
 	cl_platform_id platform_id = NULL;
 	cl_uint ret_num_devices;
@@ -127,11 +130,25 @@ int main()
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
 	check(__LINE__, ret);
 
+	/* Get Device Info */
 	cl_uint max_compute_units;
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, NULL);
+	size_t max_work_group_size;
+	cl_uint max_work_item_dimensions;
+	size_t max_work_item_sizes[16];
+	
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS,   sizeof(cl_uint), &max_compute_units, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &max_work_group_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &max_work_item_dimensions, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_SIZES, max_work_item_dimensions * sizeof(size_t), &max_work_item_sizes, NULL);
 
 	printf("gpu:\n");
-	printf("max_compute_units = %i\n", max_compute_units);
+	printf("max_compute_units        = %i\n", max_compute_units);
+	printf("max_work_group_size      = %i\n", (int)max_work_group_size);
+	printf("max_work_item_dimensions = %i\n", max_work_item_dimensions);
+	for(int i = 0; i < max_work_item_dimensions; i++)
+	{
+		printf("max_work_item_sizes[%i] = %i\n", i, (int)max_work_item_sizes[i]);
+	}
 
 	/* Create OpenCL context */
 	puts("create context");
@@ -148,26 +165,39 @@ int main()
 	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(Body), NULL, &ret);
 	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
 	memobj_bodymaps = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(BodyMap), NULL, &ret);
+	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
 	check(__LINE__, ret);
-	
+
+	unsigned int flag_multi_coll = 0;
+
 	/* Write to buffers */
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodymaps, CL_TRUE, 0, u->num_bodies_ * sizeof(BodyMap), u->bodymaps, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
-	
+
 	/* Create Kernel Program from the source */
 	program = create_program_from_file(context, device_id);
 
 	/* Create OpenCL Kernel */
 	kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
 	kernel_bodies = clCreateKernel(program, "step_bodies", &ret); check(__LINE__, ret);
+	kernel_collisions = clCreateKernel(program, "step_collisions", &ret); check(__LINE__, ret);
+	kernel_clear_bodies_num_collisions = clCreateKernel(program, "clear_bodies_num_collisions", &ret); check(__LINE__, ret);
 
 	/* Set OpenCL Kernel Parameters */
 	ret = clSetKernelArg(kernel_pairs, 0, sizeof(cl_mem), (void *)&memobj_bodies);
-	ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs); check(__LINE__, ret);
+	ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs);
+	check(__LINE__, ret);
+
+	/* Set OpenCL Kernel Parameters */
+	ret = clSetKernelArg(kernel_collisions, 0, sizeof(cl_mem), (void *)&memobj_bodies);
+	ret = clSetKernelArg(kernel_collisions, 1, sizeof(cl_mem), (void *)&memobj_pairs);
+	ret = clSetKernelArg(kernel_collisions, 2, sizeof(cl_mem), (void *)&memobj_flag_multi_coll);
+	check(__LINE__, ret);
 
 	/* Set OpenCL Kernel Parameters */
 	ret = clSetKernelArg(kernel_bodies, 0, sizeof(cl_mem), (void *)&memobj_bodies);
@@ -175,67 +205,101 @@ int main()
 	ret = clSetKernelArg(kernel_bodies, 2, sizeof(cl_mem), (void *)&memobj_bodymaps);
 	ret = clSetKernelArg(kernel_bodies, 3, sizeof(float), (void *)&timestep); check(__LINE__, ret);
 
+	ret = clSetKernelArg(kernel_clear_bodies_num_collisions, 0, sizeof(cl_mem), (void *)&memobj_bodies);
+
 	/* Execute OpenCL Kernel */
 
 	puts("execute");
 
-	size_t global_size = 4;
-	size_t local_size = 1;
+	size_t global_size = 128;
+	size_t local_size = 4;
+
+	printf("global size = %i\n", (int)global_size);
+	printf("local size  = %i\n", (int)local_size);
+
+	auto program_time_start = std::chrono::system_clock::now();
 
 	for(int t = 1; t < NUM_STEPS; t++)
 	{
-		if((t % (NUM_STEPS / 10)) == 0) printf("t = %5i\n", t);
-		
-		ret = clEnqueueNDRangeKernel(
-				command_queue,
-				kernel_pairs,
-				1,
-				NULL,
-				&global_size,
-				&local_size,
-				0,
-				NULL,
-				NULL);
+		if((t % (NUM_STEPS / 100)) == 0) printf("t = %5i\n", t);
+
+		global_size = 128;
+		local_size = 4;
+
+		ret = clEnqueueNDRangeKernel(command_queue, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
 		clFinish(command_queue);
 		check(__LINE__, ret);
-		
+
 		/* Execute "step_bodies" kernel */
-		ret = clEnqueueNDRangeKernel(
-				command_queue,
-				kernel_bodies,
-				1,
-				NULL,
-				&global_size,
-				&local_size,
-				0,
-				NULL,
-				NULL);
+		ret = clEnqueueNDRangeKernel( command_queue, kernel_bodies, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
 		clFinish(command_queue);
 		check(__LINE__, ret);
+
+		/* Execute "step_collisions" kernel */
+		global_size = 128;
+		local_size = 4;
+
+		ret = clEnqueueNDRangeKernel(command_queue, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		
+		check(__LINE__, ret);
+		if(ret) break;
+		
+		clFinish(command_queue); check(__LINE__, ret);
+
+		/* Read flag_multi_coll */
+		ret = clEnqueueReadBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		clFinish(command_queue); check(__LINE__, ret);
+		
+		/* Execute "clear_bodies_num_collisions" kernel */
+		global_size = 128;
+		local_size = 4;
+
+		ret = clEnqueueNDRangeKernel(command_queue, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		check(__LINE__, ret);
+		if(ret) break;
+		
+		clFinish(command_queue); check(__LINE__, ret);
+	
+		if(flag_multi_coll)
+		{
+			puts("resolve multi_coll");
+
+			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
+			global_size = 1;
+			local_size = 1;
+			
+			ret = clEnqueueNDRangeKernel(command_queue, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+			
+			check(__LINE__, ret);
+			if(ret) break;
+			
+			clFinish(command_queue); check(__LINE__, ret);
+		}
+
+		/* Reset flag_multi_coll */
+		flag_multi_coll = 0;
+
+		ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		clFinish(command_queue); check(__LINE__, ret);
+		
 
 		/* Store data for timestep */
-		ret = clEnqueueReadBuffer(
-				command_queue,
-				memobj_bodies,
-				CL_TRUE,
-				0,
-				u->num_bodies_ * sizeof(Body),
-				u->b(t),
-				0,
-				NULL,
-				NULL);
+		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, u->num_bodies_ * sizeof(Body), u->b(t), 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue);
-		check(__LINE__, ret);
+		clFinish(command_queue); check(__LINE__, ret);
 	}
+
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
+
+	printf("duration = %i milliseconds\n", (int)duration.count());
 
 	/* Finalization */
 	ret = clFlush(command_queue);check(__LINE__, ret);
@@ -255,17 +319,17 @@ int main()
 
 	/* Display Universe Data */
 	/*
-	printf("u = %f %f %f\n",
-			u->pairs[0].u[0],
-			u->pairs[0].u[1],
-			u->pairs[0].u[2]);
-	printf("f = %f\n",
-			u->pairs[0].f);
-	printf("x = %f %f %f\n",
-			u->b(NUM_STEPS - 1, 0).x[0],
-			u->b(NUM_STEPS - 1, 0).x[1],
-			u->b(NUM_STEPS - 1, 0).x[2]);
-	*/
+	   printf("u = %f %f %f\n",
+	   u->pairs[0].u[0],
+	   u->pairs[0].u[1],
+	   u->pairs[0].u[2]);
+	   printf("f = %f\n",
+	   u->pairs[0].f);
+	   printf("x = %f %f %f\n",
+	   u->b(NUM_STEPS - 1, 0).x[0],
+	   u->b(NUM_STEPS - 1, 0).x[1],
+	   u->b(NUM_STEPS - 1, 0).x[2]);
+	   */
 	puts("Write");
 	u->write();
 

@@ -1,7 +1,12 @@
 
-#define NUM_BODIES (100)
+#define NUM_BODIES (1024)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
-#define NUM_STEPS  (10000)
+#define NUM_STEPS  (20000)
+
+#define GLOBAL_SIZE (128)
+#define LOCAL_SIZE (4)
+#define NUM_GROUPS (GLOBAL_SIZE / LOCAL_SIZE)
+
 
 struct Body
 {
@@ -9,6 +14,10 @@ struct Body
 	float	v[3];
 	float	mass;
 	float	radius;
+
+	int	alive;
+
+	int	num_collisions;
 };
 
 struct BodyMap
@@ -25,5 +34,8 @@ struct Pair
 	float	u[3];
 	float	d;
 	float	f;
+
+	int	alive;
+	int	collision;
 };
 
