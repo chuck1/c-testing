@@ -24,7 +24,7 @@ __kernel void clear_bodies_num_collisions(
 __kernel void step_bodies(
 		    __global struct Body * bodies,
 		    __global struct Pair * pairs,
-		    __global struct BodyMap * bodymaps,
+		    __global struct Map * map,
 		    float dt
 		   )
 {
@@ -47,24 +47,27 @@ __kernel void step_bodies(
 
 	/* copy data for work group */
 	//__local struct Pair local_pairs[NUM_PAIRS];
-	__local struct BodyMap local_bodymaps[NUM_BODIES / NUM_GROUPS];
+	//__local struct BodyMap local_bodymaps[NUM_BODIES / NUM_GROUPS];
 	
 	//event_t e0 = async_work_group_copy((__local char *)local_pairs, (__global char *)pairs, NUM_PAIRS * sizeof(struct Pair), 0);
 	//wait_group_events(1, &e0);
 
-	event_t e1 = async_work_group_copy((__local char *)local_bodymaps, (__global char *)(bodymaps + i_group0), (i_group1 - i_group0) * sizeof(struct BodyMap), 0);
-	wait_group_events(1, &e1);
+	//event_t e1 = async_work_group_copy((__local char *)local_bodymaps, (__global char *)(bodymaps + i_group0), (i_group1 - i_group0) * sizeof(struct BodyMap), 0);
+	//wait_group_events(1, &e1);
 
 	/* */
 	float f[3];
 
-	__local struct BodyMap * pbm = 0;
+	//__local struct BodyMap * pbm = 0;
+	//__global struct BodyMap * pbm = 0;
 
 	__global struct Body * pb = 0;
 	
 	for(int b = i_local0; b < i_local1; b++)
 	{
-		pbm = local_bodymaps + b;
+		//pbm = local_bodymaps + b;
+		//pbm = bodymaps + b;
+
 		pb = bodies + b;
 	
 		if(!pb->alive) continue;
@@ -73,16 +76,25 @@ __kernel void step_bodies(
 		f[1] = 0;
 		f[2] = 0;
 		
-		for(int p = 0; p < (NUM_BODIES - 1); p++)
+		for(int i = 0; i < NUM_BODIES; i++)
 		{
-			//__local struct Pair * pp = &local_pairs[pbm->pair[p]];
-			__global struct Pair * pp = &pairs[pbm->pair[p]];
+			if(b == i) continue;
 
+			float s = 1.0;
+		
+			//__local struct Pair * pp = &local_pairs[pbm->pair[p]];
+			__global struct Pair * pp = pairs + map->pair[b][i];
+			
 			if(!pp->alive) continue;
 
-			f[0] += pp->u[0] * pp->f * pbm->f_sign[p];
-			f[1] += pp->u[1] * pp->f * pbm->f_sign[p];
-			f[2] += pp->u[2] * pp->f * pbm->f_sign[p];
+			if(pp->b0 == b)
+			{
+				s = - 1.0;
+			}
+
+			f[0] += pp->u[0] * pp->f * s;
+			f[1] += pp->u[1] * pp->f * s;
+			f[2] += pp->u[2] * pp->f * s;
 		}
 		
 		pb->v[0] += dt * f[0] / pb->mass;
@@ -101,7 +113,6 @@ __kernel void step_pairs(
 		    )
 {
 	/* work group */
-	
 	int local_block = NUM_PAIRS / get_num_groups(0);
 	
 	int i_group0 = get_group_id(0) * local_block;
@@ -110,7 +121,6 @@ __kernel void step_pairs(
 	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_PAIRS;
 	
 	/* work item */
-	
 	int block = (i_group1 - i_group0) / get_local_size(0);
 	
 	int i_local0 = i_group0 + get_local_id(0) * block;
@@ -176,35 +186,31 @@ __kernel void step_pairs(
 
 }
 
+/* dont use marcos here for global_size etc. */
 __kernel void step_collisions(
 		    __global struct Body* bodies, /* readonly */
 		    __global struct Pair* pairs,
 		    __global int * flag_multi_coll
 		    )
 {
-	/* global index */
+	/* work group */
+	int local_block = NUM_PAIRS / get_num_groups(0);
+	
+	int i_group0 = get_group_id(0) * local_block;
+	int i_group1 = i_group0 + local_block;
+	
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_PAIRS;
+	
+	/* work item */
+	int block = (i_group1 - i_group0) / get_local_size(0);
+	
+	int i_local0 = i_group0 + get_local_id(0) * block;
+	int i_local1 = i_local0 + block;
+	
+	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
 
-	int block = NUM_PAIRS / get_global_size(0);
-	
-	int p0 = get_global_id(0) * block;
-	int p1 = p0 + block;
-	
-	if(get_global_id(0) == (get_global_size(0) - 1)) p1 = NUM_PAIRS;
-
-	/* local index */
-
-	/*
-	int local_block = (p1 - p0) / get_local_size(0);
-	
-	int p_local0 = p0 + get_local_id(0) * local_block;
-	int p_local1 = p_local0 + local_block;
-	
-	if(get_local_id(0) == (get_local_size(0) - 1)) p_local1 = p1;
-	*/
-	//barrier(CLK_LOCAL_MEM_FENCE);
-	
-	//for(int p = p_local0; p < p_local1; p++)
-	for(int p = p0; p < p1; p++)
+	/* */
+	for(int p = i_local0; p < i_local1; p++)
 	{
 		__global struct Pair* pp = pairs + p;
 

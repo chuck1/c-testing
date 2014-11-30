@@ -27,15 +27,11 @@ struct Universe
 		num_pairs_ = (num_bodies * (num_bodies - 1)) / 2;
 
 		bodies = (Body*)malloc(sizeof(Body) * num_bodies_ * num_steps_);
-		bodymaps = (BodyMap*)malloc(sizeof(BodyMap) * num_bodies_);
 		pairs = (Pair*)malloc(sizeof(Pair) * num_pairs_);
 
-		int k = 0;
-
 		// pair index
-		int p[num_bodies];
-		for(int i = 0; i < num_bodies; i++) p[i] = 0;
-
+		int k = 0;
+		
 		
 		for(int i = 0; i < num_bodies_; i++)
 		{
@@ -56,15 +52,9 @@ struct Universe
 				Pair * pp = pairs + k;
 				pp->b0 = i;
 				pp->b1 = j;
-
-				bodymaps[i].pair[p[i]] = k;
-				bodymaps[j].pair[p[j]] = k;
-
-				bodymaps[i].f_sign[p[i]] = -1.0;
-				bodymaps[j].f_sign[p[j]] =  1.0;
-
-				p[i]++;
-				p[j]++;
+				
+				map.pair[i][j] = k;
+				map.pair[j][i] = k;
 
 				k++;
 			}
@@ -106,7 +96,6 @@ struct Universe
 	void		free()
 	{
 		::free(bodies);
-		::free(bodymaps);
 		::free(pairs);
 	}
 	void write()
@@ -138,7 +127,7 @@ struct Universe
 
 	Body*		bodies;
 
-	BodyMap*	bodymaps;
+	Map		map;
 	Pair*		pairs;
 
 	int		num_bodies_;

@@ -1,3 +1,5 @@
+#ifndef BODY_H
+#define BODY_H
 
 #define NUM_BODIES (1024)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
@@ -15,15 +17,13 @@ struct Body
 	float	mass;
 	float	radius;
 
-	int	alive;
-
-	int	num_collisions;
+	unsigned char	alive;
+	unsigned char	num_collisions;
 };
 
-struct BodyMap
+struct Map
 {
-	int	pair[NUM_BODIES-1];
-	float	f_sign[NUM_BODIES-1];
+	unsigned int	pair[NUM_BODIES][NUM_BODIES];
 };
 
 struct Pair
@@ -35,7 +35,8 @@ struct Pair
 	float	d;
 	float	f;
 
-	int	alive;
-	int	collision;
+	unsigned char	alive;
+	unsigned char	collision;
 };
 
+#endif
