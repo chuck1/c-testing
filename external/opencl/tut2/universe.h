@@ -1,13 +1,13 @@
+#ifndef UNIVERSE_H
+#define UNIVERSE_H
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "body.h"
 
-float radius(float m)
-{
-	return pow(m / 900.0 * 3.0 / 4.0 / M_PI, 0.3333333333);
-}
+float radius(float m);
 
 
 struct Universe
@@ -53,8 +53,8 @@ struct Universe
 				pp->b0 = i;
 				pp->b1 = j;
 				
-				map.pair[i][j] = k;
-				map.pair[j][i] = k;
+				map.pair[i * NUM_BODIES + j] = k;
+				map.pair[i * NUM_BODIES + j] = k;
 
 				k++;
 			}
@@ -100,7 +100,7 @@ struct Universe
 	}
 	void write()
 	{
-		FILE* fp = fopen("build/data.dat", "w");
+		FILE* fp = fopen("data.dat", "w");
 
 		fwrite(&num_bodies_, sizeof(int), 1, fp);
 		fwrite(&num_steps_, sizeof(int), 1, fp);
@@ -111,7 +111,7 @@ struct Universe
 	}
 	int read()
 	{
-		FILE* fp = fopen("build/data.dat", "r");
+		FILE* fp = fopen("data.dat", "r");
 		if(!fp) return 1;
 		fread(&num_bodies_, sizeof(int), 1, fp);
 		fread(&num_steps_, sizeof(int), 1, fp);
@@ -136,4 +136,4 @@ struct Universe
 };
 
 
-
+#endif

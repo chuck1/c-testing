@@ -3,25 +3,12 @@
 #include <chrono>
 #include <CL/cl.h>
 
-#define NUM_FILE (1)
-#define MAX_SOURCE_SIZE (0x100000)
 
 #include "universe.h"
+#include "other.hpp"
 
 float timestep = 100.0;
 float mass = 1e6;
-
-void check(int line, int ret)
-{
-	if(ret)
-	{
-		printf("%i: %i\n", line, ret);
-		//exit(1);
-	}
-}
-
-
-
 
 
 cl_device_id device_id = NULL;
@@ -46,125 +33,6 @@ cl_uint ret_num_platforms;
 cl_int ret;
 
 
-
-
-
-
-
-cl_program create_program_from_file(cl_context context, cl_device_id device_id)
-{
-
-	cl_program program = NULL;
-	cl_int ret;
-
-
-	FILE *fp;
-	char const * fileName[NUM_FILE] = {"./build/kernel.cl"};
-	char *source_str[NUM_FILE];
-	size_t source_size[NUM_FILE];
-
-	/* Load the source code containing the kernel*/
-
-	for(int i = 0; i < NUM_FILE; i++)
-	{
-		fp = fopen(fileName[i], "r");
-		if (!fp) {
-			fprintf(stderr, "Failed to load kernel.\n");
-			exit(1);
-		}
-		source_str[i] = (char*)malloc(MAX_SOURCE_SIZE);
-		source_size[i] = fread(source_str[i], 1, MAX_SOURCE_SIZE, fp);
-
-		fclose(fp);
-	}
-
-	program = clCreateProgramWithSource(
-			context,
-			NUM_FILE,
-			(const char **)source_str,
-			(const size_t *)source_size, &ret);
-	check(__LINE__, ret);
-
-
-
-	for(int i = 0; i < NUM_FILE; i++) free(source_str[i]);
-
-	/* Build Kernel Program */
-	ret = clBuildProgram(
-			program,
-			1,
-			&device_id,
-			"-I.",
-			NULL, NULL);
-	//eck(__LINE__, ret);
-
-	cl_build_status status;
-	size_t logSize;
-	char* programLog;
-
-	// build failed
-	if (ret != CL_SUCCESS) {
-
-		// check build error and build status first
-		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS,
-				sizeof(cl_build_status), &status, NULL);
-
-		// check build log
-		clGetProgramBuildInfo(program, device_id,
-				CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
-
-		programLog = (char*) calloc (logSize+1, sizeof(char));
-
-		clGetProgramBuildInfo(program, device_id,
-				CL_PROGRAM_BUILD_LOG, logSize+1, programLog, NULL);
-
-		printf("Build failed; error=%d, status=%d, programLog:nn%s",
-				ret, status, programLog);
-
-		free(programLog);
-	}
-
-	return program;
-}
-int		get_device_info(cl_device_id device_id)
-{
-	cl_int ret;
-
-	cl_uint max_compute_units;
-	size_t max_work_group_size;
-	cl_uint max_work_item_dimensions;
-	size_t max_work_item_sizes[16];
-	cl_ulong local_mem_size;
-
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &max_work_group_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &max_work_item_dimensions, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_SIZES, max_work_item_dimensions * sizeof(size_t), &max_work_item_sizes, NULL);
-
-	printf("gpu:\n");
-	printf("%32s = %i\n", "max_compute_units", max_compute_units);
-	printf("%32s = %i\n", "local_mem_size", (int)local_mem_size);
-	printf("%32s = %i\n", "max_work_group_size", (int)max_work_group_size);
-	printf("%32s = %i\n", "max_work_item_dimensions", max_work_item_dimensions);
-	for(int i = 0; i < max_work_item_dimensions; i++)
-	{
-		printf("%29s[%i] = %i\n", "max_work_item_sizes", i, (int)max_work_item_sizes[i]);
-	}
-
-	printf("setup:\n");
-	printf("%32s = %i\n", "global size", GLOBAL_SIZE);
-	printf("%32s = %i\n", "local size", LOCAL_SIZE);
-	printf("%32s = %i\n", "num groups", NUM_GROUPS);
-
-	printf("problem:\n");
-	printf("%32s = %i\n", "num bodies", NUM_BODIES);
-	printf("%32s = %i\n", "bodies per group", NUM_BODIES / NUM_GROUPS);
-	printf("%32s = %i\n", "bodies per work item", NUM_BODIES / NUM_GROUPS / LOCAL_SIZE);
-	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
-	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
-	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
-}
 int		cleanup()
 {
 	cl_int ret;
@@ -172,11 +40,15 @@ int		cleanup()
 
 	ret = clReleaseKernel(kernel_pairs);check(__LINE__, ret);
 	ret = clReleaseKernel(kernel_bodies);check(__LINE__, ret);
+	ret = clReleaseKernel(kernel_collisions);check(__LINE__, ret);
+	ret = clReleaseKernel(kernel_clear_bodies_num_collisions);check(__LINE__, ret);
 
 	ret = clReleaseProgram(program);check(__LINE__, ret);
 
 	ret = clReleaseMemObject(memobj_bodies);check(__LINE__, ret);
 	ret = clReleaseMemObject(memobj_pairs);check(__LINE__, ret);
+	ret = clReleaseMemObject(memobj_map);check(__LINE__, ret);
+	ret = clReleaseMemObject(memobj_flag_multi_coll);check(__LINE__, ret);
 
 	ret = clReleaseCommandQueue(command_queue);check(__LINE__, ret);
 	ret = clReleaseContext(context);check(__LINE__, ret);
@@ -206,7 +78,7 @@ int main()
 
 	/* Create OpenCL context */
 	puts("create context");
-	context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+	context = clCreateContext(NULL, 1, &device_id, notify_context, NULL, &ret);
 	check(__LINE__, ret);
 
 	/* Create Command Queue */
@@ -263,6 +135,8 @@ int main()
 
 	/* Execute OpenCL Kernel */
 
+	get_kernel_info(kernel_pairs, device_id);
+
 	puts("execute");
 
 	size_t global_size = GLOBAL_SIZE;
@@ -272,6 +146,8 @@ int main()
 
 	for(int t = 1; t < NUM_STEPS; t++)
 	{
+		puts("loop");
+
 		if((t % (NUM_STEPS / 100)) == 0) printf("t = %5i\n", t);
 
 		/* Execute "step_pairs" kernel */
@@ -301,7 +177,11 @@ int main()
 
 		/* Read flag_multi_coll */
 		ret = clEnqueueReadBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		if(ret) break;
+		
 		clFinish(command_queue); check(__LINE__, ret);
+
+		
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		ret = clEnqueueNDRangeKernel(command_queue, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);

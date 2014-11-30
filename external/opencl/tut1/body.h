@@ -1,9 +1,9 @@
-#ifndef BODY_H
-#define BODY_H
+//#ifndef BODY_H
+//#define BODY_H
 
 #define NUM_BODIES (1024)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
-#define NUM_STEPS  (20000)
+#define NUM_STEPS  (1000)
 
 #define GLOBAL_SIZE (128)
 #define LOCAL_SIZE (4)
@@ -39,4 +39,4 @@ struct Pair
 	unsigned char	collision;
 };
 
-#endif
+//#endif
