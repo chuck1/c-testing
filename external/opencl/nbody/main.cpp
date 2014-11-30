@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <chrono>
 #include <CL/cl.h>
-
+#include <ctime>
 
 #include "universe.h"
 #include "other.hpp"
 
 float timestep = 100.0;
 float mass = 1e6;
+unsigned int num_steps = 1000;
 
 
 cl_device_id device_id = NULL;
@@ -55,21 +56,57 @@ int		cleanup()
 
 	return ret;
 }
-int main()
+int main(int ac, char ** av)
 {
 	puts("Create Universe");
 
-	Universe* u = (Universe*)malloc(sizeof(Universe));
-	u->alloc(NUM_BODIES, NUM_STEPS);
-	u->random(mass);
+	Universe* u = new Universe;
 
-	//printf("x = %f %f %f\n", u->bodies[0].x[0], u->bodies[0].x[1], u->bodies[0].x[2]);
+	if(ac == 2)
+	{
+		u->read(av[1], num_steps);
+	}
+	else if(ac == 1)
+	{
+		time_t rawtime;
+		tm * timeinfo;
+		
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		
+		strftime(u->name_, 80, "%Y_%M_%d_%H_%M_%S", timeinfo);
+		
+		printf("%s\n", u->name_);
 
+		u->alloc(NUM_BODIES, num_steps);
+		//u->random(mass);
+		u->spin(mass);
+	}
+	else
+	{
+		exit(1);
+	}
 
 
 	/* Get Platform and Device Info */
 	puts("Get Platform and Device Info");
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
+	
+	if(ret)
+	{
+		// CPU
+		u->solve();
+
+		u->write();
+
+		exit(0);
+	}
+
+	//printf("x = %f %f %f\n", u->bodies[0].x[0], u->bodies[0].x[1], u->bodies[0].x[2]);
+
+
+	/* Get Platform and Device Info */
+
 	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices); check(__LINE__, ret);
 
 	/* Get Device Info */
@@ -98,8 +135,8 @@ int main()
 	/* Write to buffers */
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs, 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &u->map, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs_, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &u->map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
@@ -143,11 +180,11 @@ int main()
 
 	auto program_time_start = std::chrono::system_clock::now();
 
-	for(int t = 1; t < NUM_STEPS; t++)
+	for(int t = 1; t < num_steps; t++)
 	{
 		puts("loop");
 
-		if((t % (NUM_STEPS / 100)) == 0) printf("t = %5i\n", t);
+		if((t % (num_steps / 10)) == 0) printf("t = %5i\n", t);
 
 		/* Execute "step_pairs" kernel */
 
@@ -177,10 +214,10 @@ int main()
 		/* Read flag_multi_coll */
 		ret = clEnqueueReadBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 		if(ret) break;
-		
+
 		clFinish(command_queue); check(__LINE__, ret);
 
-		
+
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		ret = clEnqueueNDRangeKernel(command_queue, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
@@ -235,7 +272,7 @@ int main()
 		u->free();
 		return 1;
 	}
-	
+
 	ret = clFinish(command_queue);check(__LINE__, ret);
 
 	ret = cleanup();

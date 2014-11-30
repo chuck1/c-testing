@@ -1,9 +1,8 @@
 #ifndef BODY_H
 #define BODY_H
 
-#define NUM_BODIES (256)
+#define NUM_BODIES (512)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
-#define NUM_STEPS  (1000)
 
 #define GLOBAL_SIZE (128)
 #define LOCAL_SIZE (8)
@@ -12,6 +11,8 @@
 
 struct Body
 {
+	Body(): x{0,0,0}, v{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0) {}
+	
 	float	x[3]; // 4 * 3 = 12
 	float	v[3]; // 4 * 3 = 12
 	float	mass; // 4
@@ -23,7 +24,6 @@ struct Body
 	
 	// 40
 	
-	char		fill[64-40];
 };
 
 struct Map
@@ -33,6 +33,8 @@ struct Map
 
 struct Pair
 {
+	Pair(): b0(0), b1(0), u{0,0,0}, d(0), f(0), alive(1), collision(0) {}
+
 	int	b0; // 4
 	int	b1; // 4
 	
@@ -47,7 +49,6 @@ struct Pair
 
 	// 36
 	
-	char		fill[64-36];
 };
 
 #endif

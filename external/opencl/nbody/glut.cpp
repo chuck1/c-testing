@@ -8,6 +8,7 @@ Universe u;
 
 glm::vec3 body_center;
 glm::vec3 body_extent;
+glm::vec3 body_std;
 
 void print(glm::vec3 v)
 {
@@ -22,9 +23,9 @@ glm::vec3 body_max()
 	
 	for(int i = 0; i < u.num_bodies_; i++)
 	{
-		e.x = std::max(e.x, u.b(0, i).x[0]);
-		e.y = std::max(e.y, u.b(0, i).x[1]);
-		e.z = std::max(e.z, u.b(0, i).x[2]);
+		e.x = std::max(e.x, u.b(0, i)->x[0]);
+		e.y = std::max(e.y, u.b(0, i)->x[1]);
+		e.z = std::max(e.z, u.b(0, i)->x[2]);
 	}
 
 	return e;
@@ -36,9 +37,9 @@ glm::vec3 body_min()
 	
 	for(int i = 0; i < u.num_bodies_; i++)
 	{
-		e.x = std::min(e.x, u.b(0, i).x[0]);
-		e.y = std::min(e.y, u.b(0, i).x[1]);
-		e.z = std::min(e.z, u.b(0, i).x[2]);
+		e.x = std::min(e.x, u.b(0, i)->x[0]);
+		e.y = std::min(e.y, u.b(0, i)->x[1]);
+		e.z = std::min(e.z, u.b(0, i)->x[2]);
 	}
 
 	return e;
@@ -87,8 +88,11 @@ static GLfloat g_nearPlane = 1;
 static GLfloat g_farPlane = 5000;
 static int g_Width = 600;                          // Initial window width
 static int g_Height = 600;                         // Initial window height
+static int g_xClick = 0;
 static int g_yClick = 0;
 static float g_lightPos[4] = { 10, 10, -100, 1 };  // Position of light
+static float g_yaw = 0.0;
+static float g_pitch = 0.0;
 #ifdef _WIN32
 static DWORD last_idle_time;
 #else
@@ -164,15 +168,15 @@ void RenderObjects2(int t)
 
 	for(int i = 0; i < u.num_bodies_; i++)
 	{
-		if(!u.b(t,i).alive) continue;
+		if(!u.b(t,i)->alive) continue;
 		
 		glPushMatrix();
 		glTranslatef(
-				u.b(t, i).x[0],
-				u.b(t, i).x[1],
-				u.b(t, i).x[2]);
+				u.b(t, i)->x[0],
+				u.b(t, i)->x[1],
+				u.b(t, i)->x[2]);
 
-		glutSolidSphere(u.b(t, i).radius, 8, 8);
+		glutSolidSphere(u.b(t, i)->radius, 8, 8);
 		glPopMatrix();
 	}
 
@@ -187,18 +191,30 @@ void display(void)
 	// Set up viewing transformation, looking down -Z axis
 	glLoadIdentity();
 	
+	//glm::vec3 c = body_center;
+	glm::vec3 c = u.mass_center_[ct];
+	
 	gluLookAt(
-			body_center.x, body_center.y, body_center.z - g_fViewDistance,
-			body_center.x, body_center.y, body_center.z,
+			c.x, c.y, c.z - g_fViewDistance,
+			c.x, c.y, c.z,
 			0, 1, 0);
 
 	// Set up the stationary light
 	glLightfv(GL_LIGHT0, GL_POSITION, g_lightPos);
 
-	// Render the scene
-	RenderObjects2(ct);
-	ct += g_t_skip;
-	if(ct >= u.num_steps_) ct = 0;
+	glPushMatrix();
+	{
+		glRotatef(g_yaw, 0, 1, 0);
+
+		glRotatef(g_pitch, cos(-g_yaw), 0, sin(-g_yaw));
+
+		// Render the scene
+		RenderObjects2(ct);
+		ct += g_t_skip;
+		if(ct >= u.num_steps_) ct = 0;
+
+	}
+	glPopMatrix();
 
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
@@ -230,22 +246,22 @@ void InitGraphics(void)
 	//glEnable(GL_LIGHT0);
 
 	// Create texture for cube; load marble texture from file and bind it
-/*
-	pTextureImage = read_texture("marble.rgb", &width, &height, &nComponents);
-	glBindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,     // texture to specify
-			GL_RGBA,           // internal texture storage format
-			width,             // texture width
-			height,            // texture height
-			GL_RGBA,           // pixel format
-			GL_UNSIGNED_BYTE,	// color component format
-			pTextureImage);    // pointer to texture image
+	/*
+	   pTextureImage = read_texture("marble.rgb", &width, &height, &nComponents);
+	   glBindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
+	   gluBuild2DMipmaps(GL_TEXTURE_2D,     // texture to specify
+	   GL_RGBA,           // internal texture storage format
+	   width,             // texture width
+	   height,            // texture height
+	   GL_RGBA,           // pixel format
+	   GL_UNSIGNED_BYTE,	// color component format
+	   pTextureImage);    // pointer to texture image
 
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			GL_LINEAR_MIPMAP_LINEAR);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	*/
+	   glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	   glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+	   GL_LINEAR_MIPMAP_LINEAR);
+	   glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	   */
 }
 
 void MouseButton(int button, int state, int x, int y)
@@ -256,7 +272,11 @@ void MouseButton(int button, int state, int x, int y)
 	if (button == GLUT_LEFT_BUTTON)
 	{
 		g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
-		g_yClick = y - 3 * g_fViewDistance;
+		
+		//g_yClick = y - 3 * g_fViewDistance;
+
+		g_xClick = x - 10.0 * g_yaw;
+		g_yClick = y - 10.0 * g_pitch;
 	}
 }
 
@@ -266,9 +286,17 @@ void MouseMotion(int x, int y)
 
 	if (g_bButton1Down)
 	{
-		g_fViewDistance = (y - g_yClick) / 3.0;
-		if (g_fViewDistance < VIEWING_DISTANCE_MIN)
-			g_fViewDistance = VIEWING_DISTANCE_MIN;
+		// view distance
+		/*
+		   g_fViewDistance = (y - g_yClick) / 3.0;
+		   if (g_fViewDistance < VIEWING_DISTANCE_MIN)
+		   g_fViewDistance = VIEWING_DISTANCE_MIN;
+		   */
+
+		// view angle
+		g_yaw = (x - g_xClick) / 10.0;
+		g_pitch = (y - g_yClick) / 10.0;
+
 		glutPostRedisplay();
 	}
 }
@@ -378,9 +406,11 @@ int BuildPopupMenu (void)
 
 int main(int argc, char** argv)
 {
+	if(argc != 2) exit(1);
+
 	int ret;
-	
-	ret = u.read();
+
+	ret = u.read(argv[1]);
 
 	if(ret) return ret;
 
@@ -390,18 +420,22 @@ int main(int argc, char** argv)
 	auto emin = body_min();
 	auto emax = body_max();
 
-	body_center = (emax + emin) * 0.5f;
-	body_extent = emax - emin;
-
-	g_fViewDistance = body_extent.x;
 	
-	printf("min: %f %f %f\n", emin.x, emin.y, emin.z);
-	printf("max: %f %f %f\n", emax.x, emax.y, emax.z);
+	u.mass_center(0, &body_center.x, &body_std.x);
+	u.stats();
+	
+	body_extent = emax - emin;
+	
+	//g_fViewDistance = body_extent.x;
+	g_fViewDistance = body_std.x * 10;
 
-	for(int t = 0; t < u.num_steps_; t++)
-	{
-		//print(u.p(t,0));
-	}
+	g_farPlane = g_fViewDistance + body_extent.z;
+
+	printf("min:         %f %f %f\n", emin.x, emin.y, emin.z);
+	printf("max:         %f %f %f\n", emax.x, emax.y, emax.z);
+	printf("mass center: %f %f %f\n", body_extent.x, body_extent.y, body_extent.z);
+	printf("std:         %f %f %f\n", body_std.x, body_std.y, body_std.z);
+
 
 	//u.list(u.num_step-100);
 

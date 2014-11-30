@@ -17,7 +17,7 @@ __kernel void step_bodies(
 	int i_group0 = get_group_id(0) * local_block;
 	int i_group1 = i_group0 + local_block;
 	
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_PAIRS;
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_BODIES;
 	
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
