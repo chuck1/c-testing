@@ -69,9 +69,8 @@ int main()
 
 	/* Get Platform and Device Info */
 	puts("Get Platform and Device Info");
-	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
-	check(__LINE__, ret);
+	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
+	ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices); check(__LINE__, ret);
 
 	/* Get Device Info */
 	ret = get_device_info(device_id);
