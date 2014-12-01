@@ -8,16 +8,42 @@
 #include "kernel.h"
 #include "universe.h"
 
-Universe::Universe(): bodies_(0), pairs_(0), first_step_(0)
+void		init_map_and_pairs(int nb, Map & map, std::vector<Pair> & pairs)
+{
+	int k = 0;
+	
+	map.alloc(nb);
+
+	pairs.resize(nb * (nb - 1) / 2);
+
+	for(int i = 0; i < nb; i++)
+	{
+		for(int j = i + 1; j < nb; j++)
+		{
+			
+			pairs[k].b0 = i;
+			pairs[k].b1 = j;
+			
+			map.pair_[i * nb + j] = k;
+			map.pair_[j * nb + i] = k;
+
+			k++;
+		}
+	}
+}
+
+Universe::Universe(): pairs_(0), first_step_(0)
 {
 }
 Body*		Universe::b(int t)
 {
-	return &bodies_[0] + (t * num_bodies_);
+	assert(frames_.size() > t);
+	return frames_[t].b(0); // &_M_bodies[0] + (t * num_bodies_);
 }
 Body*		Universe::b(int t, int i)
 {
-	return &bodies_[0] + (t * num_bodies_ + i);
+	assert(frames_.size() > t);
+	return frames_[t].b(i); //&_M_bodies[0] + (t * num_bodies_ + i);
 }
 void		Universe::alloc(int num_bodies, int num_steps)
 {
@@ -26,70 +52,62 @@ void		Universe::alloc(int num_bodies, int num_steps)
 	num_pairs_ = (num_bodies * (num_bodies - 1)) / 2;
 
 	/* Allocate bodies */
-	//bodies_ = new Body[sizeof(Body) * num_bodies_ * num_steps_];
-	bodies_.resize(num_bodies_ * num_steps_);
+	add_frame(num_bodies);
 
-	pairs_ = new Pair[sizeof(Pair) * num_pairs_];
+	//bodies_.resize(num_bodies_ * num_steps_);
 
-	// pair index
-	int k = 0;
+	/* Allocate and initialize map and pairs */
+	init_map_and_pairs(num_bodies, map_, pairs_);
 
+}
+unsigned int	count_alive(Body * b, int n)
+{
+	int na = 0;
+	for(int i = 0; i < n; i++)
+	{
+		if(b[i].alive) na++;
+	}
+	return na;
+}
+unsigned int	Universe::count_alive(int t)
+{
+	int n = 0;
 	for(int i = 0; i < num_bodies_; i++)
 	{
-		bodies_[i].alive = 1;
-		bodies_[i].num_collisions = 0;
+		if(b(t,i)->alive) n++;
 	}
-	for(int i = 0; i < num_pairs_; i++)
-	{
-		pairs_[i].alive = 1;
-		pairs_[i].collision = 0;
-	}
-
-
-	for(int i = 0; i < num_bodies; i++)
-	{
-		for(int j = i + 1; j < num_bodies; j++)
-		{
-			Pair * pp = pairs_ + k;
-			pp->b0 = i;
-			pp->b1 = j;
-
-			map_.pair[i * NUM_BODIES + j] = k;
-			map_.pair[j * NUM_BODIES + i] = k;
-
-			k++;
-		}
-	}
+	return n;
 }
-
 int		Universe::solve()
 {
+	// temp bodies
 	Body* bodies = new Body[num_bodies_];
-	memcpy(bodies, &bodies_[0], num_bodies_ * sizeof(Body));
+	memcpy(bodies, b(0), num_bodies_ * sizeof(Body));
 
-	assert(pairs_);
-	//assert(bodies_);
+	
 
 	unsigned int flag_multi_coll = 0;
 	float dt = 100.0;
 
+	int total_coll = num_bodies_ - count_alive(0);
+
+	unsigned int nc = 0;
+	
 	for(int t = 1; t < num_steps_; t++)
 	{
 		if((t % (num_steps_ / 100)) == 0)
 		{
-			printf("t = %5i\n", t);
+			printf("t = %6i nb = %6i\n", t, num_bodies_ - total_coll);
 		}
 
 		/* Execute "step_pairs" kernel */
-
-		//ret = clEnqueueNDRangeKernel(command_queue, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-		step_pairs(bodies, pairs_);
+		step_pairs(bodies, &pairs_[0]);
 
 		/* Execute "step_bodies" kernel */
-		step_bodies(bodies, pairs_, &map_, dt);
+		step_bodies(bodies, &pairs_[0], &map_, dt);
 
 		/* Execute "step_collisions" kernel */
-		step_collisions(bodies, pairs_, &flag_multi_coll);
+		step_collisions(bodies, &pairs_[0], &flag_multi_coll, &nc);
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		clear_bodies_num_collisions(bodies);
@@ -99,15 +117,38 @@ int		Universe::solve()
 			puts("resolve multi_coll");
 
 			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
-			step_collisions(bodies, pairs_, &flag_multi_coll);
+			step_collisions(bodies, &pairs_[0], &flag_multi_coll, &nc);
 		}
-
+		
+		total_coll += (nc/2);
+		nc = 0;
+		
 		/* Reset flag_multi_coll */
 		flag_multi_coll = 0;
 
+		if(count_alive(t) != (num_bodies_ - total_coll))
+		{
+			printf("%i %i\n", count_alive(t), (num_bodies_ - total_coll));
+			exit(1);
+		}
+	
+
 		/* Store data for timestep */
+		//frames_.emplace_back();
+		add_frame(num_bodies_);
 		memcpy(b(t), bodies, num_bodies_ * sizeof(Body));
+
+		if(count_alive(t) != (num_bodies_ - total_coll))
+		{
+			printf("%i %i\n", count_alive(t), (num_bodies_ - total_coll));
+			exit(1);
+		}
 	}
+}
+void	Universe::add_frame(unsigned int n)
+{
+	frames_.emplace_back();
+	frames_.back().alloc(n);
 }
 void	Universe::rw_header()
 {
@@ -139,7 +180,7 @@ void	Universe::write()
 
 	fwrite(&name_, 32, 1, pfile_);
 
-	fwrite(&bodies_[0], sizeof(Body), num_steps_ * num_bodies_, pfile_);
+	fwrite(b(0), sizeof(Body), num_steps_ * num_bodies_, pfile_);
 
 	fclose(pfile_);
 	pfile_ = 0;
@@ -195,11 +236,11 @@ int	Universe::read(std::string fileName, int num_steps)
 		for(int i = 0; i < num_steps_old; i++)
 		{
 			if((i % (num_steps_old / 10)) == 0) printf("t = %i\n", i);
-			fread(bodies + i * num_bodies_, sizeof(Body), num_bodies_, pfile_);
+			fread(b(i), sizeof(Body), num_bodies_, pfile_);
 		}
 
 		// copy last to first
-		memcpy(&bodies_[0], bodies + (num_steps_old - 1) * num_bodies_, num_bodies_ * sizeof(Body));
+		memcpy(b(0), bodies + (num_steps_old - 1) * num_bodies_, num_bodies_ * sizeof(Body));
 
 		delete[] bodies;
 	}
@@ -209,7 +250,11 @@ int	Universe::read(std::string fileName, int num_steps)
 
 		alloc(num_bodies_, num_steps_);
 
-		fread(&bodies_[0], sizeof(Body), num_steps_old * num_bodies_, pfile_);
+		for(int i = 0; i < num_steps_old; i++)
+		{
+			if((i % (num_steps_old / 10)) == 0) printf("t = %i\n", i);
+			fread(b(i), sizeof(Body), num_bodies_, pfile_);
+		}
 	}
 
 	fclose(pfile_);
@@ -271,18 +316,18 @@ void		Universe::random(float m)
 {
 	int w = 1000;
 
-	for(Body * b = &bodies_[0]; b < (&bodies_[0] + num_bodies_); b++)
+	for(Body * pb = b(0); pb < (b(0) + num_bodies_); pb++)
 	{
-		b->x[0] = (float)(rand() % w) - (float)w * 0.5;
-		b->x[1] = (float)(rand() % w) - (float)w * 0.5;
-		b->x[2] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[0] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[1] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[2] = (float)(rand() % w) - (float)w * 0.5;
 
-		b->v[0] = 0;
-		b->v[1] = 0;
-		b->v[2] = 0;
+		pb->v[0] = 0;
+		pb->v[1] = 0;
+		pb->v[2] = 0;
 
-		b->mass = m;
-		b->radius = radius(b->mass);
+		pb->mass = m;
+		pb->radius = radius(pb->mass);
 	}
 }
 void		Universe::spin(float m)
@@ -294,24 +339,24 @@ void		Universe::spin(float m)
 	// universe mass
 	float umass = num_bodies_ * m;
 
-	for(Body * b = &bodies_[0]; b < (&bodies_[0] + num_bodies_); b++)
+	for(Body * pb = b(0); pb < (b(0) + num_bodies_); pb++)
 	{
-		b->x[0] = (float)(rand() % w) - (float)w * 0.5;
-		b->x[1] = (float)(rand() % w) - (float)w * 0.5;
-		b->x[2] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[0] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[1] = (float)(rand() % w) - (float)w * 0.5;
+		pb->x[2] = (float)(rand() % w) - (float)w * 0.5;
 
-		float r = sqrt(b->x[0] * b->x[0] + b->x[1] * b->x[1] + b->x[2] * b->x[2]);
+		float r = sqrt(pb->x[0] * pb->x[0] + pb->x[1] * pb->x[1] + pb->x[2] * pb->x[2]);
 
-		float rxz = sqrt(b->x[0] * b->x[0] + b->x[2] * b->x[2]);
+		float rxz = sqrt(pb->x[0] * pb->x[0] + pb->x[2] * pb->x[2]);
 
 		float v = sqrt(6.67384E-11 * umass / r) * 0.5;
 
-		b->v[0] = -b->x[2] / rxz * v;
-		b->v[1] = 0;
-		b->v[2] = b->x[0] / rxz * v;
+		pb->v[0] = -pb->x[2] / rxz * v;
+		pb->v[1] = 0;
+		pb->v[2] = pb->x[0] / rxz * v;
 
-		b->mass = m;
-		b->radius = radius(b->mass);
+		pb->mass = m;
+		pb->radius = radius(pb->mass);
 	}
 }
 void		Universe::stats()

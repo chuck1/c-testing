@@ -1,14 +1,18 @@
 #include <float.h>
 #include <glm/glm.hpp>
 #include <algorithm>
+#include <cstring>
 
 #include "universe.h"
 
-Universe u;
+std::vector<Universe*> u;
+unsigned int universe_index = 0;
 
 glm::vec3 body_center;
 glm::vec3 body_extent;
 glm::vec3 body_std;
+
+std::vector<std::string> fileNames;
 
 void print(glm::vec3 v)
 {
@@ -21,11 +25,11 @@ glm::vec3 body_max()
 {
 	glm::vec3 e(FLT_MIN);
 	
-	for(int i = 0; i < u.num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
 	{
-		e.x = std::max(e.x, u.b(0, i)->x[0]);
-		e.y = std::max(e.y, u.b(0, i)->x[1]);
-		e.z = std::max(e.z, u.b(0, i)->x[2]);
+		e.x = std::max(e.x, u[universe_index]->b(0, i)->x[0]);
+		e.y = std::max(e.y, u[universe_index]->b(0, i)->x[1]);
+		e.z = std::max(e.z, u[universe_index]->b(0, i)->x[2]);
 	}
 
 	return e;
@@ -35,11 +39,11 @@ glm::vec3 body_min()
 {
 	glm::vec3 e(FLT_MAX);
 	
-	for(int i = 0; i < u.num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
 	{
-		e.x = std::min(e.x, u.b(0, i)->x[0]);
-		e.y = std::min(e.y, u.b(0, i)->x[1]);
-		e.z = std::min(e.z, u.b(0, i)->x[2]);
+		e.x = std::min(e.x, u[universe_index]->b(0, i)->x[0]);
+		e.y = std::min(e.y, u[universe_index]->b(0, i)->x[1]);
+		e.z = std::min(e.z, u[universe_index]->b(0, i)->x[2]);
 	}
 
 	return e;
@@ -98,6 +102,9 @@ static DWORD last_idle_time;
 #else
 static struct timeval last_idle_time;
 #endif
+
+static float g_yawScale = 100.0;
+static float g_pitchScale = 100.0;
 
 void DrawCubeFace(float fSize)
 {
@@ -166,17 +173,17 @@ void RenderObjects2(int t)
 {
 	//glBegin(GL_POINTS);
 
-	for(int i = 0; i < u.num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
 	{
-		if(!u.b(t,i)->alive) continue;
+		if(!u[universe_index]->b(t,i)->alive) continue;
 		
 		glPushMatrix();
 		glTranslatef(
-				u.b(t, i)->x[0],
-				u.b(t, i)->x[1],
-				u.b(t, i)->x[2]);
+				u[universe_index]->b(t, i)->x[0],
+				u[universe_index]->b(t, i)->x[1],
+				u[universe_index]->b(t, i)->x[2]);
 
-		glutSolidSphere(u.b(t, i)->radius, 8, 8);
+		glutSolidSphere(u[universe_index]->b(t, i)->radius, 8, 8);
 		glPopMatrix();
 	}
 
@@ -192,7 +199,7 @@ void display(void)
 	glLoadIdentity();
 	
 	//glm::vec3 c = body_center;
-	glm::vec3 c = u.mass_center_[ct];
+	glm::vec3 c = u[universe_index]->mass_center_[ct];
 	
 	gluLookAt(
 			c.x, c.y, c.z - g_fViewDistance,
@@ -204,15 +211,42 @@ void display(void)
 
 	glPushMatrix();
 	{
-		glRotatef(g_yaw, 0, 1, 0);
+		glRotatef(g_yaw / M_PI * 180.0, 0, 1, 0);
 
-		glRotatef(g_pitch, cos(-g_yaw), 0, sin(-g_yaw));
+		glRotatef(-g_pitch / M_PI * 180.0, cos(-g_yaw), 0, -sin(-g_yaw));
+		
+		//glRotatef(g_pitch, 1, 0, 0);
 
 		// Render the scene
 		RenderObjects2(ct);
 		ct += g_t_skip;
-		if(ct >= u.num_steps_) ct = 0;
+		while(ct >= u[universe_index]->num_steps_)
+		{
+			ct -= u[universe_index]->num_steps_;
+			universe_index++;
+			if(universe_index == u.size()) universe_index = 0;
 
+			assert(u[universe_index]);
+		}
+
+		// Global axes
+		glBegin(GL_LINES);
+		glVertex3f(c.x, c.y, c.z);
+		glVertex3f(
+				c.x + body_extent.x,
+				c.y,
+				c.z);
+		glVertex3f(c.x, c.y, c.z);
+		glVertex3f(
+				c.x,
+				c.y + body_extent.y,
+				c.z);
+		glVertex3f(c.x, c.y, c.z);
+		glVertex3f(
+				c.x,
+				c.y,
+				c.z + body_extent.z);
+		glEnd();
 	}
 	glPopMatrix();
 
@@ -275,8 +309,8 @@ void MouseButton(int button, int state, int x, int y)
 		
 		//g_yClick = y - 3 * g_fViewDistance;
 
-		g_xClick = x - 10.0 * g_yaw;
-		g_yClick = y - 10.0 * g_pitch;
+		g_xClick = x - g_yawScale * g_yaw;
+		g_yClick = y - g_pitchScale * g_pitch;
 	}
 }
 
@@ -294,8 +328,8 @@ void MouseMotion(int x, int y)
 		   */
 
 		// view angle
-		g_yaw = (x - g_xClick) / 10.0;
-		g_pitch = (y - g_yClick) / 10.0;
+		g_yaw = (x - g_xClick) / g_yawScale;
+		g_pitch = (y - g_yClick) / g_pitchScale;
 
 		glutPostRedisplay();
 	}
@@ -406,26 +440,69 @@ int BuildPopupMenu (void)
 
 int main(int argc, char** argv)
 {
-	if(argc != 2) exit(1);
+	if(argc != 2)
+	{
+		printf("wrong number of arguments\n");
+		exit(1);
+	}
+
+	// get extension
+	char * c = argv[1] + strlen(argv[1]);
+	while(*c != '.')
+	{
+		c--;
+	}
+	printf("%s\n",c);
+	
+	char line_buffer[128];
+	
+	if(strcmp(c, ".txt") == 0)
+	{
+		FILE* pf = fopen(argv[1], "r");
+		
+		while(fgets(line_buffer, 128, pf))
+		{
+			int l = strlen(line_buffer);
+			line_buffer[l-1] = 0;
+			fileNames.emplace_back(line_buffer);
+		}
+	}
+	else if(strcmp(c, ".dat") == 0)
+	{
+		fileNames.emplace_back(argv[1]);
+	}
 
 	int ret;
 
-	ret = u.read(argv[1]);
+	for(auto fileName : fileNames)
+	{
+		Universe* utemp = new Universe;
+		
+		ret = utemp->read(fileName);
+		if(ret)
+		{
+			printf("read failed: %s\n", fileName.c_str());
+			exit(ret);
+		}
 
-	if(ret) return ret;
+		utemp->stats();
 
-	printf("num_step:   %i\n", u.num_steps_);
-	printf("num_bodies: %i\n", u.num_bodies_);
+		u.push_back(utemp);
+	}
+
+
+	printf("num_step:   %i\n", u[universe_index]->num_steps_);
+	printf("num_bodies: %i\n", u[universe_index]->num_bodies_);
 
 	auto emin = body_min();
 	auto emax = body_max();
 
-	
-	u.mass_center(0, &body_center.x, &body_std.x);
-	u.stats();
-	
+
+	u[universe_index]->mass_center(0, &body_center.x, &body_std.x);
+	u[universe_index]->stats();
+
 	body_extent = emax - emin;
-	
+
 	//g_fViewDistance = body_extent.x;
 	g_fViewDistance = body_std.x * 10;
 
@@ -437,7 +514,7 @@ int main(int argc, char** argv)
 	printf("std:         %f %f %f\n", body_std.x, body_std.y, body_std.z);
 
 
-	//u.list(u.num_step-100);
+	//u[universe_index]->list(u.num_step-100);
 
 	// GLUT Window Initialization:
 	glutInit (&argc, argv);

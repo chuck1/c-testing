@@ -54,7 +54,8 @@ void clear_bodies_num_collisions(
 void step_collisions(
 		    struct Body* bodies, /* readonly */
 		    struct Pair* pairs,
-		    unsigned int * flag_multi_coll
+		    unsigned int * flag_multi_coll,
+		    unsigned int * nc
 		    )
 {
 	/* work group */
@@ -158,6 +159,9 @@ void step_collisions(
 	
 				b1->alive = 0;
 				pp->alive = 0;
+
+				// atmoic
+				(*nc)++;
 			}
 
 		}

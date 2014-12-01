@@ -17,11 +17,12 @@ void step_pairs(
 		struct Pair * pairs
 	       );
 void step_collisions(
-		    struct Body* bodies, /* readonly */
-		    struct Pair* pairs,
-		    unsigned int * flag_multi_coll
-		    );
+		struct Body* bodies, /* readonly */
+		struct Pair* pairs,
+		unsigned int * flag_multi_coll,
+		unsigned int * nc
+		);
 void clear_bodies_num_collisions(
-		    struct Body * bodies
-		    );
+		struct Body * bodies
+		);
 

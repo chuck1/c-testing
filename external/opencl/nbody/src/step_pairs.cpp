@@ -82,7 +82,9 @@ void step_pairs(
 		if(pp->d < (b0->radius + b1->radius))
 		{
 			pp->collision = 1;
+			// atomic
 			b0->num_collisions++;
+			// atomic
 			b1->num_collisions++;
 		}
 

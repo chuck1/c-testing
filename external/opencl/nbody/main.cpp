@@ -3,6 +3,7 @@
 #include <chrono>
 #include <CL/cl.h>
 #include <ctime>
+#include <cstring>
 
 #include "universe.h"
 #include "other.hpp"
@@ -95,10 +96,26 @@ int main(int ac, char ** av)
 	if(ret)
 	{
 		// CPU
-		u->solve();
 
-		u->write();
+		for(int i = 0; i < 5; i++)
+		{
+			u->solve();
+			
+			u->write();
 
+			printf("alive = %i\n", u->count_alive(u->num_steps_ - 1));
+
+			// copy last to first
+			memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
+			
+			// reset
+			u->frames_.resize(1);
+	
+			printf("alive = %i\n", u->count_alive(0));
+		
+
+			u->first_step_ += u->num_steps_;
+		}
 		exit(0);
 	}
 
@@ -135,7 +152,7 @@ int main(int ac, char ** av)
 	/* Write to buffers */
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 u->pairs_, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 &u->pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &u->map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
@@ -269,7 +286,6 @@ int main(int ac, char ** av)
 
 	if(ret)
 	{
-		u->free();
 		return 1;
 	}
 
@@ -293,14 +309,11 @@ int main(int ac, char ** av)
 
 	if(ret)
 	{
-		u->free();
 		return 1;
 	}
 
 	puts("Write");
 	u->write();
-
-	u->free();
 
 	return 0;
 }

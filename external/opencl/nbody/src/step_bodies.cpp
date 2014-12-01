@@ -74,9 +74,10 @@ void step_bodies(
 			if(b == i) continue;
 
 			//__local struct Pair * pp = &local_pairs[pbm->pair[p]];
-			Pair * pp = pairs + map->pair[b * NUM_BODIES + i];
+			Pair * pp = pairs + map->pair_[b * NUM_BODIES + i];
 
 			if(!pp->alive) continue;
+
 
 			if(pp->b0 == b)
 			{

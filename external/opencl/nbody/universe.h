@@ -16,47 +16,69 @@
 
 float radius(float m);
 
+struct Frame
+{
+	public:
+		Body*		b(int i)
+		{
+			assert(bodies_.size() > i);
+			return &bodies_[0];
+
+		}
+		void		alloc(int n)
+		{
+			bodies_.resize(n);
+		}
+		void		copy(Body* b, int n);
+		void		reduce();
+
+	private:	
+		std::vector<Body>	bodies_;
+};
 
 struct Universe
 {
-	Universe();
-	Body*		b(int t);
-	Body*		b(int t, int i);
-	int		solve();
-	void		alloc(int num_bodies, int num_steps);
-	void		random(float m);
-	int		mass_center(int t, float * x, float * s);
-	void		spin(float m);
-	void		free()
-	{
-		//delete[] bodies_;
-		delete[] pairs_;
-	}
-	void		write();
-	int		read(std::string fileName = std::string("data.dat"), int num_steps = 0);
-	void		rw_header();
-	void		operator&(int i);
-	void		stats();
+	public:
+		Universe();
+		Body*		b(int t);
+		Body*		b(int t, int i);
+		int		solve();
+		void		alloc(int num_bodies, int num_steps);
+		void		random(float m);
+		int		mass_center(int t, float * x, float * s);
+		void		spin(float m);
+		void		write();
+		int		read(std::string fileName = std::string("data.dat"), int num_steps = 0);
+		void		rw_header();
+		void		operator&(int i);
+		void		stats();
+		unsigned int	count_alive(int t);
+		void		add_frame(unsigned int n);
 
-	//Body*		bodies_;
-	std::vector<Body>	bodies_;
-	Map		map_;
-	Pair*		pairs_;
+		//Body*		bodies_;
 
-	int		num_bodies_;
-	int		num_pairs_;
-	int		num_steps_;
+		std::vector<Frame>	frames_;
 
-	int		first_step_;
+		//std::vector<Body>	_M_bodies;
 
-	char		name_[32];
+		std::vector<Pair>	pairs_;
 
-	// extra timeseries data
-	std::vector<glm::vec3>		mass_center_;
+		Map			map_;
 
-	// read/write
-	FILE*		pfile_;
-	int		filemode_;
+		int		num_bodies_;
+		int		num_pairs_;
+		int		num_steps_;
+
+		int		first_step_;
+
+		char		name_[32];
+
+		// extra timeseries data
+		std::vector<glm::vec3>		mass_center_;
+
+		// read/write
+		FILE*		pfile_;
+		int		filemode_;
 };
 
 

@@ -19,8 +19,8 @@ struct Body
 	float	radius; // 4
 	// 12 + 12 + 4 + 4 = 32
 	
-	unsigned int	alive; // 4
-	unsigned int	num_collisions; // 4
+	unsigned char	alive; // 4
+	unsigned char	num_collisions; // 4
 	
 	// 40
 	
@@ -28,7 +28,12 @@ struct Body
 
 struct Map
 {
-	unsigned int	pair[NUM_BODIES * NUM_BODIES];
+	void	alloc(int n)
+	{
+		pair_ = new unsigned int[n*n];
+	}
+	
+	unsigned int *		pair_; //[NUM_BODIES * NUM_BODIES];
 };
 
 struct Pair
@@ -44,8 +49,8 @@ struct Pair
 	
 	// 28
 
-	unsigned int	alive; // 4
-	unsigned int	collision; // 4
+	unsigned char	alive; // 4
+	unsigned char	collision; // 4
 
 	// 36
 	
