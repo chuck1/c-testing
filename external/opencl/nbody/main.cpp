@@ -10,7 +10,7 @@
 
 float timestep = 100.0;
 float mass = 1e6;
-unsigned int num_steps = 10;
+unsigned int num_steps = 1000;
 
 
 cl_device_id device_id = NULL;

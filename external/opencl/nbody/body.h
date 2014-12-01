@@ -2,8 +2,9 @@
 #define BODY_H
 
 #include <cstdio>
+#include <cstring>
 
-#define NUM_BODIES (16)
+#define NUM_BODIES (32)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
 
 #define GLOBAL_SIZE (128)
@@ -17,8 +18,11 @@ struct Body
 	{
 		//printf("%s\n", __PRETTY_FUNCTION__);
 	}
-	Body(Body const & b): alive(b.alive)
-	{}
+	Body(Body const & b): mass(b.mass), radius(b.radius), alive(b.alive)
+	{
+		memcpy(x, b.x, 12);
+		memcpy(v, b.v, 12);
+	}
 	
 	float	x[3]; // 4 * 3 = 12
 	float	v[3]; // 4 * 3 = 12

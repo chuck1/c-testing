@@ -69,12 +69,12 @@ struct Frame
 
 			for(int i = 0; i < n; i++)
 			{
-
+/*
 				printf("%f %f %f\n",
 						bodies_[i].x[0],
 						bodies_[i].x[1],
 						bodies_[i].x[2]);
-						
+	*/					
 			}
 		}
 		void		read(FILE* pf)
