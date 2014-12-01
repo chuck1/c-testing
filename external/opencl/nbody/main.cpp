@@ -10,7 +10,7 @@
 
 float timestep = 100.0;
 float mass = 1e6;
-unsigned int num_steps = 1000;
+unsigned int num_steps = 10;
 
 
 cl_device_id device_id = NULL;
@@ -75,7 +75,7 @@ int main(int ac, char ** av)
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 		
-		strftime(u->name_, 80, "%Y_%M_%d_%H_%M_%S", timeinfo);
+		strftime(u->name_, 80, "%Y_%m_%d_%H_%M_%S", timeinfo);
 		
 		printf("%s\n", u->name_);
 
@@ -96,21 +96,27 @@ int main(int ac, char ** av)
 	if(ret)
 	{
 		// CPU
-
+		
 		for(int i = 0; i < 5; i++)
 		{
 			u->solve();
 			
 			u->write();
 
-			printf("alive = %i\n", u->count_alive(u->num_steps_ - 1));
+			printf("alive = %i dead = %i\n",
+					u->count_alive(u->num_steps_ - 1),
+					u->count_dead(u->num_steps_ - 1));
 
 			// copy last to first
-			memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
+			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
+			
+			u->get_frame(0) = u->get_frame(u->num_steps_ - 1);
 			
 			// reset
-			u->frames_.resize(1);
+			u->frames_.frames_.resize(1);
 	
+			
+
 			printf("alive = %i\n", u->count_alive(0));
 		
 
@@ -141,7 +147,7 @@ int main(int ac, char ** av)
 
 	/* Create Memory Buffer */
 	puts("create buffer");
-	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_bodies_ * sizeof(Body), NULL, &ret);
+	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->size(0) * sizeof(Body), NULL, &ret);
 	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
 	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(Map), NULL, &ret);
 	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
@@ -151,7 +157,7 @@ int main(int ac, char ** av)
 
 	/* Write to buffers */
 	puts("write buffers");
-	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->num_bodies_ * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->size(0) * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 &u->pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &u->map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
@@ -270,7 +276,7 @@ int main(int ac, char ** av)
 
 
 		/* Store data for timestep */
-		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, u->num_bodies_ * sizeof(Body), u->b(t), 0, NULL, NULL);
+		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, u->size(0) * sizeof(Body), u->b(t), 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 

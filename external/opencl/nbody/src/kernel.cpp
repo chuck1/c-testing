@@ -1,5 +1,7 @@
 #include "body.h"
 #include <math.h>
+#include <cassert>
+#include <cstdio>
 
 int	get_num_groups(int)
 {
@@ -161,7 +163,9 @@ void step_collisions(
 				pp->alive = 0;
 
 				// atmoic
-				(*nc)++;
+				*nc = *nc + 1;
+
+				//printf("resolved collision %i %i\n", *nc, b1->alive);
 			}
 
 		}

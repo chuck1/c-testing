@@ -1,7 +1,9 @@
 #ifndef BODY_H
 #define BODY_H
 
-#define NUM_BODIES (512)
+#include <cstdio>
+
+#define NUM_BODIES (16)
 #define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
 
 #define GLOBAL_SIZE (128)
@@ -11,7 +13,12 @@
 
 struct Body
 {
-	Body(): x{0,0,0}, v{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0) {}
+	Body(): x{0,0,0}, v{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0)
+	{
+		//printf("%s\n", __PRETTY_FUNCTION__);
+	}
+	Body(Body const & b): alive(b.alive)
+	{}
 	
 	float	x[3]; // 4 * 3 = 12
 	float	v[3]; // 4 * 3 = 12

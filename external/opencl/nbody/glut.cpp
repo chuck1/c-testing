@@ -25,7 +25,7 @@ glm::vec3 body_max()
 {
 	glm::vec3 e(FLT_MIN);
 	
-	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->size(0); i++)
 	{
 		e.x = std::max(e.x, u[universe_index]->b(0, i)->x[0]);
 		e.y = std::max(e.y, u[universe_index]->b(0, i)->x[1]);
@@ -39,7 +39,7 @@ glm::vec3 body_min()
 {
 	glm::vec3 e(FLT_MAX);
 	
-	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->size(0); i++)
 	{
 		e.x = std::min(e.x, u[universe_index]->b(0, i)->x[0]);
 		e.y = std::min(e.y, u[universe_index]->b(0, i)->x[1]);
@@ -173,7 +173,7 @@ void RenderObjects2(int t)
 {
 	//glBegin(GL_POINTS);
 
-	for(int i = 0; i < u[universe_index]->num_bodies_; i++)
+	for(int i = 0; i < u[universe_index]->size(0); i++)
 	{
 		if(!u[universe_index]->b(t,i)->alive) continue;
 		
@@ -492,7 +492,7 @@ int main(int argc, char** argv)
 
 
 	printf("num_step:   %i\n", u[universe_index]->num_steps_);
-	printf("num_bodies: %i\n", u[universe_index]->num_bodies_);
+	printf("num_bodies: %i\n", u[universe_index]->size(0));
 
 	auto emin = body_min();
 	auto emax = body_max();
