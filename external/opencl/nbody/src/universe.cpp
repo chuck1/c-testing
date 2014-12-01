@@ -8,31 +8,9 @@
 #include "kernel.h"
 #include "universe.h"
 
-void		init_map_and_pairs(int nb, Map & map, std::vector<Pair> & pairs)
-{
-	int k = 0;
-	
-	map.alloc(nb);
 
-	pairs.resize(nb * (nb - 1) / 2);
 
-	for(int i = 0; i < nb; i++)
-	{
-		for(int j = i + 1; j < nb; j++)
-		{
-			
-			pairs[k].b0 = i;
-			pairs[k].b1 = j;
-			
-			map.pair_[i * nb + j] = k;
-			map.pair_[j * nb + i] = k;
-
-			k++;
-		}
-	}
-}
-
-Universe::Universe(): pairs_(0), first_step_(0)
+Universe::Universe(): first_step_(0)
 {
 }
 Body*		Universe::b(int t)
@@ -57,7 +35,7 @@ void		Universe::alloc(int num_bodies, int num_steps)
 	//bodies_.resize(num_bodies_ * num_steps_);
 
 	/* Allocate and initialize map and pairs */
-	init_map_and_pairs(num_bodies, map_, pairs_);
+	//init_map_and_pairs(num_bodies, map_, pairs_);
 
 }
 unsigned int	count_alive(Body * b, int n)
@@ -102,50 +80,74 @@ int		Universe::solve()
 	
 	Frame f = get_frame(0);
 	
+	Pairs pairs;
+	pairs.init(f);
 	
 	unsigned int flag_multi_coll = 0;
 	float dt = 100.0;
 
-	int total_coll = size(0) - count_alive(0);
-
-	unsigned int nc = 0;
+	unsigned int alive = count_alive(0);
+	unsigned int dead = size(0) - alive;
 	
+	unsigned int one_tenth = size(0) / 10;
+	unsigned int temp_dead = 0;
+	
+	unsigned int nc = 0;
+
+	unsigned int number_removed = 0;
+
 	for(int t = 1; t < num_steps_; t++)
 	{
 		if((t % (num_steps_ / 10)) == 0)
 		{
-			printf("t = %6i nb = %6i\n", t, size(0) - total_coll);
+			printf("t = %6i nb = %6i\n", t, alive);
+		}
+		
+		if(temp_dead >= one_tenth)
+		{
+			printf("tenth\n");
+		
+			one_tenth = alive / 10;
+			temp_dead = 0;
+
+			if(1)
+			{
+				number_removed += f.reduce();
+				pairs.init(f);
+			}
 		}
 
 		/* Execute "step_pairs" kernel */
-		step_pairs(f.b(0), &pairs_[0]);
+		step_pairs(f.b(0), &pairs.pairs_[0], pairs.size());
 
 		/* Execute "step_bodies" kernel */
-		step_bodies(f.b(0), &pairs_[0], &map_, dt);
-
+		step_bodies(f.b(0), &pairs.pairs_[0], pairs.map_.ptr(), dt, f.size());
+		
 		/* Execute "step_collisions" kernel */
-		step_collisions(f.b(0), &pairs_[0], &flag_multi_coll, &nc);
-
+		step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, f.size());
+		
 		/* Execute "clear_bodies_num_collisions" kernel */
-		clear_bodies_num_collisions(f.b(0));
+		clear_bodies_num_collisions(f.b(0), f.size());
 
 		if(flag_multi_coll)
 		{
 			puts("resolve multi_coll");
 
 			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
-			step_collisions(f.b(0), &pairs_[0], &flag_multi_coll, &nc);
+			step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, f.size());
 		}
 		
-		total_coll += nc;
+		alive -= nc;
+		dead += nc;
+		temp_dead += nc;
 		nc = 0;
 		
 		/* Reset flag_multi_coll */
 		flag_multi_coll = 0;
 
-		if(f.count_dead() != total_coll)
+		if((number_removed + f.count_dead()) != dead)
 		{
-			printf("1: %i %i\n", f.count_dead(), total_coll);
+			printf("1: %i %i\n", (number_removed + f.count_dead()), dead);
 			exit(1);
 		}
 
@@ -165,9 +167,9 @@ int		Universe::solve()
 		}
 	
 
-		if(count_dead(t) != total_coll)
+		if((number_removed + count_dead(t)) != dead)
 		{
-			printf("3: %i %i\n", count_dead(t), total_coll);
+			printf("3: %i %i\n", (number_removed + count_dead(t)), dead);
 			exit(1);
 		}
 	}
@@ -200,7 +202,7 @@ void	Universe::operator&(int i)
 	}
 
 }
-void		Universe::write()
+std::string	Universe::getFilename()
 {
 	char buffer[8];
 	sprintf(buffer, "%i", num_steps_ + first_step_);
@@ -212,7 +214,13 @@ void		Universe::write()
 	strcat(fileName, buffer);
 	strcat(fileName, ".dat");
 
-	pfile_ = fopen(fileName, "w");
+	return std::string(fileName);
+}
+void		Universe::write()
+{
+	auto filename = getFilename();
+
+	pfile_ = fopen(filename.c_str(), "w");
 	if(pfile_ == 0)
 	{
 		perror("fopen");
@@ -280,6 +288,8 @@ int		Universe::read(std::string fileName, int num_steps)
 int		Universe::mass_center(int t, float * x, float * s)
 {
 
+	get_frame(t).mass_center(x, s);
+/*
 	float temp[3] = {0,0,0};
 
 	float m = 0;
@@ -327,6 +337,7 @@ int		Universe::mass_center(int t, float * x, float * s)
 		s[1] = sqrt(temp[1] / m);
 		s[2] = sqrt(temp[2] / m);
 	}
+	*/
 }
 void		Universe::random(float m)
 {

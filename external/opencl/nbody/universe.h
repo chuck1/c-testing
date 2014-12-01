@@ -35,14 +35,18 @@ struct Frame
 		Body*		b(int i)
 		{
 			assert(bodies_.size() > i);
-			return &bodies_[0];
+			return &bodies_[i];
+		}
+		unsigned int	size() const
+		{
+			return bodies_.size();
 		}
 		void		alloc(int n)
 		{
 			bodies_.resize(n);
 		}
 		void		copy(Body* b, int n);
-		void		reduce();
+		unsigned int	reduce();
 		unsigned int	count_dead()
 		{
 			unsigned int n = 0;
@@ -67,15 +71,6 @@ struct Frame
 			fwrite(&n, sizeof(unsigned int), 1, pf);
 			fwrite(&bodies_[0], sizeof(Body), n, pf);
 
-			for(int i = 0; i < n; i++)
-			{
-/*
-				printf("%f %f %f\n",
-						bodies_[i].x[0],
-						bodies_[i].x[1],
-						bodies_[i].x[2]);
-	*/					
-			}
 		}
 		void		read(FILE* pf)
 		{
@@ -83,22 +78,122 @@ struct Frame
 			fread(&n, sizeof(unsigned int), 1, pf);
 			bodies_.resize(n);
 			fread(&bodies_[0], sizeof(Body), n, pf);
-
-			for(int i = 0; i < n; i++)
+	
+			//print();
+		}
+		void		print()
+		{
+			for(int i = 0; i < bodies_.size(); i++)
 			{
-/*
-				printf("%f %f %f\n",
+
+				printf("% 12f % 12f % 12f %i\n",
 						bodies_[i].x[0],
 						bodies_[i].x[1],
-						bodies_[i].x[2]);
-						*/
+						bodies_[i].x[2],
+						bodies_[i].alive);
+						
+			}
+
+		}
+		glm::vec3	body_max()
+		{
+			glm::vec3 e(FLT_MIN);
+
+			for(Body & b : bodies_)
+			{
+				if(b.alive)
+				{
+					e.x = std::max(e.x, b.x[0]);
+					e.y = std::max(e.y, b.x[1]);
+					e.z = std::max(e.z, b.x[2]);
+				}
+			}
+
+			return e;
+		}
+
+		glm::vec3	body_min()
+		{
+			glm::vec3 e(FLT_MAX);
+
+			for(Body & b : bodies_)
+			{
+				if(b.alive)
+				{
+					e.x = std::min(e.x, b.x[0]);
+					e.y = std::min(e.y, b.x[1]);
+					e.z = std::min(e.z, b.x[2]);
+				}
+			}
+
+			return e;
+		}
+		int		mass_center(float * x, float * s)
+		{
+			float temp[3] = {0,0,0};
+
+			float m = 0;
+
+			for(Body & b : bodies_)
+			{
+				if(b.alive)
+				{
+					temp[0] += b.x[0] * b.mass;
+					temp[1] += b.x[1] * b.mass;
+					temp[2] += b.x[2] * b.mass;
+
+					m += b.mass;
+				}
+			}
+
+			temp[0] /= m;
+			temp[1] /= m;
+			temp[2] /= m;
+
+			if(x)
+			{
+				x[0] = temp[0];
+				x[1] = temp[1];
+				x[2] = temp[2];
+			}
+
+			// weighted std
+
+			if(s)
+			{
+				temp[0] = 0;
+				temp[1] = 0;
+				temp[2] = 0;
+
+				for(Body & b : bodies_)
+				{
+					if(b.alive)
+					{
+						temp[0] += b.mass * pow(b.x[0] - x[0], 2);
+						temp[1] += b.mass * pow(b.x[1] - x[1], 2);
+						temp[2] += b.mass * pow(b.x[2] - x[2], 2);
+					}
+				}
+
+				s[0] = sqrt(temp[0] / m);
+				s[1] = sqrt(temp[1] / m);
+				s[2] = sqrt(temp[2] / m);
 			}
 		}
+
 	public:	
 		std::vector<Body>	bodies_;
 };
 struct Frames
 {
+	Frames() {}
+	Frames(Frames const & f): frames_(f.frames_)
+	{
+	}
+	Frames &	operator=(Frames const & f)
+	{
+		frames_ = f.frames_;
+	}
 	void		write(FILE* pf)
 	{
 		unsigned int n = frames_.size();
@@ -121,39 +216,69 @@ struct Frames
 
 	std::vector<Frame>	frames_;
 };
+struct Pairs
+{
+	void			init(Frame const & f)
+	{
+		int k = 0;
+
+		unsigned int nb = f.size();
+
+		map_.alloc(nb);
+
+		pairs_.resize(nb * (nb - 1) / 2);
+
+		for(int i = 0; i < nb; i++)
+		{
+			for(int j = i + 1; j < nb; j++)
+			{
+
+				pairs_[k].b0 = i;
+				pairs_[k].b1 = j;
+
+				map_.pair_[i * nb + j] = k;
+				map_.pair_[j * nb + i] = k;
+
+				k++;
+			}
+		}
+	}
+	unsigned int		size() const
+	{
+		return pairs_.size();
+	}
+	std::vector<Pair>	pairs_;
+	Map			map_;
+};
 struct Universe
 {
 	public:
 		Universe();
-		Body*		b(int t);
-		Body*		b(int t, int i);
-		int		solve();
-		void		alloc(int num_bodies, int num_steps);
-		void		random(float m);
-		int		mass_center(int t, float * x, float * s);
-		void		spin(float m);
-		void		write();
-		int		read(std::string fileName = std::string("data.dat"), int num_steps = 0);
-		void		rw_header();
-		void		operator&(int i);
-		void		stats();
-		unsigned int	count_alive(int t);
-		unsigned int	count_dead(int t);
-		void		add_frame(unsigned int n);
-		Frame &		get_frame(int t);
-		unsigned int	size(unsigned int t);
-		//Body*		bodies_;
+		Body*			b(int t);
+		Body*			b(int t, int i);
+		int			solve();
+		void			alloc(int num_bodies, int num_steps);
+		void			random(float m);
+		int			mass_center(int t, float * x, float * s);
+		void			spin(float m);
+		void			write();
+		int			read(std::string fileName = std::string("data.dat"), int num_steps = 0);
+		void			rw_header();
+		void			operator&(int i);
+		void			stats();
+		unsigned int		count_alive(int t);
+		unsigned int		count_dead(int t);
+		void			add_frame(unsigned int n);
+		Frame &			get_frame(int t);
+		unsigned int		size(unsigned int t);
+		std::string		getFilename();
 
+
+	public:
 		Frames			frames_;
 
-		//std::vector<Body>	_M_bodies;
 
-		std::vector<Pair>	pairs_;
 
-		Map			map_;
-
-		//int			num_bodies_;
-		int			num_pairs_;
 		int			num_steps_;
 
 		int			first_step_;

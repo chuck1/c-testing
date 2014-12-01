@@ -6,17 +6,18 @@
 void step_bodies(
 		    struct Body * bodies,
 		    struct Pair * pairs,
-		    struct Map * map,
-		    float dt
+		    unsigned int * map,
+		    float dt,
+		    unsigned int num_bodies
 		   )
 {
 	/* work group */
-	int local_block = NUM_BODIES / get_num_groups(0);
+	int local_block = num_bodies / get_num_groups(0);
 	
 	int i_group0 = get_group_id(0) * local_block;
 	int i_group1 = i_group0 + local_block;
 	
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_BODIES;
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = num_bodies;
 	
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
@@ -69,12 +70,12 @@ void step_bodies(
 		f[1] = 0;
 		f[2] = 0;
 		
-		for(int i = 0; i < NUM_BODIES; i++)
+		for(int i = 0; i < num_bodies; i++)
 		{
 			if(b == i) continue;
 
 			//__local struct Pair * pp = &local_pairs[pbm->pair[p]];
-			Pair * pp = pairs + map->pair_[b * NUM_BODIES + i];
+			Pair * pp = pairs + map[b * num_bodies + i];
 
 			if(!pp->alive) continue;
 

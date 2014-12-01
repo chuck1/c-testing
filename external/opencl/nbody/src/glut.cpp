@@ -21,33 +21,6 @@ void print(glm::vec3 v)
 
 int ct = 0;
 
-glm::vec3 body_max()
-{
-	glm::vec3 e(FLT_MIN);
-	
-	for(int i = 0; i < u[universe_index]->size(0); i++)
-	{
-		e.x = std::max(e.x, u[universe_index]->b(0, i)->x[0]);
-		e.y = std::max(e.y, u[universe_index]->b(0, i)->x[1]);
-		e.z = std::max(e.z, u[universe_index]->b(0, i)->x[2]);
-	}
-
-	return e;
-}
-
-glm::vec3 body_min()
-{
-	glm::vec3 e(FLT_MAX);
-	
-	for(int i = 0; i < u[universe_index]->size(0); i++)
-	{
-		e.x = std::min(e.x, u[universe_index]->b(0, i)->x[0]);
-		e.y = std::min(e.y, u[universe_index]->b(0, i)->x[1]);
-		e.z = std::min(e.z, u[universe_index]->b(0, i)->x[2]);
-	}
-
-	return e;
-}
 
 // glut_example.c
 // Stanford University, CS248, Fall 2000
@@ -494,8 +467,8 @@ int main(int argc, char** argv)
 	printf("num_step:   %i\n", u[universe_index]->num_steps_);
 	printf("num_bodies: %i\n", u[universe_index]->size(0));
 
-	auto emin = body_min();
-	auto emax = body_max();
+	auto emin = u[universe_index]->get_frame(0).body_min();
+	auto emax = u[universe_index]->get_frame(0).body_max();
 
 
 	u[universe_index]->mass_center(0, &body_center.x, &body_std.x);

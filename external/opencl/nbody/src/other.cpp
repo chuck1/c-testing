@@ -54,13 +54,6 @@ int		get_device_info(cl_device_id device_id)
 	printf("%32s = %i\n", "local size", LOCAL_SIZE);
 	printf("%32s = %i\n", "num groups", NUM_GROUPS);
 
-	printf("problem:\n");
-	printf("%32s = %i\n", "num bodies", NUM_BODIES);
-	printf("%32s = %i\n", "bodies per group", NUM_BODIES / NUM_GROUPS);
-	printf("%32s = %i\n", "bodies per work item", NUM_BODIES / NUM_GROUPS / LOCAL_SIZE);
-	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
-	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
-	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
 }
 int		get_kernel_info(cl_kernel kernel, cl_device_id device_id)
 {

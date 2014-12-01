@@ -4,14 +4,14 @@
 #include <CL/cl.h>
 #include <ctime>
 #include <cstring>
-
+#include <fstream>
 #include "universe.h"
 #include "other.hpp"
 
 float timestep = 100.0;
 float mass = 1e6;
-unsigned int num_steps = 1000;
-
+unsigned int num_steps = 400;
+unsigned int num_bodies = 2048;
 
 cl_device_id device_id = NULL;
 cl_context context = NULL;
@@ -34,7 +34,16 @@ cl_uint ret_num_devices;
 cl_uint ret_num_platforms;
 cl_int ret;
 
-
+int		info_problem()
+{
+	printf("problem:\n");
+	printf("%32s = %i\n", "num bodies", num_bodies);
+	printf("%32s = %i\n", "bodies per group", num_bodies / NUM_GROUPS);
+	printf("%32s = %i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
+	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
+	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
+	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
+}
 int		cleanup()
 {
 	cl_int ret;
@@ -61,6 +70,8 @@ int main(int ac, char ** av)
 {
 	puts("Create Universe");
 
+	
+
 	Universe* u = new Universe;
 
 	if(ac == 2)
@@ -79,7 +90,8 @@ int main(int ac, char ** av)
 		
 		printf("%s\n", u->name_);
 
-		u->alloc(NUM_BODIES, num_steps);
+		u->alloc(num_bodies, num_steps);
+	
 		//u->random(mass);
 		u->spin(mass);
 	}
@@ -92,16 +104,20 @@ int main(int ac, char ** av)
 	/* Get Platform and Device Info */
 	puts("Get Platform and Device Info");
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
+
+	std::vector<std::string>	filenames;
 	
 	if(ret)
 	{
 		// CPU
 		
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 20; i++)
 		{
 			u->solve();
 			
 			u->write();
+
+			filenames.push_back(u->getFilename());
 
 			printf("alive = %i dead = %i\n",
 					u->count_alive(u->num_steps_ - 1),
@@ -122,6 +138,18 @@ int main(int ac, char ** av)
 
 			u->first_step_ += u->num_steps_;
 		}
+		
+		
+		std::ofstream ofs;
+		ofs.open("files.txt", std::ofstream::out);
+
+		for(auto filename : filenames)
+		{
+			ofs << filename << std::endl;
+		}
+
+		ofs.close();
+
 		exit(0);
 	}
 
@@ -145,21 +173,26 @@ int main(int ac, char ** av)
 	command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 	check(__LINE__, ret);
 
+	// solver variables
+	Pairs pairs;
+	pairs.init(u->get_frame(0));
+
 	/* Create Memory Buffer */
 	puts("create buffer");
 	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->size(0) * sizeof(Body), NULL, &ret);
-	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, u->num_pairs_ * sizeof(Pair), NULL, &ret);
-	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(Map), NULL, &ret);
+	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
+	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, u->size(0) * u->size(0) * sizeof(unsigned int), NULL, &ret);
 	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
 	check(__LINE__, ret);
 
 	unsigned int flag_multi_coll = 0;
 
+
 	/* Write to buffers */
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->size(0) * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, u->num_pairs_ * sizeof(Pair),	 &u->pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &u->map_, 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
@@ -193,7 +226,8 @@ int main(int ac, char ** av)
 	ret = clSetKernelArg(kernel_clear_bodies_num_collisions, 0, sizeof(cl_mem), (void *)&memobj_bodies);
 
 	/* Execute OpenCL Kernel */
-
+	
+	
 	get_kernel_info(kernel_pairs, device_id);
 
 	puts("execute");

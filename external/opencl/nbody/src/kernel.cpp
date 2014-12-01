@@ -34,18 +34,19 @@ float	rsqrt(float f)
 
 
 void clear_bodies_num_collisions(
-		    struct Body * bodies
-		    )
+		struct Body * bodies,
+		unsigned int num_bodies
+		)
 {
 	/* global index */
-	
-	int block = NUM_BODIES / get_global_size(0);
-	
+
+	int block = num_bodies / get_global_size(0);
+
 	int b0 = get_global_id(0) * block;
 	int b1 = b0 + block;
-	
-	if(get_global_id(0) == (get_global_size(0) - 1)) b1 = NUM_BODIES;
-	
+
+	if(get_global_id(0) == (get_global_size(0) - 1)) b1 = num_bodies;
+
 	//for(int b = b_local0; b < b_local1; b++)
 	for(int b = b0; b < b1; b++)
 	{
@@ -54,26 +55,27 @@ void clear_bodies_num_collisions(
 }
 /* dont use marcos here for global_size etc. */
 void step_collisions(
-		    struct Body* bodies, /* readonly */
-		    struct Pair* pairs,
-		    unsigned int * flag_multi_coll,
-		    unsigned int * nc
-		    )
+		struct Body* bodies, /* readonly */
+		struct Pair* pairs,
+		unsigned int * flag_multi_coll,
+		unsigned int * nc,
+		unsigned int num_pairs
+		)
 {
 	/* work group */
-	int local_block = NUM_PAIRS / get_num_groups(0);
-	
+	int local_block = num_pairs / get_num_groups(0);
+
 	int i_group0 = get_group_id(0) * local_block;
 	int i_group1 = i_group0 + local_block;
-	
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_PAIRS;
-	
+
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = num_pairs;
+
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
-	
+
 	int i_local0 = i_group0 + get_local_id(0) * block;
 	int i_local1 = i_local0 + block;
-	
+
 	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
 
 	/* */
@@ -120,9 +122,9 @@ void step_collisions(
 			{
 				//printf("collision\n");
 				//num_collision++;
-				
+
 				//pairs.push_back(Pair(me,i));
-				
+
 				// total momentum
 				float mom[3];
 				mom[0] = b0->v[0] * b0->mass + b1->v[0] * b1->mass;
@@ -131,34 +133,34 @@ void step_collisions(
 
 				// total mass
 				float m = b0->mass + b1->mass;
-	
+
 				// mass-weighted average position
 				float x[3];
 				x[0] = (x0[0] * b0->mass + x1[0] * b1->mass) / m;
 				x[1] = (x0[1] * b0->mass + x1[1] * b1->mass) / m;
 				x[2] = (x0[2] * b0->mass + x1[2] * b1->mass) / m;
-	
+
 				x0[0] = x[0];
 				x0[1] = x[1];
 				x0[2] = x[2];
-	
+
 				// absorb mass
 				b0->mass = m;
 				b0->radius = pow(3.0 / 4.0 / 3.1415 * m / 900.0, 0.333333);
-		
+
 				/*
-				printf("mass = %f radius = %f\n", m, u.r(t, me));
-				printf("p = %f %f %f\n",
-						u.p(t, me).x,
-						u.p(t, me).y,
-						u.p(t, me).z);
-				*/
-	
+				   printf("mass = %f radius = %f\n", m, u.r(t, me));
+				   printf("p = %f %f %f\n",
+				   u.p(t, me).x,
+				   u.p(t, me).y,
+				   u.p(t, me).z);
+				   */
+
 				// new velocity
 				b0->v[0] = mom[0] / m;
 				b0->v[1] = mom[1] / m;
 				b0->v[2] = mom[2] / m;
-	
+
 				b1->alive = 0;
 				pp->alive = 0;
 
@@ -170,23 +172,23 @@ void step_collisions(
 
 		}
 
-	
+
 		float r[3];
-		
+
 		r[0] = x0[0] - x1[0];
 		r[1] = x0[1] - x1[1];
 		r[2] = x0[2] - x1[2];
-	
+
 		float d2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
 
 		float dr = rsqrt(d2);
 
 		pp->d = sqrt(d2);
-		
+
 		pp->u[0] = r[0] * dr;
 		pp->u[1] = r[1] * dr;
 		pp->u[2] = r[2] * dr;
-		
+
 		pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
 	}
 }

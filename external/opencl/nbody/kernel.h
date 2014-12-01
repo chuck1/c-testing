@@ -8,21 +8,25 @@ float	rsqrt(float);
 void step_bodies(
 		struct Body * bodies,
 		struct Pair * pairs,
-		struct Map * map,
-		float dt
+		unsigned int * map,
+		float dt,
+		unsigned int num_bodies
 		);
 
 void step_pairs(
 		struct Body * bodies,
-		struct Pair * pairs
+		struct Pair * pairs,
+		unsigned int num_pairs
 	       );
 void step_collisions(
 		struct Body* bodies, /* readonly */
 		struct Pair* pairs,
 		unsigned int * flag_multi_coll,
-		unsigned int * nc
+		unsigned int * nc,
+		unsigned int num_bodies
 		);
 void clear_bodies_num_collisions(
-		struct Body * bodies
+		struct Body * bodies,
+		unsigned int num_bodies
 		);
 

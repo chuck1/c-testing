@@ -5,16 +5,17 @@
 
 void step_pairs(
 		    struct Body * bodies,
-		    struct Pair * pairs
+		    struct Pair * pairs,
+		    unsigned int num_pairs
 		    )
 {
 	/* work group */
-	int local_block = NUM_PAIRS / get_num_groups(0);
+	int local_block = num_pairs / get_num_groups(0);
 	
 	int i_group0 = get_group_id(0) * local_block;
 	int i_group1 = i_group0 + local_block;
 	
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = NUM_PAIRS;
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = num_pairs;
 	
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
