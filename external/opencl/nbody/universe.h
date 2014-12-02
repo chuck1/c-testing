@@ -15,6 +15,7 @@
 #define FILEMODE_READ 0
 
 float radius(float m);
+void	print(float * x);
 
 struct Frame
 {
@@ -26,27 +27,40 @@ struct Frame
 		{
 			//printf("%s\n", __PRETTY_FUNCTION__);
 		}
-		Frame &		operator=(Frame const & f)
+		Frame &			operator=(Frame const & f)
 		{
 			//printf("%s\n", __PRETTY_FUNCTION__);
 			bodies_ = f.bodies_;
 			return *this;
 		}
-		Body*		b(int i)
+		Body*			b(int i)
 		{
 			assert(bodies_.size() > i);
 			return &bodies_[i];
 		}
-		unsigned int	size() const
+		unsigned int		size() const
 		{
 			return bodies_.size();
 		}
-		void		alloc(int n)
+		void			alloc(int n)
 		{
 			bodies_.resize(n);
 		}
-		void		copy(Body* b, int n);
-		unsigned int	reduce();
+		int			try_insert(
+				float * x,
+				float a0,
+				float a1,
+				float a2,
+				float (*f0)(float),
+				float (*f1)(float),
+				float (*f2)(float),
+				float radius,
+				unsigned int idx);
+		void			copy(Body* b, int n);
+		unsigned int		reduce();
+		void			random(float m, float w, float v);
+		void			spin(float m, float w);
+		void			rings(float m, float w);
 		unsigned int	count_dead()
 		{
 			unsigned int n = 0;
@@ -78,7 +92,7 @@ struct Frame
 			fread(&n, sizeof(unsigned int), 1, pf);
 			bodies_.resize(n);
 			fread(&bodies_[0], sizeof(Body), n, pf);
-	
+
 			//print();
 		}
 		void		print()
@@ -91,7 +105,7 @@ struct Frame
 						bodies_[i].x[1],
 						bodies_[i].x[2],
 						bodies_[i].alive);
-						
+
 			}
 
 		}
@@ -220,9 +234,13 @@ struct Pairs
 {
 	void			init(Frame const & f)
 	{
+		assert(f.size() > 0);
+
 		int k = 0;
 
 		unsigned int nb = f.size();
+
+
 
 		map_.alloc(nb);
 
@@ -258,9 +276,7 @@ struct Universe
 		Body*			b(int t, int i);
 		int			solve();
 		void			alloc(int num_bodies, int num_steps);
-		void			random(float m);
 		int			mass_center(int t, float * x, float * s);
-		void			spin(float m);
 		void			write();
 		int			read(std::string fileName = std::string("data.dat"), int num_steps = 0);
 		void			rw_header();

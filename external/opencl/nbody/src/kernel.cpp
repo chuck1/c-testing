@@ -62,6 +62,8 @@ void step_collisions(
 		unsigned int num_pairs
 		)
 {
+	assert(num_pairs > 0);
+
 	/* work group */
 	int local_block = num_pairs / get_num_groups(0);
 
@@ -83,19 +85,23 @@ void step_collisions(
 	{
 		struct Pair* pp = pairs + p;
 
-		if(!pp->alive) continue;
+		if(pp->_M_alive == 0)
+		{
+			//printf("pair already dead\n");
+			continue;
+		}
 
 		struct Body* b0 = bodies + pp->b0;
 		struct Body* b1 = bodies + pp->b1;
 
-		if(!b0->alive)
+		if(b0->alive == 0)
 		{
-			pp->alive = 0;
+			pp->_M_alive = 0;
 			continue;
 		}
-		if(!b1->alive)
+		if(b1->alive == 0)
 		{
-			pp->alive = 0;
+			pp->_M_alive = 0;
 			continue;
 		}
 
@@ -103,20 +109,20 @@ void step_collisions(
 		if(b0->num_collisions > 1)
 		{
 			//atomic_add(flag_multi_coll, 1);
-			flag_multi_coll++;
+			(*flag_multi_coll)++;
 			continue;
 		}
 		if(b1->num_collisions > 1)
 		{
 			//atomic_add(flag_multi_coll, 1);
-			flag_multi_coll++;
+			(*flag_multi_coll)++;
 			continue;
 		}
 
 		float * x0 = bodies[pp->b0].x;
 		float * x1 = bodies[pp->b1].x;
 
-		if(pp->collision)
+		if(pp->_M_collision)
 		{
 			//if(b0 < b1)
 			{
@@ -162,7 +168,7 @@ void step_collisions(
 				b0->v[2] = mom[2] / m;
 
 				b1->alive = 0;
-				pp->alive = 0;
+				pp->_M_alive = 0;
 
 				// atmoic
 				*nc = *nc + 1;
@@ -172,7 +178,7 @@ void step_collisions(
 
 		}
 
-
+		/*
 		float r[3];
 
 		r[0] = x0[0] - x1[0];
@@ -190,5 +196,6 @@ void step_collisions(
 		pp->u[2] = r[2] * dr;
 
 		pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
+		*/
 	}
 }

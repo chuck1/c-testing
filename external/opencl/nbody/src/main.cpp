@@ -5,13 +5,17 @@
 #include <ctime>
 #include <cstring>
 #include <fstream>
+#include <signal.h>
+
 #include "universe.h"
 #include "other.hpp"
 
-float timestep = 100.0;
+float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 400;
-unsigned int num_bodies = 2048;
+unsigned int num_steps = 100;
+unsigned int num_bodies = 1024;
+
+// 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 
 cl_device_id device_id = NULL;
 cl_context context = NULL;
@@ -66,12 +70,20 @@ int		cleanup()
 
 	return ret;
 }
-int main(int ac, char ** av)
+
+int should_exit = 0;
+
+void		signal_callback(int signum)
+{
+	should_exit = 1;
+}
+int		main(int ac, char ** av)
 {
 	puts("Create Universe");
 
+	signal(SIGINT, signal_callback);
 	
-
+	
 	Universe* u = new Universe;
 
 	if(ac == 2)
@@ -93,13 +105,13 @@ int main(int ac, char ** av)
 		u->alloc(num_bodies, num_steps);
 	
 		//u->random(mass);
-		u->spin(mass);
+		//u->spin(mass);
+		u->get_frame(0).rings(mass, 2000.0);
 	}
 	else
 	{
 		exit(1);
 	}
-
 
 	/* Get Platform and Device Info */
 	puts("Get Platform and Device Info");
@@ -110,18 +122,13 @@ int main(int ac, char ** av)
 	if(ret)
 	{
 		// CPU
-		
-		for(int i = 0; i < 20; i++)
+		for(int i = 0; i < 100; i++)
 		{
 			u->solve();
 			
 			u->write();
 
 			filenames.push_back(u->getFilename());
-
-			printf("alive = %i dead = %i\n",
-					u->count_alive(u->num_steps_ - 1),
-					u->count_dead(u->num_steps_ - 1));
 
 			// copy last to first
 			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
@@ -131,14 +138,10 @@ int main(int ac, char ** av)
 			// reset
 			u->frames_.frames_.resize(1);
 	
-			
-
-			printf("alive = %i\n", u->count_alive(0));
-		
-
 			u->first_step_ += u->num_steps_;
+
+			if(should_exit == 1) break;
 		}
-		
 		
 		std::ofstream ofs;
 		ofs.open("files.txt", std::ofstream::out);

@@ -46,7 +46,8 @@ enum {
 	MENU_LIGHTING = 1,
 	MENU_POLYMODE,
 	MENU_TEXTURING,
-	MENU_EXIT
+	MENU_EXIT,
+	MENU_RESTART
 };
 
 typedef int BOOL;
@@ -145,18 +146,20 @@ void RenderObjects(void)
 void RenderObjects2(int t)
 {
 	//glBegin(GL_POINTS);
-
-	for(int i = 0; i < u[universe_index]->size(0); i++)
+	
+	Frame & f = u[universe_index]->get_frame(t);
+	
+	for(int i = 0; i < f.size(); i++)
 	{
-		if(!u[universe_index]->b(t,i)->alive) continue;
+		if(f.b(i)->alive == 0) continue;
 		
 		glPushMatrix();
 		glTranslatef(
-				u[universe_index]->b(t, i)->x[0],
-				u[universe_index]->b(t, i)->x[1],
-				u[universe_index]->b(t, i)->x[2]);
+				f.b(i)->x[0],
+				f.b(i)->x[1],
+				f.b(i)->x[2]);
 
-		glutSolidSphere(u[universe_index]->b(t, i)->radius, 8, 8);
+		glutSolidSphere(f.b(i)->radius, 8, 8);
 		glPopMatrix();
 	}
 
@@ -195,30 +198,36 @@ void display(void)
 		ct += g_t_skip;
 		while(ct >= u[universe_index]->num_steps_)
 		{
+			
+			
 			ct -= u[universe_index]->num_steps_;
 			universe_index++;
 			if(universe_index == u.size()) universe_index = 0;
 
+			printf("universe_index = %i\n", universe_index);
+
 			assert(u[universe_index]);
 		}
+
+		float axes_length = 1000.0;
 
 		// Global axes
 		glBegin(GL_LINES);
 		glVertex3f(c.x, c.y, c.z);
 		glVertex3f(
-				c.x + body_extent.x,
+				c.x + axes_length,
 				c.y,
 				c.z);
 		glVertex3f(c.x, c.y, c.z);
 		glVertex3f(
 				c.x,
-				c.y + body_extent.y,
+				c.y + axes_length,
 				c.z);
 		glVertex3f(c.x, c.y, c.z);
 		glVertex3f(
 				c.x,
 				c.y,
-				c.z + body_extent.z);
+				c.z + axes_length);
 		glEnd();
 	}
 	glPopMatrix();
@@ -226,11 +235,9 @@ void display(void)
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
 }
-
-void reshape(GLint width, GLint height)
+void		reset_proj()
 {
-	g_Width = width;
-	g_Height = height;
+	g_farPlane = 2.0 * g_fViewDistance;
 
 	glViewport(0, 0, g_Width, g_Height);
 	glMatrixMode(GL_PROJECTION);
@@ -238,7 +245,13 @@ void reshape(GLint width, GLint height)
 	gluPerspective(65.0, (float)g_Width / g_Height, g_nearPlane, g_farPlane);
 	glMatrixMode(GL_MODELVIEW);
 }
+void reshape(GLint width, GLint height)
+{
+	g_Width = width;
+	g_Height = height;
 
+	reset_proj();
+}
 void InitGraphics(void)
 {
 	int width, height;
@@ -276,15 +289,30 @@ void MouseButton(int button, int state, int x, int y)
 	// Respond to mouse button presses.
 	// If button1 pressed, mark this state so we know in motion function.
 
-	if (button == GLUT_LEFT_BUTTON)
+	//printf("mouse button = %i, state = %i, x = %i, y = %i\n", button, state, x, y);
+	
+	switch(button)
 	{
+	case GLUT_LEFT_BUTTON:
 		g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
 		
 		//g_yClick = y - 3 * g_fViewDistance;
 
 		g_xClick = x - g_yawScale * g_yaw;
 		g_yClick = y - g_pitchScale * g_pitch;
+		break;
+	case 3: // wheel up
+		g_fViewDistance *= 0.9;
+		printf("g_fViewDistance = %f\n", g_fViewDistance);
+		reset_proj();
+		break;
+	case 4: // wheel down
+		g_fViewDistance *= 1.1;
+		printf("g_fViewDistance = %f\n", g_fViewDistance);
+		reset_proj();
+		break;
 	}
+	
 }
 
 void MouseMotion(int x, int y)
@@ -359,7 +387,10 @@ void SelectFromMenu(int idCommand)
 			else
 				glDisable(GL_TEXTURE_2D);
 			break;    
-
+		case MENU_RESTART:
+			ct = 0;
+			universe_index = 0;
+			break;
 		case MENU_EXIT:
 			exit (0);
 			break;
@@ -388,6 +419,9 @@ void Keyboard(unsigned char key, int x, int y)
 		case 't':
 			SelectFromMenu(MENU_TEXTURING);
 			break;
+		case 'r':
+			SelectFromMenu(MENU_RESTART);
+			break;
 		case ',':
 			g_t_skip--;
 			g_t_skip = (g_t_skip < 1) ? 1 : g_t_skip;
@@ -402,11 +436,12 @@ int BuildPopupMenu (void)
 {
 	int menu;
 
-	menu = glutCreateMenu (SelectFromMenu);
-	glutAddMenuEntry ("Toggle lighting\tl", MENU_LIGHTING);
-	glutAddMenuEntry ("Toggle polygon fill\tp", MENU_POLYMODE);
-	glutAddMenuEntry ("Toggle texturing\tt", MENU_TEXTURING);
-	glutAddMenuEntry ("Exit demo\tEsc", MENU_EXIT);
+	menu = glutCreateMenu(SelectFromMenu);
+	glutAddMenuEntry("Toggle lighting\tl", MENU_LIGHTING);
+	glutAddMenuEntry("Toggle polygon fill\tp", MENU_POLYMODE);
+	glutAddMenuEntry("Toggle texturing\tt", MENU_TEXTURING);
+	glutAddMenuEntry("Restart\tr", MENU_TEXTURING);
+	glutAddMenuEntry("Exit demo\tEsc", MENU_EXIT);
 
 	return menu;
 }

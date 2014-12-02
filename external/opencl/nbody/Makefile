@@ -17,10 +17,10 @@ solv.out: $(O_FILES) build/main.o
 	@echo link $@
 	@g++ -g -o $@ build/main.o $(O_FILES) $(LIBS) -I. -pthread -std=c++0x
 
-$(O_FILES) build/main.o build/glut.o: build/%.o: src/%.cpp
+$(O_FILES) build/main.o build/glut.o: build/%.o: src/%.cpp body.h
 	@echo build $@
 	@mkdir -p $(dir $@)
-	@g++ -g -c -o $@ $^ -I. -std=c++0x
+	@g++ -g -c -o $@ $< -I. -std=c++0x
 
 clean:
 	rm -rf build/

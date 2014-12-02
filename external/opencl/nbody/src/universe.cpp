@@ -3,11 +3,16 @@
 #include <chrono>
 #include <cstring>
 #include <cassert>
+#include <algorithm>
 
 #include "body.h"
 #include "kernel.h"
 #include "universe.h"
 
+void		print(float * a)
+{
+	printf("% 12f % 12f % 12f\n", a[0], a[1], a[2]);
+}
 
 
 Universe::Universe(): first_step_(0)
@@ -84,7 +89,7 @@ int		Universe::solve()
 	pairs.init(f);
 	
 	unsigned int flag_multi_coll = 0;
-	float dt = 100.0;
+	float dt = 10.0;
 
 	unsigned int alive = count_alive(0);
 	unsigned int dead = size(0) - alive;
@@ -96,16 +101,23 @@ int		Universe::solve()
 
 	unsigned int number_removed = 0;
 
+	float velocity_ratio_min = 0.1;
+	float velocity_ratio[3];
+
 	for(int t = 1; t < num_steps_; t++)
 	{
-		if((t % (num_steps_ / 10)) == 0)
+		//if((t % (num_steps_ / 10)) == 0)
 		{
-			printf("t = %6i nb = %6i\n", t, alive);
+			printf("t = %6i alive = %6i dead = %6i temp_dead = %6i\n",
+					t,
+					alive,
+					dead,
+					temp_dead);
 		}
 		
 		if(temp_dead >= one_tenth)
 		{
-			printf("tenth\n");
+			//printf("one tenth\n");
 		
 			one_tenth = alive / 10;
 			temp_dead = 0;
@@ -120,11 +132,32 @@ int		Universe::solve()
 		/* Execute "step_pairs" kernel */
 		step_pairs(f.b(0), &pairs.pairs_[0], pairs.size());
 
+
+
 		/* Execute "step_bodies" kernel */
-		step_bodies(f.b(0), &pairs.pairs_[0], pairs.map_.ptr(), dt, f.size());
+
+
+		std::fill_n(velocity_ratio, 3, 0);
+
+		step_bodies(f.b(0), &pairs.pairs_[0], pairs.map_.ptr(), dt, f.size(), velocity_ratio);
+		
+		if(
+				(velocity_ratio[0] > velocity_ratio_min) ||
+				(velocity_ratio[1] > velocity_ratio_min) ||
+				(velocity_ratio[2] > velocity_ratio_min)
+		  )
+		{
+			printf("velocity_ratio = % 12f % 12f % 12f\n",
+					velocity_ratio[0],
+					velocity_ratio[1],
+					velocity_ratio[2]
+					);
+
+			dt *= 0.5;
+		}
 		
 		/* Execute "step_collisions" kernel */
-		step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, f.size());
+		step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, pairs.size());
 		
 		/* Execute "clear_bodies_num_collisions" kernel */
 		clear_bodies_num_collisions(f.b(0), f.size());
@@ -134,7 +167,7 @@ int		Universe::solve()
 			puts("resolve multi_coll");
 
 			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
-			step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, f.size());
+			step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, pairs.size());
 		}
 		
 		alive -= nc;
@@ -287,112 +320,19 @@ int		Universe::read(std::string fileName, int num_steps)
 }
 int		Universe::mass_center(int t, float * x, float * s)
 {
-
 	get_frame(t).mass_center(x, s);
-/*
-	float temp[3] = {0,0,0};
-
-	float m = 0;
-
-	for(int i = 0; i < size(t); i++)
-	{
-		Body * pb = b(t,i);
-
-		temp[0] += pb->x[0] * pb->mass;
-		temp[1] += pb->x[1] * pb->mass;
-		temp[2] += pb->x[2] * pb->mass;
-
-		m += pb->mass;
-	}
-
-	temp[0] /= m;
-	temp[1] /= m;
-	temp[2] /= m;
-
-	if(x)
-	{
-		x[0] = temp[0];
-		x[1] = temp[1];
-		x[2] = temp[2];
-	}
-
-	// weighted std
-
-	if(s)
-	{
-		temp[0] = 0;
-		temp[1] = 0;
-		temp[2] = 0;
-
-		for(int i = 0; i < size(t); i++)
-		{
-			Body * pb = b(t,i);
-
-			temp[0] += pb->mass * pow(pb->x[0] - x[0], 2);
-			temp[1] += pb->mass * pow(pb->x[1] - x[1], 2);
-			temp[2] += pb->mass * pow(pb->x[2] - x[2], 2);
-		}
-
-		s[0] = sqrt(temp[0] / m);
-		s[1] = sqrt(temp[1] / m);
-		s[2] = sqrt(temp[2] / m);
-	}
-	*/
-}
-void		Universe::random(float m)
-{
-	int w = 1000;
-
-	for(Body * pb = b(0); pb < (b(0) + size(0)); pb++)
-	{
-		pb->x[0] = (float)(rand() % w) - (float)w * 0.5;
-		pb->x[1] = (float)(rand() % w) - (float)w * 0.5;
-		pb->x[2] = (float)(rand() % w) - (float)w * 0.5;
-
-		pb->v[0] = 0;
-		pb->v[1] = 0;
-		pb->v[2] = 0;
-
-		pb->mass = m;
-		pb->radius = radius(pb->mass);
-	}
-}
-void		Universe::spin(float m)
-{
-	// give bodies xz velocity orbiting mass_center
-
-	int w = 1000;
-
-	// universe mass
-	float umass = size(0) * m;
-
-	for(Body * pb = b(0); pb < (b(0) + size(0)); pb++)
-	{
-		pb->x[0] = (float)(rand() % w) - (float)w * 0.5;
-		pb->x[1] = (float)(rand() % w) - (float)w * 0.5;
-		pb->x[2] = (float)(rand() % w) - (float)w * 0.5;
-
-		float r = sqrt(pb->x[0] * pb->x[0] + pb->x[1] * pb->x[1] + pb->x[2] * pb->x[2]);
-
-		float rxz = sqrt(pb->x[0] * pb->x[0] + pb->x[2] * pb->x[2]);
-
-		float v = sqrt(6.67384E-11 * umass / r) * 0.5;
-
-		pb->v[0] = -pb->x[2] / rxz * v;
-		pb->v[1] = 0;
-		pb->v[2] = pb->x[0] / rxz * v;
-
-		pb->mass = m;
-		pb->radius = radius(pb->mass);
-	}
 }
 void		Universe::stats()
 {
 	mass_center_.resize(num_steps_);
-
+	
+	float s[3];
+	
 	for(int t = 0; t < num_steps_; t++)
 	{
-		mass_center(t, &mass_center_[t].x, (float*)0);
+		mass_center(t, &mass_center_[t].x, s);
+		
+		//print(s);
 	}
 }
 unsigned int	Universe::size(unsigned int t)

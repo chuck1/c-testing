@@ -10,7 +10,8 @@ void step_bodies(
 		struct Pair * pairs,
 		unsigned int * map,
 		float dt,
-		unsigned int num_bodies
+		unsigned int num_bodies,
+		float * velocity_ratio
 		);
 
 void step_pairs(

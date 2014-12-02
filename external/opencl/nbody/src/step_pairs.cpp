@@ -40,7 +40,7 @@ void step_pairs(
 	{
 		struct Pair* pp = pairs + p;
 
-		if(pp->alive == 0)
+		if(pp->_M_alive == 0)
 		{
 			//puts("dead");
 			continue;
@@ -51,14 +51,14 @@ void step_pairs(
 		struct Body* b0 = bodies + pp->b0;
 		struct Body* b1 = bodies + pp->b1;
 
-		if(!b0->alive)
+		if(b0->alive == 0)
 		{
-			pp->alive = 0;
+			pp->_M_alive = 0;
 			continue;
 		}
-		if(!b1->alive)
+		if(b1->alive == 0)
 		{
-			pp->alive = 0;
+			pp->_M_alive = 0;
 			continue;
 		}
 		
@@ -75,25 +75,35 @@ void step_pairs(
 	
 		float d2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
 
+
 		//float dr = rsqrt(d2);
 		float d = sqrt(d2);
 
 		pp->d = sqrt(d2);
 	
+
 		if(pp->d < (b0->radius + b1->radius))
 		{
-			pp->collision = 1;
+			//printf("collision\n");
+			pp->_M_collision = 1;
 			// atomic
 			b0->num_collisions++;
 			// atomic
 			b1->num_collisions++;
 		}
 
-		pp->u[0] = r[0] / d;
-		pp->u[1] = r[1] / d;
-		pp->u[2] = r[2] / d;
-		
-		pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
+		if(d2 == 0.0)
+		{
+			//printf("d2 is zero. d = %f\n", pp->d);
+		}
+		else
+		{
+			pp->u[0] = r[0] / d;
+			pp->u[1] = r[1] / d;
+			pp->u[2] = r[2] / d;
+
+			pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
+		}
 	}
 
 }
