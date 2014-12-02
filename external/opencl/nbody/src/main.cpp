@@ -13,7 +13,8 @@
 float timestep = 1.0;
 float mass = 1e6;
 unsigned int num_steps = 100;
-unsigned int num_bodies = 1024;
+unsigned int num_bodies = 16384;
+float width = 3000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 
@@ -47,6 +48,7 @@ int		info_problem()
 	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
 	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
 	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
+	return 0;
 }
 int		cleanup()
 {
@@ -98,15 +100,15 @@ int		main(int ac, char ** av)
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 		
-		strftime(u->name_, 80, "%Y_%m_%d_%H_%M_%S", timeinfo);
+		strftime(u->name_, 32, "%Y_%m_%d_%H_%M_%S", timeinfo);
 		
-		printf("%s\n", u->name_);
+		printf("name = %s\n", u->name_);
 
 		u->alloc(num_bodies, num_steps);
 	
 		//u->random(mass);
-		//u->spin(mass);
-		u->get_frame(0).rings(mass, 2000.0);
+		u->get_frame(0).spin(mass, width);
+		//u->get_frame(0).rings(mass, width);
 	}
 	else
 	{
@@ -144,7 +146,13 @@ int		main(int ac, char ** av)
 		}
 		
 		std::ofstream ofs;
-		ofs.open("files.txt", std::ofstream::out);
+
+		char filename[128];
+		strcpy(filename, "files_");
+		strcat(filename, u->name_);
+		strcat(filename, ".dat");
+		
+		ofs.open(filename, std::ofstream::out);
 
 		for(auto filename : filenames)
 		{
@@ -240,7 +248,7 @@ int		main(int ac, char ** av)
 
 	auto program_time_start = std::chrono::system_clock::now();
 
-	for(int t = 1; t < num_steps; t++)
+	for(unsigned int t = 1; t < num_steps; t++)
 	{
 		puts("loop");
 

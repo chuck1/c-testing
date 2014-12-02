@@ -154,6 +154,8 @@ void step_collisions(
 				b0->mass = m;
 				b0->radius = pow(3.0 / 4.0 / 3.1415 * m / 900.0, 0.333333);
 
+				//printf("new radius = %f\n", b0->radius);
+
 				/*
 				   printf("mass = %f radius = %f\n", m, u.r(t, me));
 				   printf("p = %f %f %f\n",

@@ -33,6 +33,7 @@ struct Body
 		radius = b.radius;
 		alive = b.alive;
 		num_collisions = b.num_collisions;
+		return *this;
 	}
 
 	float	x[3]; // 4 * 3 = 12
@@ -73,8 +74,8 @@ struct Pair
 		assert(0);
 	}
 
-	int		b0; // 4
-	int		b1; // 4
+	unsigned int	b0; // 4
+	unsigned int	b1; // 4
 	
 	float		u[3]; // 12
 	float		d; // 4

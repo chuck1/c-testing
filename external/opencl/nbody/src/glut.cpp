@@ -149,7 +149,7 @@ void RenderObjects2(int t)
 	
 	Frame & f = u[universe_index]->get_frame(t);
 	
-	for(int i = 0; i < f.size(); i++)
+	for(unsigned int i = 0; i < f.size(); i++)
 	{
 		if(f.b(i)->alive == 0) continue;
 		
@@ -160,6 +160,9 @@ void RenderObjects2(int t)
 				f.b(i)->x[2]);
 
 		glutSolidSphere(f.b(i)->radius, 8, 8);
+
+		//printf("radius = %f\n", f.b(i)->radius);
+
 		glPopMatrix();
 	}
 
@@ -254,9 +257,9 @@ void reshape(GLint width, GLint height)
 }
 void InitGraphics(void)
 {
-	int width, height;
-	int nComponents;
-	void* pTextureImage;
+	//int width, height;
+	//int nComponents;
+	//void* pTextureImage;
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -460,11 +463,11 @@ int main(int argc, char** argv)
 	{
 		c--;
 	}
-	printf("%s\n",c);
+	printf("ext = %s\n",c);
 	
 	char line_buffer[128];
 	
-	if(strcmp(c, ".txt") == 0)
+	if(strcmp(c, ".dat") == 0)
 	{
 		FILE* pf = fopen(argv[1], "r");
 		
@@ -475,18 +478,28 @@ int main(int argc, char** argv)
 			fileNames.emplace_back(line_buffer);
 		}
 	}
+	/*
 	else if(strcmp(c, ".dat") == 0)
 	{
 		fileNames.emplace_back(argv[1]);
 	}
+	*/
 
 	int ret;
 
 	for(auto fileName : fileNames)
 	{
 		Universe* utemp = new Universe;
-		
-		ret = utemp->read(fileName);
+
+		try
+		{
+			ret = utemp->read(fileName);
+		}
+		catch(std::bad_alloc & e)
+		{
+			break;
+		}
+
 		if(ret)
 		{
 			printf("read failed: %s\n", fileName.c_str());
@@ -498,6 +511,11 @@ int main(int argc, char** argv)
 		u.push_back(utemp);
 	}
 
+	if(u.empty())
+	{
+		printf("universes empty\n");
+		exit(1);
+	}
 
 	printf("num_step:   %i\n", u[universe_index]->num_steps_);
 	printf("num_bodies: %i\n", u[universe_index]->size(0));

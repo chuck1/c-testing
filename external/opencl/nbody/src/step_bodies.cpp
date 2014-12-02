@@ -16,16 +16,16 @@ void step_bodies(
 	/* work group */
 	int local_block = num_bodies / get_num_groups(0);
 	
-	int i_group0 = get_group_id(0) * local_block;
-	int i_group1 = i_group0 + local_block;
+	unsigned int i_group0 = get_group_id(0) * local_block;
+	unsigned int i_group1 = i_group0 + local_block;
 	
 	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = num_bodies;
 	
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
 	
-	int i_local0 = i_group0 + get_local_id(0) * block;
-	int i_local1 = i_local0 + block;
+	unsigned int i_local0 = i_group0 + get_local_id(0) * block;
+	unsigned int i_local1 = i_local0 + block;
 	
 	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
 
@@ -55,7 +55,7 @@ void step_bodies(
 
 	Body * pb = 0;
 	
-	for(int b = i_local0; b < i_local1; b++)
+	for(unsigned int b = i_local0; b < i_local1; b++)
 	{
 		//pbm = local_bodymaps + b;
 		//pbm = bodymaps + b;
@@ -72,7 +72,7 @@ void step_bodies(
 		f[1] = 0;
 		f[2] = 0;
 		
-		for(int i = 0; i < num_bodies; i++)
+		for(unsigned int i = 0; i < num_bodies; i++)
 		{
 			if(b == i) continue;
 

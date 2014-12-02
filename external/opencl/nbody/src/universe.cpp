@@ -20,12 +20,12 @@ Universe::Universe(): first_step_(0)
 }
 Body*		Universe::b(int t)
 {
-	assert(frames_.frames_.size() > t);
+	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].b(0); // &_M_bodies[0] + (t * num_bodies_);
 }
 Body*		Universe::b(int t, int i)
 {
-	assert(frames_.frames_.size() > t);
+	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].b(i); //&_M_bodies[0] + (t * num_bodies_ + i);
 }
 void		Universe::alloc(int num_bodies, int num_steps)
@@ -63,17 +63,17 @@ unsigned int	count_dead(Body * b, int n)
 }
 unsigned int	Universe::count_alive(int t)
 {
-	assert(frames_.frames_.size() > t);
+	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].count_alive();
 }
 Frame &		Universe::get_frame(int t)
 {
-	assert(frames_.frames_.size() > t);
+	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t];
 }
 unsigned int	Universe::count_dead(int t)
 {
-	assert(frames_.frames_.size() > t);
+	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].count_dead();
 }
 int		Universe::solve()
@@ -106,7 +106,7 @@ int		Universe::solve()
 
 	for(int t = 1; t < num_steps_; t++)
 	{
-		//if((t % (num_steps_ / 10)) == 0)
+		if((t % (num_steps_ / 10)) == 0)
 		{
 			printf("t = %6i alive = %6i dead = %6i temp_dead = %6i\n",
 					t,
@@ -141,6 +141,8 @@ int		Universe::solve()
 
 		step_bodies(f.b(0), &pairs.pairs_[0], pairs.map_.ptr(), dt, f.size(), velocity_ratio);
 		
+		if(0)
+		{
 		if(
 				(velocity_ratio[0] > velocity_ratio_min) ||
 				(velocity_ratio[1] > velocity_ratio_min) ||
@@ -155,7 +157,8 @@ int		Universe::solve()
 
 			dt *= 0.5;
 		}
-		
+		}
+
 		/* Execute "step_collisions" kernel */
 		step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, pairs.size());
 		
@@ -189,7 +192,7 @@ int		Universe::solve()
 		//memcpy(b(t), f.b(0), num_bodies_ * sizeof(Body));
 		frames_.frames_.push_back(f);
 
-		assert(frames_.frames_.size() == (t+1));
+		assert(frames_.frames_.size() == (unsigned int)(t+1));
 
 		assert(frames_.frames_[t].bodies_.size() == f.bodies_.size());
 		
@@ -205,7 +208,11 @@ int		Universe::solve()
 			printf("3: %i %i\n", (number_removed + count_dead(t)), dead);
 			exit(1);
 		}
+
+		//f.print();
 	}
+
+	return 0;
 }
 void	Universe::add_frame(unsigned int n)
 {
@@ -240,8 +247,8 @@ std::string	Universe::getFilename()
 	char buffer[8];
 	sprintf(buffer, "%i", num_steps_ + first_step_);
 
-	char fileName[64];
-	strcpy(fileName, "data_");
+	char fileName[128];
+	strcpy(fileName, "data/data_");
 	strcat(fileName, name_);
 	strcat(fileName, "_");
 	strcat(fileName, buffer);
@@ -264,7 +271,9 @@ void		Universe::write()
 	fwrite(&num_steps_, sizeof(int), 1, pfile_);
 	fwrite(&first_step_, sizeof(int), 1, pfile_);
 
-	fwrite(&name_, 32, 1, pfile_);
+	fwrite(&name_, 1, NAME_SIZE, pfile_);
+
+	printf("name = %s\n", name_);
 
 	frames_.write(pfile_);
 	//fwrite(b(0), sizeof(Body), num_steps_ * num_bodies_, pfile_);
@@ -282,7 +291,7 @@ int		Universe::read(std::string fileName, int num_steps)
 	fread(&num_steps_old, sizeof(int), 1, pfile_);
 	fread(&first_step_, sizeof(int), 1, pfile_);
 
-	fread(&name_, 32, 1, pfile_);
+	fread(&name_, 1, NAME_SIZE, pfile_);
 
 	printf("name = %s\n", name_);
 
@@ -321,6 +330,7 @@ int		Universe::read(std::string fileName, int num_steps)
 int		Universe::mass_center(int t, float * x, float * s)
 {
 	get_frame(t).mass_center(x, s);
+	return 0;
 }
 void		Universe::stats()
 {

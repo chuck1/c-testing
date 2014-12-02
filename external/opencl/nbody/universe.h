@@ -33,7 +33,7 @@ struct Frame
 			bodies_ = f.bodies_;
 			return *this;
 		}
-		Body*			b(int i)
+		Body*			b(unsigned int i)
 		{
 			assert(bodies_.size() > i);
 			return &bodies_[i];
@@ -64,7 +64,7 @@ struct Frame
 		unsigned int	count_dead()
 		{
 			unsigned int n = 0;
-			for(int i = 0; i < bodies_.size(); i++)
+			for(unsigned int i = 0; i < bodies_.size(); i++)
 			{
 				if(bodies_[i].alive == 0) n++;
 			}
@@ -73,7 +73,7 @@ struct Frame
 		unsigned int	count_alive()
 		{
 			unsigned int n = 0;
-			for(int i = 0; i < bodies_.size(); i++)
+			for(unsigned int i = 0; i < bodies_.size(); i++)
 			{
 				if(bodies_[i].alive == 1) n++;
 			}
@@ -95,20 +95,7 @@ struct Frame
 
 			//print();
 		}
-		void		print()
-		{
-			for(int i = 0; i < bodies_.size(); i++)
-			{
-
-				printf("% 12f % 12f % 12f %i\n",
-						bodies_[i].x[0],
-						bodies_[i].x[1],
-						bodies_[i].x[2],
-						bodies_[i].alive);
-
-			}
-
-		}
+		void		print();
 		glm::vec3	body_max()
 		{
 			glm::vec3 e(FLT_MIN);
@@ -193,6 +180,8 @@ struct Frame
 				s[1] = sqrt(temp[1] / m);
 				s[2] = sqrt(temp[2] / m);
 			}
+
+			return 0;
 		}
 
 	public:	
@@ -207,12 +196,13 @@ struct Frames
 	Frames &	operator=(Frames const & f)
 	{
 		frames_ = f.frames_;
+		return *this;
 	}
 	void		write(FILE* pf)
 	{
 		unsigned int n = frames_.size();
 		fwrite(&n, sizeof(unsigned int), 1, pf);
-		for(int i = 0; i < n; i++)
+		for(unsigned int i = 0; i < n; i++)
 		{
 			frames_[i].write(pf);
 		}
@@ -222,7 +212,7 @@ struct Frames
 		unsigned int n;
 		fread(&n, sizeof(unsigned int), 1, pf);
 		frames_.resize(n);
-		for(int i = 0; i < n; i++)
+		for(unsigned int i = 0; i < n; i++)
 		{
 			frames_[i].read(pf);
 		}
@@ -246,9 +236,9 @@ struct Pairs
 
 		pairs_.resize(nb * (nb - 1) / 2);
 
-		for(int i = 0; i < nb; i++)
+		for(unsigned int i = 0; i < nb; i++)
 		{
-			for(int j = i + 1; j < nb; j++)
+			for(unsigned int j = i + 1; j < nb; j++)
 			{
 
 				pairs_[k].b0 = i;
@@ -293,13 +283,13 @@ struct Universe
 	public:
 		Frames			frames_;
 
-
+		static const unsigned int	NAME_SIZE = 32;
 
 		int			num_steps_;
 
 		int			first_step_;
 
-		char			name_[32];
+		char			name_[NAME_SIZE];
 
 		// extra timeseries data
 		std::vector<glm::vec3>		mass_center_;

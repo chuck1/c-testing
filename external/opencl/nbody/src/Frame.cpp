@@ -9,6 +9,23 @@ void		Frame::copy(Body* b, int n)
 	bodies_.resize(n);
 	memcpy(&bodies_[0], b, n * sizeof(Body));
 }
+void		Frame::print()
+{
+	for(unsigned int i = 0; i < bodies_.size(); i++)
+	{
+
+		printf("x = % 12f % 12f % 12f m = % 12e r = % 12f alive = %i\n",
+				bodies_[i].x[0],
+				bodies_[i].x[1],
+				bodies_[i].x[2],
+				bodies_[i].mass,
+				bodies_[i].radius,
+				bodies_[i].alive);
+
+	}
+
+}
+
 unsigned int		Frame::reduce()
 {
 	unsigned int n;
@@ -87,7 +104,7 @@ float	distance(float * x0, float * x1)
 	float d = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
 	return d;
 }
-/*
+
 float	func1(float a)
 {
 	return (float)(rand() % (int)a) - a * 0.5;
@@ -96,7 +113,7 @@ float	func2(float a)
 {
 	return a;
 }
-*/
+
 int			Frame::try_insert(
 		float * x,
 		float a0,
@@ -110,7 +127,7 @@ int			Frame::try_insert(
 {
 	bool fail = true;
 
-	for(int i = 0; i < 10; i ++)
+	for(unsigned int j = 0; j < 10; j ++)
 	{
 		x[0] = f0(a0);
 		x[1] = f1(a1);
@@ -118,7 +135,7 @@ int			Frame::try_insert(
 
 		fail = false;
 
-		for(int i = 0; i < idx; i++)
+		for(unsigned int i = 0; i < idx; i++)
 		{
 			Body & b = bodies_[i];
 
@@ -126,7 +143,7 @@ int			Frame::try_insert(
 
 			if(distance(b.x, x) < (b.radius + radius))
 			{
-				//printf("retry insert\n");
+				//printf("retry insert %i\n", j);
 				fail = true;
 				break;
 			}
@@ -135,7 +152,7 @@ int			Frame::try_insert(
 		if(!fail) return 0;
 	}
 
-	//printf("failed clean insert\n");
+	printf("failed clean insert\n");
 
 	return 1;
 }
@@ -143,9 +160,9 @@ void			Frame::rings(float m, float w)
 {
 	// give bodies xz velocity orbiting mass_center
 
-	float r = radius(m);
+	float rad = radius(m);
 
-	printf("radius = %f w = %f\n", r, w);
+	printf("radius = %f w = %f\n", rad, w);
 	printf("num bodies = %i\n", size());
 
 	// universe mass
@@ -156,24 +173,24 @@ void			Frame::rings(float m, float w)
 	int n = 0;
 
 
-	//for(unsigned int i = 0; i < bodies_.size(); i++)
-	for(Body & b : bodies_)
+	for(unsigned int i = 0; i < bodies_.size(); i++)
+	//for(Body & b : bodies_)
 	{
-		//Body & b = bodies_[i];
+		Body & b = bodies_[i];
 
-		/*
-		if(try_insert(x, w, 0.0, w, func1, func2, func1, r, i)) n++;
+
+		if(try_insert(x, w, 0.0, w, func1, func2, func1, rad, i)) n++;
 
 		b.x[0] = x[0];
 		b.x[1] = x[1];
 		b.x[2] = x[2];
-		*/
 
-		b.x[0] = (float)(rand() % (int)w) - w * 0.5;
-		b.x[1] = 0.0;
-		b.x[2] = (float)(rand() % (int)w) - w * 0.5;
-		
-		::print(b.x);
+		/*
+		   b.x[0] = (float)(rand() % (int)w) - w * 0.5;
+		   b.x[1] = 0.0;
+		   b.x[2] = (float)(rand() % (int)w) - w * 0.5;
+		   */
+		//::print(b.x);
 
 		float r = sqrt(b.x[0] * b.x[0] + b.x[1] * b.x[1] + b.x[2] * b.x[2]);
 
@@ -186,7 +203,7 @@ void			Frame::rings(float m, float w)
 		b.v[2] = b.x[0] / rxz * v;
 
 		b.mass = m;
-		b.radius = r;
+		b.radius = rad;
 	}
 
 	printf("%i failed inserts\n", n);

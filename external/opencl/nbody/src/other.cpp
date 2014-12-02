@@ -44,7 +44,7 @@ int		get_device_info(cl_device_id device_id)
 	printf("%32s = %i\n", "device_mem_base_addr_align", (int)device_mem_base_addr_align / 8);
 	printf("%32s = %i\n", "max_work_group_size", (int)max_work_group_size);
 	printf("%32s = %i\n", "max_work_item_dimensions", max_work_item_dimensions);
-	for(int i = 0; i < max_work_item_dimensions; i++)
+	for(unsigned int i = 0; i < max_work_item_dimensions; i++)
 	{
 		printf("%29s[%i] = %i\n", "max_work_item_sizes", i, (int)max_work_item_sizes[i]);
 	}
@@ -54,6 +54,9 @@ int		get_device_info(cl_device_id device_id)
 	printf("%32s = %i\n", "local size", LOCAL_SIZE);
 	printf("%32s = %i\n", "num groups", NUM_GROUPS);
 
+	check(__LINE__, ret);
+
+	return 0;
 }
 int		get_kernel_info(cl_kernel kernel, cl_device_id device_id)
 {
@@ -61,7 +64,7 @@ int		get_kernel_info(cl_kernel kernel, cl_device_id device_id)
 
 	cl_ulong kernel_local_mem_size;
 
-	clGetKernelWorkGroupInfo(kernel, device_id,  CL_KERNEL_LOCAL_MEM_SIZE, sizeof(cl_ulong), &kernel_local_mem_size, NULL);
+	ret = clGetKernelWorkGroupInfo(kernel, device_id,  CL_KERNEL_LOCAL_MEM_SIZE, sizeof(cl_ulong), &kernel_local_mem_size, NULL);
 
 	printf("kernel:\n");
 	printf("%32s = %i\n", "kernel local mem size", (int)kernel_local_mem_size);
@@ -87,7 +90,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 
 	/* Load the source code containing the kernel*/
 
-	for(int i = 0; i < numFiles; i++)
+	for(unsigned int i = 0; i < numFiles; i++)
 	{
 		fp = fopen(fileName[i], "r");
 		if (!fp) {
@@ -109,7 +112,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 
 
 
-	for(int i = 0; i < numFiles; i++) free(source_str[i]);
+	for(unsigned int i = 0; i < numFiles; i++) free(source_str[i]);
 
 	/* Build Kernel Program */
 	ret = clBuildProgram(
