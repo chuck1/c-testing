@@ -152,7 +152,7 @@ int		main(int ac, char ** av)
 		strcat(filename, u->name_);
 		strcat(filename, ".dat");
 		
-		ofs.open(filename, std::ofstream::out);
+		ofs.open(filename, std::ofstream::out | std::ofstream::app);
 
 		for(auto filename : filenames)
 		{

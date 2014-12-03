@@ -91,6 +91,8 @@ int		Universe::solve()
 	unsigned int flag_multi_coll = 0;
 	float dt = 10.0;
 
+	float time_sim = 0;
+	
 	unsigned int alive = count_alive(0);
 	unsigned int dead = size(0) - alive;
 	
@@ -99,20 +101,49 @@ int		Universe::solve()
 	
 	unsigned int nc = 0;
 
+	unsigned int step = first_step_;
+	
 	unsigned int number_removed = 0;
-
+	
 	float velocity_ratio_min = 0.1;
 	float velocity_ratio[3];
 
+	float duration_real = 0;
+
+	printf("num_steps = %i\n", num_steps_);
+
 	for(int t = 1; t < num_steps_; t++)
 	{
+		auto program_time_start = std::chrono::system_clock::now();
+
+		step++;
+
+		float eta = (duration_real == 0.0) ? 0.0 : (duration_real / (float)(t-1) * (num_steps_ - 1));
+
+		time_sim += dt;
+	
+		if((t % (num_steps_ / 1)) == 0)
+		{
+			printf("%16s%16s%16s%16s%16s%16s%16s\n",
+					"sim time",
+					"step",
+					"step inner",
+					"alive",
+					"dead",
+					"temp_dead",
+					"eta");
+		}
 		if((t % (num_steps_ / 10)) == 0)
 		{
-			printf("t = %6i alive = %6i dead = %6i temp_dead = %6i\n",
+			printf("%16f%16i%16i%16i%16i%16i%16f\n",
+					time_sim,
+					step,
 					t,
 					alive,
 					dead,
-					temp_dead);
+					temp_dead,
+					eta
+					);
 		}
 		
 		if(temp_dead >= one_tenth)
@@ -192,7 +223,12 @@ int		Universe::solve()
 		//memcpy(b(t), f.b(0), num_bodies_ * sizeof(Body));
 		frames_.frames_.push_back(f);
 
-		assert(frames_.frames_.size() == (unsigned int)(t+1));
+		if(frames_.frames_.size() != (unsigned int)(t+1))
+		{
+			printf("error\nframes_.frames_.size() = %i\n(unsigned int)(t+1) = %i\n",
+				(int)frames_.frames_.size(),
+				(t+1));
+		}
 
 		assert(frames_.frames_[t].bodies_.size() == f.bodies_.size());
 		
@@ -210,6 +246,9 @@ int		Universe::solve()
 		}
 
 		//f.print();
+		
+		auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - program_time_start);
+		duration_real += (float)duration.count();
 	}
 
 	return 0;
@@ -310,9 +349,11 @@ int		Universe::read(std::string fileName, int num_steps)
 		
 		// copy last to first
 		//memcpy(b(0), bodies + (num_steps_old - 1) * num_bodies_, num_bodies_ * sizeof(Body));
-		get_frame(0) = frames_.frames_[num_steps_old - 1];
+		
+		//get_frame(0) = frames.frames_[num_steps_old - 1];
+		frames_.frames_.push_back(frames.frames_[num_steps_old - 1]);
 
-		alloc(size(0), num_steps_);
+		//alloc(size(0), num_steps_);
 	}
 	else
 	{
