@@ -69,8 +69,9 @@ static int g_Height = 600;                         // Initial window height
 static int g_xClick = 0;
 static int g_yClick = 0;
 static float g_lightPos[4] = { 10, 10, -100, 1 };  // Position of light
-static float g_yaw = 0.0;
-static float g_pitch = 0.0;
+static float	g_yaw = 0.0;
+static float	g_pitch = 0.0;
+static float	g_radiusScale = 1.0;
 #ifdef _WIN32
 static DWORD last_idle_time;
 #else
@@ -159,7 +160,7 @@ void RenderObjects2(int t)
 				f.b(i)->x[1],
 				f.b(i)->x[2]);
 
-		glutSolidSphere(f.b(i)->radius, 8, 8);
+		glutSolidSphere(f.b(i)->radius * g_radiusScale, 8, 8);
 
 		//printf("radius = %f\n", f.b(i)->radius);
 
@@ -432,6 +433,15 @@ void Keyboard(unsigned char key, int x, int y)
 		case '.':
 			g_t_skip++;
 			break;
+		case '1':
+			g_radiusScale = 1.0;
+			break;
+		case '2':
+			g_radiusScale = 2.0;
+			break;
+		case '3':
+			g_radiusScale = 3.0;
+			break;
 	}
 }
 
@@ -523,8 +533,9 @@ int main(int argc, char** argv)
 	auto emin = u[universe_index]->get_frame(0).body_min();
 	auto emax = u[universe_index]->get_frame(0).body_max();
 
+	float mass;
 
-	u[universe_index]->mass_center(0, &body_center.x, &body_std.x);
+	u[universe_index]->mass_center(0, &body_center.x, &body_std.x, &mass);
 	u[universe_index]->stats();
 
 	body_extent = emax - emin;

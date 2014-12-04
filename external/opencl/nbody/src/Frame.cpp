@@ -3,13 +3,38 @@
 #include "universe.h"
 
 
-
-void		Frame::copy(Body* b, int n)
+Frame::Frame()
+{
+}
+Frame::Frame(Frame const & f): bodies_(f.bodies_)
+{
+	//printf("%s\n", __PRETTY_FUNCTION__);
+}
+Frame &			Frame::operator=(Frame const & f)
+{
+	//printf("%s\n", __PRETTY_FUNCTION__);
+	bodies_ = f.bodies_;
+	return *this;
+}
+Body*			Frame::b(unsigned int i)
+{
+	assert(bodies_.size() > i);
+	return &bodies_[i];
+}
+unsigned int		Frame::size() const
+{
+	return bodies_.size();
+}
+void			Frame::alloc(int n)
+{
+	bodies_.resize(n);
+}
+void			Frame::copy(Body* b, int n)
 {
 	bodies_.resize(n);
 	memcpy(&bodies_[0], b, n * sizeof(Body));
 }
-void		Frame::print()
+void			Frame::print()
 {
 	for(unsigned int i = 0; i < bodies_.size(); i++)
 	{
@@ -28,7 +53,7 @@ void		Frame::print()
 
 unsigned int		Frame::reduce()
 {
-	unsigned int n;
+	unsigned int n = 0;
 
 	auto it = bodies_.begin();
 
@@ -174,7 +199,7 @@ void			Frame::rings(float m, float w)
 
 
 	for(unsigned int i = 0; i < bodies_.size(); i++)
-	//for(Body & b : bodies_)
+		//for(Body & b : bodies_)
 	{
 		Body & b = bodies_[i];
 
@@ -207,5 +232,92 @@ void			Frame::rings(float m, float w)
 	}
 
 	printf("%i failed inserts\n", n);
+}
+glm::vec3	Frame::body_max()
+{
+	glm::vec3 e(FLT_MIN);
+
+	for(Body & b : bodies_)
+	{
+		if(b.alive)
+		{
+			e.x = std::max(e.x, b.x[0]);
+			e.y = std::max(e.y, b.x[1]);
+			e.z = std::max(e.z, b.x[2]);
+		}
+	}
+
+	return e;
+}
+
+glm::vec3	Frame::body_min()
+{
+	glm::vec3 e(FLT_MAX);
+
+	for(Body & b : bodies_)
+	{
+		if(b.alive)
+		{
+			e.x = std::min(e.x, b.x[0]);
+			e.y = std::min(e.y, b.x[1]);
+			e.z = std::min(e.z, b.x[2]);
+		}
+	}
+
+	return e;
+}
+int		Frame::mass_center(float * x, float * s, float * m)
+{
+	float temp[3] = {0,0,0};
+	
+	*m = 0;
+	
+	for(Body & b : bodies_)
+	{
+		if(b.alive)
+		{
+			temp[0] += b.x[0] * b.mass;
+			temp[1] += b.x[1] * b.mass;
+			temp[2] += b.x[2] * b.mass;
+
+			*m += b.mass;
+		}
+	}
+
+	temp[0] /= *m;
+	temp[1] /= *m;
+	temp[2] /= *m;
+
+	if(x)
+	{
+		x[0] = temp[0];
+		x[1] = temp[1];
+		x[2] = temp[2];
+	}
+
+	// weighted std
+
+	if(s)
+	{
+		temp[0] = 0;
+		temp[1] = 0;
+		temp[2] = 0;
+
+		for(Body & b : bodies_)
+		{
+			if(b.alive)
+			{
+				temp[0] += b.mass * pow(b.x[0] - x[0], 2);
+				temp[1] += b.mass * pow(b.x[1] - x[1], 2);
+				temp[2] += b.mass * pow(b.x[2] - x[2], 2);
+			}
+		}
+
+		s[0] = sqrt(temp[0] / *m);
+		s[1] = sqrt(temp[1] / *m);
+		s[2] = sqrt(temp[2] / *m);
+	}
+
+	return 0;
 }
 

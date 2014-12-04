@@ -12,9 +12,9 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 100;
-unsigned int num_bodies = 16384;
-float width = 3000.0;
+unsigned int num_steps = 2000;
+unsigned int num_bodies = 1024;
+float width = 1000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 
@@ -119,47 +119,44 @@ int		main(int ac, char ** av)
 	puts("Get Platform and Device Info");
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
 
-	std::vector<std::string>	filenames;
+	//std::vector<std::string>	filenames;
 	
 	if(ret)
 	{
-		// CPU
-		for(int i = 0; i < 100; i++)
-		{
-			u->solve();
-			
-			u->write();
-
-			filenames.push_back(u->getFilename());
-
-			// copy last to first
-			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
-			
-			u->get_frame(0) = u->get_frame(u->num_steps_ - 1);
-			
-			// reset
-			u->frames_.frames_.resize(1);
-	
-			u->first_step_ += u->num_steps_;
-
-			if(should_exit == 1) break;
-		}
-		
-		std::ofstream ofs;
-
+		// files.dat filename
 		char filename[128];
 		strcpy(filename, "files_");
 		strcat(filename, u->name_);
 		strcat(filename, ".dat");
-		
-		ofs.open(filename, std::ofstream::out | std::ofstream::app);
 
-		for(auto filename : filenames)
+		// CPU
+		for(int i = 0; i < 100; i++)
 		{
-			ofs << filename << std::endl;
-		}
+			u->solve();
 
-		ofs.close();
+			u->write();
+
+			// append filename
+			//filenames.push_back(u->getFilename());
+			std::ofstream ofs;
+			ofs.open(filename, std::ofstream::out | std::ofstream::app);
+			ofs << u->getFilename() << std::endl;
+			ofs.close();
+
+			// copy last to first
+			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
+
+			u->get_frame(0) = u->get_frame(u->num_steps_ - 1);
+
+			// reset
+			u->frames_.frames_.resize(1);
+
+			u->first_step_ += u->num_steps_;
+
+
+			// check abort signal	
+			if(should_exit == 1) break;
+		}
 
 		exit(0);
 	}
@@ -237,8 +234,8 @@ int		main(int ac, char ** av)
 	ret = clSetKernelArg(kernel_clear_bodies_num_collisions, 0, sizeof(cl_mem), (void *)&memobj_bodies);
 
 	/* Execute OpenCL Kernel */
-	
-	
+
+
 	get_kernel_info(kernel_pairs, device_id);
 
 	puts("execute");

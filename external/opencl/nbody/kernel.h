@@ -11,7 +11,10 @@ void step_bodies(
 		unsigned int * map,
 		float dt,
 		unsigned int num_bodies,
-		float * velocity_ratio
+		float * velocity_ratio,
+		float * mass_center,
+		float mass,
+		unsigned int * number_escaped
 		);
 
 void step_pairs(
