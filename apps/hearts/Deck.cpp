@@ -12,7 +12,7 @@ Deck::Deck()
 
 	for(unsigned char suit = 0; suit < 4; suit++) {
 		for(unsigned char i = 0; i < 13; i++) {
-			cards_.push_back((suit << 4) + i);
+			cards_.push_back(Card(suit, + i));
 		}
 	}
 
@@ -20,8 +20,12 @@ Deck::Deck()
 	std::mt19937 g(rd());
 
 	std::shuffle(cards_.begin(), cards_.end(), g);
+}
 
-	for(auto card : cards_) printf("%X %X\n", card >> 4, card & 0xf);
+bool card_less(Card const & c0, Card const & c1)
+{
+	if(c0.suit_ == c1.suit_) return c0.value_ < c1.value_;
+	return c0.suit_ < c1.suit_;
 }
 
 void Deck::deal(int hands)
@@ -30,32 +34,28 @@ void Deck::deal(int hands)
 
 	int extra = 52 % hands;
 	
-	hands_.clear();
-	hands_.resize(hands);
 
-	piles_.clear();
-	piles_.resize(hands);
-	
-	is_human_.resize(hands, true);
+	players_.clear();
+	players_.resize(hands);
 
 	int k = 0;
 	for(int i = 0; i < cards_per_hand; i++) {
 		for(int j = 0; j < hands; j++) {
-			unsigned char c = cards_[k++];
-			hands_[j].push_back(c);
+			Card c = cards_[k++];
+			players_[j].hand_.push_back(c);
 			
-			printf("%X %X    ", c >> 4, c & 0xf);
+			printf("%X %X    ", c.suit_, c.value_);
 		}
 		printf("\n");
 	}
 
 	for(int j = 0; j < hands; j++)
-		std::sort(hands_[j].begin(), hands_[j].end());
+		std::sort(players_[j].hand_.begin(), players_[j].hand_.end(), card_less);
 
 	for(int i = 0; i < cards_per_hand; i++) {
 		for(int j = 0; j < hands; j++) {
-			unsigned char c = hands_[j][i];
-			printf("%X %X    ", c >> 4, c & 0xf);
+			Card c = players_[j].hand_[i];
+			printf("%X %X    ", c.suit_, c.value_);
 		}
 		printf("\n");
 	}
@@ -64,23 +64,23 @@ void Deck::deal(int hands)
 
 int Deck::cards_in_hand()
 {
-	if(hands_.empty()) return 0;
-	return hands_[0].size();
+	if(players_.empty()) return 0;
+	return players_[0].hand_.size();
 }
 
 int Deck::score(int p)
 {
-	assert(p < piles_.size());
+	assert(p < players_.size());
 	
 	int s = 0;
 	
-	std::vector<unsigned char> & pile = piles_[p];
+	std::vector<Card> & pile = players_[p].pile_;
 
 	for(int i = 0; i < pile.size(); i++) {
-		unsigned char & c = pile[i];
-		if((c >> 4) == 2) s++;
-		else if((c >> 4) == 3)
-			if((c & 0xf) == 0xa) s += 13;
+		Card c = pile[i];
+		if(c.suit_ == 2) s++;
+		else if(c.suit_ == 3)
+			if(c.value_ == 0xa) s += 13;
 	}
 
 	return s;
@@ -90,7 +90,7 @@ int Deck::high_score()
 {
 	int hs = 0;
 	
-	for(int i = 0; i < piles_.size(); i++) {
+	for(int i = 0; i < players_.size(); i++) {
 		int s = score(i);
 		if(s > hs) hs = s;
 	}
@@ -101,9 +101,10 @@ int Deck::high_score()
 
 int Deck::whos_got_the_two()
 {
-	for(int i = 0; i < hands_.size(); i++) {
-		for(int j = 0; j < hands_[i].size(); j++) {
-			if(hands_[i][j] == 0) return i;
+	for(int i = 0; i < players_.size(); i++) {
+		for(int j = 0; j < players_[i].hand_.size(); j++) {
+			Card & c = players_[i].hand_[j];
+			if((c.suit_ == 0) && (c.value_ == 0)) return i;
 		}
 	}
 
@@ -215,36 +216,35 @@ char * card_string(unsigned char c)
 
 
 
-int Deck::play(int i, int first_card)
+int Deck::play(int i, Card * first_card)
 {
 	unsigned char lead;
-	int hands = hands_.size();
+	int players = players_.size();
 	int h = i;
-	unsigned char c;
+	//Card & c;
 
 	printf("\n");
 
 	trick_.clear();
 	
-	if(first_card > -1) {
+	if(first_card) {
 		// play
-		trick_.push_back(c);
-		lead = first_card >> 4;
-		h = (h+1) % hands;
+		trick_.push_back(*first_card);
+		lead = first_card->suit_;
+		h = (h+1) % players;
 	} else {
 		// play a card
-		if(is_human_[h]) {
+		if(players_[h].is_human_) {
 			unsigned int tmp;
 			printf("player %i:\n", h);
 			scanf("%x", &tmp);
-			c = tmp;
-			if(!is_valid(c)) abort();
-			printf("player %i leads with the %s\n", h, card_string(c));
+			if(!is_valid(tmp)) abort();
+			printf("player %i leads with the %s\n", h, card_string(tmp));
 			
 			// play
-			trick_.push_back(c);
-			lead = c >> 4;
-			h = (h+1) % hands;
+			trick_.push_back(Card(tmp >> 4, tmp & 0xf));
+			lead = tmp >> 4;
+			h = (h+1) % players;
 
 		} else {
 			printf("not impl\n");
@@ -257,17 +257,16 @@ int Deck::play(int i, int first_card)
 	// loop back to i
 	while(h != i) {	
 		// play a card
-		if(is_human_[h]) {
+		if(players_[h].is_human_) {
 			unsigned int tmp;
 			printf("player %i:\n", h);
 			scanf("%x", &tmp);
-			c = tmp;
-			if(!is_valid(c)) abort();
-			printf("player %i played the %s\n", h, card_string(c));
+			if(!is_valid(tmp)) abort();
+			printf("player %i played the %s\n", h, card_string(tmp));
 
 			// play
-			trick_.push_back(c);
-			h = (h+1) % hands;
+			trick_.push_back(Card(tmp >> 4, tmp & 0xf));
+			h = (h+1) % players;
 
 		} else {
 			printf("not impl\n");
@@ -278,16 +277,16 @@ int Deck::play(int i, int first_card)
 	unsigned char high_trump = 0;
 	int winner;
 	
-	for(int j = 0; j < hands; j++) {
+	for(int j = 0; j < players; j++) {
 		// player index
-		int k = (j + i) % hands;
+		int k = (j + i) % players;
 
-		unsigned char c = trick_[j];
+		Card c = trick_[j];
 		
-		if((c >> 4) != lead) continue;
+		if(c.suit_ != lead) continue;
 		
-		if((c & 0xf) > high_trump) {
-			high_trump = c & 0xf;
+		if(c.value_ > high_trump) {
+			high_trump = c.value_;
 			winner = k;
 		}
 	}

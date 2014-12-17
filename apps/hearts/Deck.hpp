@@ -3,6 +3,9 @@
 
 #include <vector>
 
+#include <Player.hpp>
+#include <Card.hpp>
+
 class Deck
 {
 	public:
@@ -13,13 +16,11 @@ class Deck
 		int		high_score();
 		int		low_score();
 		int		whos_got_the_two();
-		int		play(int i, int c = -1);
+		int		play(int i, Card * c = 0);
 
-		std::vector<bool>			is_human_;
-		std::vector<unsigned char>		cards_;
-		std::vector<std::vector<unsigned char>>	hands_;
-		std::vector<std::vector<unsigned char>>	piles_;
-		std::vector<unsigned char>		trick_;
+		std::vector<Player>			players_;
+		std::vector<Card>			cards_;
+		std::vector<Card>			trick_;
 
 };
 
