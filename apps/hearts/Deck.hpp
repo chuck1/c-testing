@@ -17,7 +17,9 @@ class Deck
 		int		low_score();
 		int		whos_got_the_two();
 		int		play(int i, Card * c = 0);
+		Card		stdin_card(char * msg, Player & p, unsigned char * lead);
 
+		bool					hearts_broken_;
 		std::vector<Player>			players_;
 		std::vector<Card>			cards_;
 		std::vector<Card>			trick_;

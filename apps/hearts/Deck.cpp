@@ -30,6 +30,8 @@ bool card_less(Card const & c0, Card const & c1)
 
 void Deck::deal(int hands)
 {
+	hearts_broken_ = false;
+
 	int cards_per_hand = 52 / hands;
 
 	int extra = 52 % hands;
@@ -111,12 +113,7 @@ int Deck::whos_got_the_two()
 	return -1;
 }
 
-int is_valid(unsigned char c)
-{
-	if((c >> 4) > 3) return 0;
-	if((c & 0xf) > 0xc) return 0;
-	return 1;
-}
+
 char * suit_string(unsigned char card)
 {
 	char * buffer = new char[32];
@@ -142,11 +139,11 @@ char * suit_string(unsigned char card)
 	return buffer;
 }
 
-char * card_string(unsigned char c)
+char * card_string(Card & c)
 {
 	char * buffer = new char[128];
 
-	switch(c & 0xf) {
+	switch(c.value_) {
 		case 0x0:
 			strcpy(buffer, "two");
 			break;
@@ -187,13 +184,13 @@ char * card_string(unsigned char c)
 			strcpy(buffer, "ace");
 			break;
 		default:
-			printf("invalid card %x\n", c);
+			printf("invalid card %x %x\n", c.suit_, c.value_);
 			abort();
 	}
 
 	strcat(buffer, " of ");
 
-	switch(c >> 4) {
+	switch(c.suit_) {
 		case 0x0:
 			strcat(buffer, "clubs");
 			break;
@@ -207,14 +204,65 @@ char * card_string(unsigned char c)
 			strcat(buffer, "spades");
 			break;
 		default:
-			printf("invalid card %x\n", c);
+			printf("invalid card %x %x\n", c.suit_, c.value_);
 			abort();
 	}
 
 	return buffer;
 }
 
+Card Deck::stdin_card(char * msg, Player & p, unsigned char * lead)
+{
 
+	unsigned int tmp_s;
+	unsigned int tmp_v;
+
+	printf("%s\n", msg);
+
+	Card tmp(0,0);
+
+	while(1) {
+		scanf("%x %x", &tmp_s, &tmp_v);
+	
+		tmp.suit_ = tmp_s;
+		tmp.value_ = tmp_v;
+
+		if(!tmp.is_valid()) {
+			printf("invalid card\n");
+			fflush(stdout);
+			continue;
+		}
+
+		if(!p.card_in_hand(tmp)) {
+			printf("player does not have that card\n");
+			fflush(stdout);
+			continue;
+		}
+
+		if(lead) {
+			if(tmp.suit_ != *lead) {
+				if(p.has_suit(*lead)) {
+					printf("player is not void in lead suit\n");
+					fflush(stdout);
+					continue;
+				}
+			}
+		} else {
+			if(tmp.suit_ == 2) { // hearts
+				if(!hearts_broken_) {
+					if(!p.only_has_suit(2)) {
+						printf("hearts are not broken\n");
+						fflush(stdout);
+						continue;
+					}
+				}
+			}
+		}
+
+		break;
+	}
+	return tmp;
+}
 
 int Deck::play(int i, Card * first_card)
 {
@@ -226,7 +274,7 @@ int Deck::play(int i, Card * first_card)
 	printf("\n");
 
 	trick_.clear();
-	
+
 	if(first_card) {
 		// play
 		trick_.push_back(*first_card);
@@ -235,15 +283,16 @@ int Deck::play(int i, Card * first_card)
 	} else {
 		// play a card
 		if(players_[h].is_human_) {
-			unsigned int tmp;
-			printf("player %i:\n", h);
-			scanf("%x", &tmp);
-			if(!is_valid(tmp)) abort();
-			printf("player %i leads with the %s\n", h, card_string(tmp));
-			
+			char buffer[64];
+			sprintf(buffer, "player %i:\n", h);
+
+			Card c = stdin_card(buffer, players_[h], 0);
+
+			printf("player %i leads with the %s\n", h, card_string(c));
+
 			// play
-			trick_.push_back(Card(tmp >> 4, tmp & 0xf));
-			lead = tmp >> 4;
+			trick_.push_back(c);
+			lead = c.suit_;
 			h = (h+1) % players;
 
 		} else {
@@ -258,14 +307,15 @@ int Deck::play(int i, Card * first_card)
 	while(h != i) {	
 		// play a card
 		if(players_[h].is_human_) {
-			unsigned int tmp;
-			printf("player %i:\n", h);
-			scanf("%x", &tmp);
-			if(!is_valid(tmp)) abort();
-			printf("player %i played the %s\n", h, card_string(tmp));
+			char buffer[64];
+			sprintf(buffer, "player %i:\n", h);
+
+			Card c = stdin_card(buffer, players_[h], &lead);
+
+			printf("player %i played the %s\n", h, card_string(c));
 
 			// play
-			trick_.push_back(Card(tmp >> 4, tmp & 0xf));
+			trick_.push_back(c);
 			h = (h+1) % players;
 
 		} else {
@@ -273,25 +323,27 @@ int Deck::play(int i, Card * first_card)
 			abort();			
 		}
 	}
-	
+
 	unsigned char high_trump = 0;
 	int winner;
-	
+	int winner_card;
+
 	for(int j = 0; j < players; j++) {
 		// player index
 		int k = (j + i) % players;
 
 		Card c = trick_[j];
-		
+
 		if(c.suit_ != lead) continue;
-		
+
 		if(c.value_ > high_trump) {
 			high_trump = c.value_;
 			winner = k;
+			winner_card = j;
 		}
 	}
-	
-	printf("player %i takes the trick with the %s\n", winner, card_string((lead << 4) + high_trump));
+
+	printf("player %i takes the trick with the %s\n", winner, card_string(trick_[winner_card]));
 
 	return winner;
 }
