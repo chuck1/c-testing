@@ -1,3 +1,9 @@
+/*
+ * TODO
+ * create player function that considers the lead suit and hearts_broken and generates list of legal cards to play
+ *
+ */
+
 #include <stdio.h>
 
 #include <Deck.hpp>
