@@ -20,9 +20,15 @@ class Deck
 		Card		stdin_card(char * msg, Player & p, unsigned char * lead);
 
 		bool					hearts_broken_;
+
+
+
 		std::vector<Player>			players_;
 		std::vector<Card>			cards_;
+
+		// trick data
 		std::vector<Card>			trick_;
+		unsigned char				lead_;
 
 };
 

@@ -139,7 +139,20 @@ char * suit_string(unsigned char card)
 	return buffer;
 }
 
+std::vector<Card> Desk::legal_plays(Player & p, unsigned char * lead)
+{
+	std::vector<Card> cards;
 
+	for(Card & c : p.hand_) {
+		if(lead) if(c.suit_ != *lead) continue;
+		
+		if(tmp.suit_ == 2) if(!hearts_broken_) continue;
+		
+		cards.push_back(c);
+	}
+
+	return cards;
+}
 
 Card Deck::stdin_card(char * msg, Player & p, unsigned char * lead)
 {
@@ -153,7 +166,7 @@ Card Deck::stdin_card(char * msg, Player & p, unsigned char * lead)
 
 	while(1) {
 		scanf("%x %x", &tmp_s, &tmp_v);
-	
+
 		tmp.suit_ = tmp_s;
 		tmp.value_ = tmp_v;
 
@@ -196,7 +209,6 @@ Card Deck::stdin_card(char * msg, Player & p, unsigned char * lead)
 
 int Deck::play(int i, Card * first_card)
 {
-	unsigned char lead;
 	int players = players_.size();
 	int h = i;
 	//Card & c;
@@ -208,7 +220,7 @@ int Deck::play(int i, Card * first_card)
 	if(first_card) {
 		// play
 		trick_.push_back(*first_card);
-		lead = first_card->suit_;
+		lead_ = first_card->suit_;
 		h = (h+1) % players;
 	} else {
 		// play a card
@@ -222,7 +234,7 @@ int Deck::play(int i, Card * first_card)
 
 			// play
 			trick_.push_back(c);
-			lead = c.suit_;
+			lead_ = c.suit_;
 			h = (h+1) % players;
 
 		} else {
@@ -231,7 +243,7 @@ int Deck::play(int i, Card * first_card)
 		}
 	}
 
-	printf("%s are lead\n", suit_string(lead << 4));
+	printf("%s are lead\n", suit_string(lead_ << 4));
 
 	// loop back to i
 	while(h != i) {	
@@ -240,7 +252,7 @@ int Deck::play(int i, Card * first_card)
 			char buffer[64];
 			sprintf(buffer, "player %i:\n", h);
 
-			Card c = stdin_card(buffer, players_[h], &lead);
+			Card c = stdin_card(buffer, players_[h], &lead_);
 
 			printf("player %i played the %s\n", h, c.string());
 
@@ -264,7 +276,7 @@ int Deck::play(int i, Card * first_card)
 
 		Card c = trick_[j];
 
-		if(c.suit_ != lead) continue;
+		if(c.suit_ != lead_) continue;
 
 		if(c.value_ > high_trump) {
 			high_trump = c.value_;
