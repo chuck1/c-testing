@@ -217,7 +217,7 @@ Card Deck::stdin_card(char * msg, Player & p, unsigned char * lead)
 	unsigned int tmp_s;
 	unsigned int tmp_v;
 
-	printf("%s\n", msg);
+	printf("%s", msg);
 
 	Card tmp(0,0);
 
