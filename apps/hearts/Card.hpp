@@ -20,4 +20,11 @@ class Card
 		unsigned char	value_;
 };
 
+inline bool card_less(Card const & c0, Card const & c1)
+{
+	if(c0.suit_ == c1.suit_) return c0.value_ < c1.value_;
+	return c0.suit_ < c1.suit_;
+}
+
+
 #endif

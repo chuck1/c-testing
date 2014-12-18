@@ -10,26 +10,27 @@ class Deck
 {
 	public:
 		Deck();
-		void		deal(int);
+		void		init(int);
+		void		deal();
 		int		cards_in_hand();
 		int		score(int);
 		int		high_score();
 		int		low_score();
 		int		whos_got_the_two();
 		int		play(int i, Card * c = 0);
-		Card		stdin_card(char * msg, Player & p, unsigned char * lead);
 
 		bool					hearts_broken_;
 
 
 
-		std::vector<Player>			players_;
+		std::vector<Player*>			players_;
 		std::vector<Card>			cards_;
 
 		// trick data
 		std::vector<Card>			trick_;
 		unsigned char				lead_;
 
+		bool					verbose_;
 };
 
 #endif
