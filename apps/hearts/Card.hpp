@@ -15,6 +15,7 @@ class Card
 			if(value_ > 0xc) return false;
 			return 1;
 		}
+		char * string();
 		unsigned char	suit_;
 		unsigned char	value_;
 };
