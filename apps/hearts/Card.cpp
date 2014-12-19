@@ -49,29 +49,13 @@ char * Card::string()
 			strcpy(buffer, "ace");
 			break;
 		default:
-			printf("invalid card %x %x\n", suit_, value_);
+			printf("invalid card value %x\n", value_);
 			abort();
 	}
 
 	strcat(buffer, " of ");
 
-	switch(suit_) {
-		case 0x0:
-			strcat(buffer, "clubs");
-			break;
-		case 0x1:
-			strcat(buffer, "diamonds");
-			break;
-		case 0x2:
-			strcat(buffer, "hearts");
-			break;
-		case 0x3:
-			strcat(buffer, "spades");
-			break;
-		default:
-			printf("invalid card %x %x\n", suit_, value_);
-			abort();
-	}
+	strcat(buffer, suit_.string());
 
 	return buffer;
 }

@@ -48,16 +48,17 @@ void Deck::deal()
 	for(int i = 0; i < cards_per_hand; i++) {
 		for(int j = 0; j < hands; j++) {
 			Card c = cards_[k++];
-			players_[j]->hand_.push_back(c);
+			players_[j]->give_card(c); //hand_.push_back(c);
 			
-			if(verbose_) printf("%X %X    ", c.suit_, c.value_);
+			//if(verbose_) printf("%X %X    ", c.suit_, c.value_);
 		}
 		if(verbose_) printf("\n");
 	}
 
 	for(int j = 0; j < hands; j++)
-		std::sort(players_[j]->hand_.begin(), players_[j]->hand_.end(), card_less);
+		players_[j]->sort_hand();
 
+	/*
 	for(int i = 0; i < cards_per_hand; i++) {
 		for(int j = 0; j < hands; j++) {
 			Card c = players_[j]->hand_[i];
@@ -65,14 +66,9 @@ void Deck::deal()
 		}
 		if(verbose_) printf("\n");
 	}
-
+	*/
 }
 
-int Deck::cards_in_hand()
-{
-	if(players_.empty()) return 0;
-	return players_[0]->hand_.size();
-}
 
 
 int Deck::high_score()
@@ -87,47 +83,24 @@ int Deck::high_score()
 	return hs;
 }
 
+int		Deck::cards_in_hand()
+{
+	assert(players_.size() > 0);
+	return players_[0]->cards_in_hand();
+}
 
 int Deck::whos_got_the_two()
 {
 	for(int i = 0; i < players_.size(); i++) {
-		for(int j = 0; j < players_[i]->hand_.size(); j++) {
-			Card & c = players_[i]->hand_[j];
-			if((c.suit_ == 0) && (c.value_ == 0)) return i;
-		}
+		//for(int j = 0; j < players_[i]->hand_.size(); j++) {
+			//Card & c = players_[i]->hand_[j];
+			//if((c.suit_ == 0) && (c.value_ == 0)) return i;
+		//}
+		if(players_[i]->has_card_in_hand(Card(0,0))) return i;
 	}
 
 	return -1;
 }
-
-
-char * suit_string(unsigned char card)
-{
-	char * buffer = new char[32];
-	
-	switch(card >> 4) {
-		case 0x0:
-			strcpy(buffer, "clubs");
-			break;
-		case 0x1:
-			strcpy(buffer, "diamonds");
-			break;
-		case 0x2:
-			strcpy(buffer, "hearts");
-			break;
-		case 0x3:
-			strcpy(buffer, "spades");
-			break;
-		default:
-			printf("invalid suit %x\n", card >> 4);
-			abort();
-	}
-
-	return buffer;
-}
-
-
-
 
 int Deck::play(int i, Card * first_card)
 {
@@ -164,7 +137,7 @@ int Deck::play(int i, Card * first_card)
 
 	}
 
-	if(verbose_) printf("%s are lead\n", suit_string(lead_ << 4));
+	if(verbose_) printf("%s are lead\n", lead_.string());
 
 	// loop back to i
 	while(player_current_ != i) {	

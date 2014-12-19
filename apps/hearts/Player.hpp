@@ -17,13 +17,13 @@ class Player
 				if(card == c) return true;
 			return false;
 		}
-		bool			has_suit(unsigned char s)
+		bool			has_suit(Suit s)
 		{
 			for(Card & card : hand_)
 				if(card.suit_ == s) return true;
 			return false;
 		}
-		bool			only_has_suit(unsigned char s)
+		bool			only_has_suit(Suit s)
 		{
 			for(Card & card : hand_)
 				if(card.suit_ != s) return false;
@@ -34,7 +34,17 @@ class Player
 		virtual Card		play(Deck & deck, bool is_lead) = 0;
 		std::vector<Card>	legal_plays(Deck & deck, bool is_lead);
 		int			score();
+		unsigned int		cards_in_hand();
+		void			sort_hand();
+		void			give_card(Card c);
+		bool			has_card_in_hand(Card c);
+		// stats
+		std::vector<Card>	cards_of_suit_outside(int suit);
+
+	private:
+		std::vector<Card>	cards_outside_;
 		std::vector<Card>	hand_;
+	public:
 		std::vector<Card>	pile_;
 		char			name_[32];
 		int			cum_score_;

@@ -5,6 +5,7 @@
 
 #include <Player.hpp>
 #include <Card.hpp>
+#include <Suit.hpp>
 
 class Deck
 {
@@ -12,8 +13,8 @@ class Deck
 		Deck();
 		void		init(int);
 		void		deal();
-		int		cards_in_hand();
 		int		score(int);
+		int		cards_in_hand();
 		int		high_score();
 		int		low_score();
 		int		whos_got_the_two();
@@ -31,7 +32,7 @@ class Deck
 		int					player_lead_;
 
 		std::vector<Card>			trick_;
-		unsigned char				lead_;
+		Suit					lead_;
 
 		bool					verbose_;
 };

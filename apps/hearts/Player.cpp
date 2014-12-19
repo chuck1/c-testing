@@ -58,3 +58,40 @@ int Player::score()
 	return s;
 }
 
+std::vector<Card> Player::cards_of_suit_outside(int suit)
+{
+	std::vector<Card> ret;
+
+	for(Card & c : cards_outside_)
+	{
+	}
+}
+
+void		Player::give_card(Card c)
+{
+	hand_.push_back(c);
+	
+	cards_outside_.erase(std::find(cards_outside_.begin(), cards_outside_.end(), c));
+}
+
+void		Player::sort_hand()
+{
+	std::sort(hand_.begin(), hand_.end(), card_less);
+}
+
+unsigned int		Player::cards_in_hand()
+{
+	return hand_.size();
+}
+
+bool			Player::has_card_in_hand(Card c)
+{
+	auto it = std::find(hand_.begin(), hand_.end(), c);
+	return it != hand_.end();
+}
+
+
+
+
+
+
