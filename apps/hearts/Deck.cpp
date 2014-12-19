@@ -131,8 +131,10 @@ char * suit_string(unsigned char card)
 
 int Deck::play(int i, Card * first_card)
 {
+	player_lead_ = i;
+	player_current_ = i;
+	
 	int players = players_.size();
-	int h = i;
 	//Card & c;
 
 	if(verbose_) printf("\n");
@@ -141,38 +143,40 @@ int Deck::play(int i, Card * first_card)
 
 	if(first_card) {
 		// remove card from player's hand
-		players_[h]->remove_from_hand(*first_card);
+		players_[player_current_]->remove_from_hand(*first_card);
 
 		// play
 		trick_.push_back(*first_card);
 		lead_ = first_card->suit_;
-		h = (h+1) % players;
+		player_current_ = (player_current_+1) % players;
 	} else {
 		// play a card
 		// this is a virtual function that is derived for human and computer players
-		Card c = players_[h]->play(*this, true);
+		Card c = players_[player_current_]->play(*this, true);
 
-		if(verbose_) printf("player %i leads with the %s\n", h, c.string());
+		if(verbose_) printf("player %i leads with the %s\n", 
+				player_current_, c.string());
 
 		// play
 		trick_.push_back(c);
 		lead_ = c.suit_;
-		h = (h+1) % players;
+		player_current_ = (player_current_+1) % players;
 
 	}
 
 	if(verbose_) printf("%s are lead\n", suit_string(lead_ << 4));
 
 	// loop back to i
-	while(h != i) {	
+	while(player_current_ != i) {	
 		// play a card
-		Card c = players_[h]->play(*this, false);
+		Card c = players_[player_current_]->play(*this, false);
 
-		if(verbose_) printf("player %i played the %s\n", h, c.string());
+		if(verbose_) printf("player %i played the %s\n",
+				player_current_, c.string());
 
 		// play
 		trick_.push_back(c);
-		h = (h+1) % players;
+		player_current_ = (player_current_+1) % players;
 	}
 
 

@@ -27,6 +27,9 @@ class Deck
 		std::vector<Card>			cards_;
 
 		// trick data
+		int					player_current_;
+		int					player_lead_;
+
 		std::vector<Card>			trick_;
 		unsigned char				lead_;
 
