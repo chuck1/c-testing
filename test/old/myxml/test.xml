@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone=no>
+	<!-- Description here, please! -->
+	<fam>
+		<parent name="homer" sex="male">36</parent>
+		<parent name="marge" sex="female">35</parent>
+		<child name="bart" sex="male">10</child>
+		<child name="lisa" sex="female">7</child>
+		<child name="maggie" sex="female">2</child>
+	</fam>
+	

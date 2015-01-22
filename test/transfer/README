@@ -1,0 +1,50 @@
+<root>
+  +- transfer
+  |   +- make
+  |   |   |- makefile.Lib.mk
+  |   |   |- makefile.Bin.mk
+  |   |
+  |   +- script
+  |   |
+  |   |- README
+  |
+  +- external
+  |
+  +- proj
+  |   +- inc
+  |   |   +- folder
+  |   |   |   |- header.hpp
+  |   |   |- header.hpp
+  |   +- src
+  |   |   +- folder
+  |   |   |   |- source.cpp
+  |   |   |- source.cpp
+  |   |
+  |   +- compiler
+  |   |   +- <platform>
+  |   |       |- makefile
+  |   |
+  |   +- doc
+  |
+  |- send.sh
+
+
+
+Format of makefile:
+
+root      := <root>
+
+hpaths    := 
+hpaths    += 
+
+lpaths    := 
+lpaths    += 
+
+libraries := 
+libraries += 
+
+defines   := 
+defines   += 
+
+-include $(root)transfer/make/makefile.Lib.mk
+
