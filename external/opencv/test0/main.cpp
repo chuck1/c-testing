@@ -6,49 +6,211 @@ using namespace cv;
 const char* window_name = "Display Image";
 
 const char* trackbar_value_0 = "Threshold";
-const char* trackbar_value_1 = "Circle Param 1";
+const char* trackbar_value_1 = "Circle Param 0";
+const char* trackbar_value_2 = "Circle Param 1";
+const char* trackbar_value_3 = "Circle Min Rad";
+const char* trackbar_value_4 = "Circle Max Rad";
+const char* trackbar_value_5 = "Circle Min Dist";
 
 int threshold_value = 128;
-int circle_value = 1000;
-int circle_radius_min = 300;
-int circle_radius_max = 1000;
+int circle_param_0 = 148;
+int circle_param_1 = 31;
+int circle_radius_min = 0;
+int circle_radius_max = 38;
+int circle_min_dist = 30;
 
-Mat image, gray0, gray1;
+VideoCapture stream0(0);
 
-void draw(int, void*)
+enum {
+	ORIGIN,
+	X,
+	Y,
+	TRACK
+};
+
+int mode = ORIGIN;
+
+Vec2f o, x, y;
+Point po, px, py;
+
+void solve(Vec2f& c, double& a, double& b)
 {
-	Mat im(image);
+	Vec2f d = c - o;
+	
+	a = (d[0] - d[1] * y[0] / y[1]) / (x[0] - x[1] * y[0] / y[1]);
 
-	threshold(gray0, gray1, threshold_value, 255, CV_THRESH_BINARY);
+	b = (d[0] - a * x[0]) / y[0];
+}
+
+struct Match
+{
+	Match(Vec3f a, Vec3f b)
+	{
+		if(b[0] < a[0]){
+			v_img[0] = Vec2f(b[0], b[1]);
+			v_img[1] = Vec2f(a[0], a[1]);
+		} else {
+			v_img[0] = Vec2f(a[0], a[1]);
+			v_img[1] = Vec2f(b[0], b[1]);
+		}
+
+		point[0] = Point(cvRound(v_img[0][0]), cvRound(v_img[0][1]));
+		point[1] = Point(cvRound(v_img[1][0]), cvRound(v_img[1][1]));
+
+
+		if(mode == TRACK)
+		{
+			//Vec2f d = v_img[0] - o;
+
+			solve(v_img[0], A, B);
+
+			v_int[0] = o + x * A;
+			v_int[1] = o + y * B;
+
+			point_int[0] = Point(cvRound(v_int[0][0]), cvRound(v_int[0][1]));
+			point_int[1] = Point(cvRound(v_int[1][0]), cvRound(v_int[1][1]));
+
+			Vec2f ab = v_img[1] - v_img[0];
+
+			// angle
+			angle = acos((ab[0]*x[0] + ab[1]*x[1]) / sqrt(ab[0]*ab[0] + ab[1]*ab[1]) / sqrt(x[0]*x[0] + x[1]*x[1]));
+
+			if(v_img[1][1] > v_img[0][1]) angle = -angle;
+		}
+	}
+
+	double A, B, angle;
+
+	Vec2f v_img[2];
+	Vec2f v[2];
+	Vec2f v_int[2];
+
+	Point point[2];
+	Point point_int[2];
+};
+
+void draw(int arg, void*)
+{
+	//printf("read stream\n");
+	//image = imread( argv[1], 1 );
+
+	Match* match = 0;
+
+	Mat img_rgb0;
+	Mat img_gray;
+
+	stream0.read(img_rgb0);
+
+	//double rs = 0.5;
+	//resize(image, image, Size(), rs, rs);
+
+	if (!img_rgb0.data) {
+		printf("No image data \n");
+		exit(1);
+	}
+
+	cvtColor(img_rgb0, img_gray, CV_BGR2GRAY);
+
+	//printf("blur\n");
+
+	GaussianBlur(img_gray, img_gray, Size(9, 9), 2, 2);
+
+	//Mat im = gray0.clone();
+	//Mat& im = gray0;
+
+	//printf("threshold\n");
+	//threshold(img_gray, img_gray, threshold_value, 255, CV_THRESH_BINARY);
+
+	// copy processed image and convert to color
+	Mat img_rgb1(img_gray.size(), CV_8UC3);
+	cv::cvtColor(img_gray, img_rgb1, CV_GRAY2RGB);
 
 	vector<Vec3f> circles;
 
 	HoughCircles(
-			gray1,
+			img_gray,
 			circles,
 			CV_HOUGH_GRADIENT,
 			1,
-			gray1.rows/32,
-			circle_value,
-			100,
+			circle_min_dist,//img_gray.rows/32,
+			circle_param_0,
+			circle_param_1,
 			circle_radius_min,
 			circle_radius_max);
 
-	printf("circles = %lu\n", circles.size());
+	//if(circles.size() > 0) printf("circles = %lu\n", circles.size());
+
+	Point pc;
+
+	if(circles.size() == 2)
+	{
+		match = new Match(circles[0], circles[1]);
+	}
+
+	if(arg == 1 && mode < TRACK)
+	{
+		if(match) {
+			switch(mode) {
+				case ORIGIN:
+					o = match->v_img[0];
+					po = Point(cvRound(match->v_img[0][0]), cvRound(match->v_img[0][1]));
+					break;
+				case X:
+					x = match->v_img[0] - o;
+					px = Point(cvRound(match->v_img[0][0]), cvRound(match->v_img[0][1]));
+					break;
+				case Y:
+					y = match->v_img[0] - o;
+					py = Point(cvRound(match->v_img[0][0]), cvRound(match->v_img[0][1]));
+					break;
+				default:
+					exit(1);
+			}
+			mode++;
+		}
+	}
+
 
 	// Draw the circles detected
 	for( size_t i = 0; i < circles.size(); i++ )
 	{
+		//printf("%f %f\n", circles[i][0], circles[i][0]);
+
 		Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
 
 		int radius = cvRound(circles[i][2]);
 		// circle center
-		circle( im, center, 3, Scalar(0,255,0), -1, 8, 0 );
+		circle( img_rgb1, center, 3, Scalar(0,255,0), -1, 8, 0 );
 		// circle outline
-		circle( im, center, radius, Scalar(0,0,255), 10, 8, 0 );
+		circle( img_rgb1, center, radius, Scalar(0,0,255), 10, 8, 0 );
 	}
 
-	imshow(window_name, im);
+	if(mode > ORIGIN) {
+		circle( img_rgb1, po, 3, Scalar(255,0,0), -1, 8, 0 );
+	}
+	if(mode > X) {
+		circle( img_rgb1, px, 3, Scalar(255,0,0), -1, 8, 0 );
+		line(img_rgb1, po, px, Scalar(255,255,0));
+	}
+	if(mode > Y) {
+		circle( img_rgb1, py, 3, Scalar(255,0,0), -1, 8, 0 );
+		line(img_rgb1, po, py, Scalar(255,255,0));
+
+		// track
+		if(match) {
+			line(img_rgb1, match->point_int[0], match->point[0], Scalar(255,255,0));
+			line(img_rgb1, match->point_int[1], match->point[0], Scalar(255,255,0));
+			line(img_rgb1, match->point[1], match->point[0], Scalar(255,255,0));
+
+			printf("x = %f, y = %f, a = %f\n", match->A, match->B, match->angle);
+		}
+	}
+	
+	imshow(window_name, img_rgb1);
+}
+void callback(void*)
+{
+	draw(0,0);
 }
 int main(int argc, char** argv )
 {
@@ -58,16 +220,6 @@ int main(int argc, char** argv )
 		return -1;
 	}
 
-	image = imread( argv[1], 1 );
-
-	resize(image, image, Size(), 0.1, 0.1);
-
-	if (!image.data) {
-		printf("No image data \n");
-		return -1;
-	}
-
-	cvtColor(image, gray0, CV_BGR2GRAY);
 
 	namedWindow(window_name, CV_WINDOW_NORMAL);
 
@@ -86,19 +238,45 @@ int main(int argc, char** argv )
 	createTrackbar(
 			trackbar_value_2,
 			window_name,
+			&circle_param_1,
+			100,
+			draw );
+	createTrackbar(
+			trackbar_value_3,
+			window_name,
 			&circle_radius_min,
-			1000,
+			100,
+			draw );
+	createTrackbar(
+			trackbar_value_4,
+			window_name,
+			&circle_radius_max,
+			100,
+			draw );
+	createTrackbar(
+			trackbar_value_5,
+			window_name,
+			&circle_min_dist,
+			100,
 			draw );
 
-	waitKey(0);
+	draw(0,0);
+
+	//waitKey(0);
 
 	// Wait until user finishes program
 	while(true)
 	{
-		int c;
-		c = waitKey( 20 );
-		if( (char)c == 27 )
-		{ break; }
+		char c = waitKey(10);
+
+		if(c >= 0) printf("key = %i\n", c);
+
+		if( c == 27 ) break;
+
+		if( c == 32 ) draw(1,0);
+		else draw(0,0);
+
+		//updateWindow(window_name);
 	}
 
 	return 0;
