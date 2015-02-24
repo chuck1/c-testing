@@ -42,6 +42,21 @@ void solve(Vec2f& c, double& a, double& b)
 	b = (d[0] - a * x[0]) / y[0];
 }
 
+void webcam()
+{
+	Mat img_rgb;
+	
+	stream0.read(img_rgb);
+	
+	//imwrite("/home/chuck/git/wiki_private/webcam/image.jpg", img_rgb);
+	bool ret = imwrite("/var/www/mysite/static/wiki/webcam/image.jpg", img_rgb);
+
+	if(!ret) {
+		printf("write error\n");
+		exit(1);
+	}
+}
+
 struct Match
 {
 	Match(Vec3f a, Vec3f b)
@@ -269,16 +284,21 @@ int main(int argc, char** argv )
 	while(true)
 	{
 		char c = waitKey(10);
-
+		
 		if(c >= 0) printf("key = %i\n", c);
-
+		
 		if( c == 27 ) break;
-
+		
+		if(0) {
+	
 		if( c == 32 ) draw(1,0);
 		else draw(0,0);
-
+		} else {
+			webcam();
+		}
 		//updateWindow(window_name);
 	}
+
 
 	return 0;
 }
