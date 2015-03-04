@@ -42,19 +42,23 @@ void solve(Vec2f& c, double& a, double& b)
 	b = (d[0] - a * x[0]) / y[0];
 }
 
-void webcam()
+void webcam(char * str)
 {
 	Mat img_rgb;
 	
 	stream0.read(img_rgb);
 	
 	//imwrite("/home/chuck/git/wiki_private/webcam/image.jpg", img_rgb);
-	bool ret = imwrite("/var/www/mysite/static/wiki/webcam/image.jpg", img_rgb);
-
+	//bool ret = imwrite("/var/www/mysite/static/wiki/webcam/image.jpg", img_rgb);
+	//"/home/chuck/image.jpg"
+	bool ret = imwrite(str, img_rgb);
+	
 	if(!ret) {
 		printf("write error\n");
 		exit(1);
 	}
+
+	printf("%s written\n", str);
 }
 
 struct Match
@@ -278,6 +282,12 @@ int main(int argc, char** argv )
 
 	draw(0,0);
 
+	printf("webcam says hello\n");
+	return 0;
+
+	webcam(argv[1]);
+	return 0;
+		
 	//waitKey(0);
 
 	// Wait until user finishes program
@@ -294,7 +304,7 @@ int main(int argc, char** argv )
 		if( c == 32 ) draw(1,0);
 		else draw(0,0);
 		} else {
-			webcam();
+			webcam(argv[1]);
 		}
 		//updateWindow(window_name);
 	}
