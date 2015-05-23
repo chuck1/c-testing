@@ -4,33 +4,30 @@
 #include <string.h>
 #include <sys/wait.h>
 
-int main(int argc, char** argv)
-{
-	if ( argc != 2)
-	{
+int main(int argc, char** argv) {
+
+	if ( argc != 2) {
 		fprintf(stderr,"Usage: %s <string>\n",argv[0]);
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 
 	char buf;
 	int pipefd[2];
-	if ( pipe(pipefd) == -1 )
-	{
+
+	if (pipe(pipefd) == -1) {
 		perror("pipe");
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 	
 	pid_t cpid;
 	cpid = fork();
 
-	if ( cpid == -1 )
-	{
+	if (cpid == -1) {
 		perror("fork");	
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 
-	if ( cpid == 0 )
-	{
+	if (cpid == 0) {
 		close(pipefd[1]);
 
 		while ( read( pipefd[0], &buf, 1 ) > 0 )
@@ -41,17 +38,13 @@ int main(int argc, char** argv)
 
 		close(pipefd[0]);
 
-		exit(EXIT_SUCCESS);
-
-	}
-	else
-	{
+		return 0;
+	} else {
 		close(pipefd[0]);
 		write(pipefd[1], argv[1], strlen(argv[1]));
 		close(pipefd[1]);
 		wait(NULL);
-		exit(EXIT_SUCCESS);
-
+		return 0;
 	}
 	return 0;
 }
