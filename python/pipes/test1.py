@@ -7,7 +7,11 @@ import os
 name = "/tmp/python_pipe_test"
 
 if sys.argv[1] == 'w':
-    os.mkfifo(name)
+    try:
+        os.mkfifo(name)
+    except OSError:
+        pass
+
     with open(name, 'w') as f:
         f.write(sys.argv[2])
 elif sys.argv[1] == 'r':
