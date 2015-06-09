@@ -3,7 +3,6 @@
 
 #include <CL/cl.h>
 
-
 int main()
 {
 	//get all platforms (drivers)
@@ -27,12 +26,13 @@ int main()
 	for(int i = 0;i < num_platforms;++i) printf("%p\n",platforms[i]);
 	
 	
-	cl::Platform default_platform=all_platforms[0];
-	std::cout << "Using platform: "<<default_platform.getInfo<CL_PLATFORM_NAME>()<<"\n";
+	//clPlatform default_platform=all_platforms[0];
+	//std::cout << "Using platform: "<<default_platform.getInfo<CL_PLATFORM_NAME>()<<"\n";
 
 	//get default device of the default platform
-	std::vector<cl::Device> all_devices;
-	default_platform.getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
+	//std::vector<cl::Device> all_devices;
+	//default_platform.getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
+	
 	if(all_devices.size()==0)
 	{
 		std::cout<<" No devices found. Check OpenCL installation!\n";
@@ -86,7 +86,9 @@ int main()
 			cl::NullRange);
 
 	simple_add(buffer_A,buffer_B,buffer_C);
-	
+
+
+
 	//alternative way to run the kernel
 	/*cl::Kernel kernel_add=cl::Kernel(program,"simple_add");
 	  kernel_add.setArg(0,buffer_A);
@@ -94,14 +96,14 @@ int main()
 	  kernel_add.setArg(2,buffer_C);
 	  queue.enqueueNDRangeKernel(kernel_add,cl::NullRange,cl::NDRange(10),cl::NullRange);
 	  queue.finish();*/
-	/*
+	
 	int C[10];
 	//read result C from the device to array C
 	queue.enqueueReadBuffer(buffer_C,CL_TRUE,0,sizeof(int)*10,C);
 	
 	std::cout<<" result: \n";
 	for(int i=0;i<10;i++) std::cout<<C[i]<<" ";
-	*/
+	
 
 	
 	return 0;
