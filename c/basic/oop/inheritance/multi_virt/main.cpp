@@ -14,7 +14,6 @@ using namespace std;
 template<class F>
 void __call() {}
 
-
 template<typename F, class A, class... B>
 void __call(A a, B... b) {
 
@@ -30,7 +29,8 @@ void __call(A a, B... b) {
 
 }
 
-template<class Dispatcher, class... Subs> class A {
+template<class Dispatcher, class... Subs>
+class A {
 	public:	
 		typedef A<Dispatcher, Subs...> a_type;
 
@@ -50,8 +50,8 @@ template<class Dispatcher, class... Subs> class A {
 
 //================================================================
 
-#define DISPATCH_ROOT(thisclass,dispatcher,x) public A< dispatcher, thisclass<x...>, x... >
-#define DISPATCH_BRANCH(thisclass,parent,x) public parent< thisclass<x...>, x... >
+#define DISPATCH_ROOT(  thisclass, dispatcher, x) public A< dispatcher, thisclass<x...>, x... >
+#define DISPATCH_BRANCH(thisclass,     parent, x) public parent< thisclass<x...>, x... >
 
 
 struct dispatch_foo {
@@ -101,11 +101,11 @@ int main() {
 
 	E* e = new E;
 	
+	e->E::e_type::call();
 	
 	
 	
-	
-	
+	/*
 	
 	timespec t1,t2;
 
@@ -120,7 +120,7 @@ int main() {
 	cout << t2.tv_sec << endl;
 
 	cout << t2.tv_nsec - t1.tv_nsec << endl;
-
+*/
 	
 
 }
