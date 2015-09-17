@@ -10,7 +10,7 @@ Computer::Computer(char * name):
 	Player(name)
 {
 }
-Card Computer::play(Deck & deck, bool is_lead)
+S_C		Computer::play(Deck & deck, bool is_lead)
 {
 
 	unsigned int tmp_s;
@@ -20,7 +20,7 @@ Card Computer::play(Deck & deck, bool is_lead)
 
 	Card tmp(0,0);
 	
-	std::vector<Card> cards = legal_plays(deck, is_lead);
+	auto cards = legal_plays(deck, is_lead);
 
 	if(cards.empty()) {
 		printf("legal plays is empty\n");
@@ -28,10 +28,12 @@ Card Computer::play(Deck & deck, bool is_lead)
 		abort();
 	}
 	
-	auto c_min = std::min_element(cards.begin(), cards.end(), card_less);
+	auto it = std::min_element(cards.begin(), cards.end(), card_less);
+	
+	auto card = *it;
 
-	remove_from_hand(*c_min);
+	remove_from_hand(card);
 
-	return *c_min;
+	return card;
 }
 

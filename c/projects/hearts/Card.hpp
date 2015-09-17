@@ -1,6 +1,6 @@
 #ifndef HEARTS_CARD_HPP
 #define HEARTS_CARD_HPP
-
+#include <memory>
 #include <Suit.hpp>
 
 class Card
@@ -22,10 +22,12 @@ class Card
 		unsigned char	value_;
 };
 
-inline bool card_less(Card const & c0, Card const & c1)
+typedef std::shared_ptr<Card> S_C;
+
+inline bool card_less(S_C const & c0, S_C const & c1)
 {
-	if(c0.suit_ == c1.suit_) return c0.value_ < c1.value_;
-	return c0.suit_ < c1.suit_;
+	if(c0->suit_ == c1->suit_) return c0->value_ < c1->value_;
+	return c0->suit_ < c1->suit_;
 }
 
 
