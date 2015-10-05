@@ -1,0 +1,11 @@
+digraph {
+	subgraph cluster__library_A {
+		label="library A";
+		A_foo [label="A::foo"]
+	}
+	subgraph cluster__library_B {
+		label="library B";
+		B_foo [label="B::foo"]
+	}
+	B_foo -> A_foo
+}

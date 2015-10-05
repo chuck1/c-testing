@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/chuck/git/c-testing/external/opengl/glsl/frag_stencil/main.cpp
+GL/glew.h
+-
+GL/gl.h
+-
+GLFW/glfw3.h
+-
+iostream
+-
+stdlib.h
+-
+stdio.h
+-
+

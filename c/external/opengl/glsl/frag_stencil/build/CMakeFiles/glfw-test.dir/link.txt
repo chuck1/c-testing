@@ -1,0 +1,1 @@
+/usr/bin/c++    -g    CMakeFiles/glfw-test.dir/main.cpp.o  -o glfw-test -rdynamic -lglfw3 -lGL -lGLEW -lXrandr -lXcursor -lXi 

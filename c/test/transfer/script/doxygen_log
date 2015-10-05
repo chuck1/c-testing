@@ -1,0 +1,10 @@
+
+
+Configuration file `../../transfer/jess/doc/D1' created.
+
+Now edit the configuration file and enter
+
+  doxygen ../../transfer/jess/doc/D1
+
+to generate the documentation for your project
+
