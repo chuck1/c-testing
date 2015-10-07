@@ -93,7 +93,7 @@ class Guess(object):
             solver.colors_c = solver.colors_c.union(self.guesses[0])
 
             
-        self.prnt()
+        #self.prnt()
     
     def filter_correct_colors(self, solver):
         return solver.filter_correct_colors(self.g)
@@ -176,16 +176,35 @@ class Judge0(object):
         u = set(self.puz).intersection(set(guess))
         return len(u), c.count(True)
 
+clr_tab = {
+        0: 'BLACK',
+        1: 'WHITE',
+        2: 'BROWN',
+        3: 'RED',
+        4: 'ORANGE',
+        5: 'YELLOW',
+        6: 'GREEN',
+        7: 'BLUE'
+        }
+
 class Judge1(object):
     def judge(self, guess):
-        m = raw_input("number of correct colors: ")
-        n = raw_input("number of correct locations: ")
+        print "guess = ", " ".join(["{:6}".format(clr_tab[x]) for x in guess])
+        m = int(raw_input("number of correct colors: "))
+        n = int(raw_input("number of correct locations: "))
         return m,n
 
 class Solver(object):
 
     def __init__(self, judge):
         self.judge = judge
+
+        self.hypos = list(itertools.permutations(range(8), 5))
+        
+    def print_hypos(self):
+        print "hypos"
+        for h in self.hypos:
+            print " ", h
 
     def filter_correct_colors(self, g):
 
@@ -194,8 +213,37 @@ class Solver(object):
         r = [l(x) for x in g]
 
         return r
-        
-    def solve_colors(self, puz):
+    
+
+    def filter_hypos(self):
+
+        l = lambda x,y: x if x == y else -1
+
+        def flt(h):
+            for guess in self.guesses:
+                lst1 = [l(x,y) for x,y in zip(h, guess.g)]
+
+                lst2 = filter(lambda x: x > -1, lst1)
+
+                if len(lst2) != guess.n:
+                    #print "flt"
+                    #print " ", lst1
+                    #print " ", lst2
+                    #print " ", guess.n
+
+                    return False
+
+            return True
+
+        a = len(self.hypos)
+
+        self.hypos = filter(flt, self.hypos)
+
+        b = len(self.hypos)
+    
+        print "len(hypos) = {:4} - {:4} = {:4}".format(a, a-b, b)
+
+    def solve_colors(self):
         
         self.colors = set(range(8))
         self.colors_c = set()
@@ -203,10 +251,9 @@ class Solver(object):
     
         color_com = list(itertools.combinations(self.colors, 5))
         
-        puz = random.sample(self.colors, 5)
         g = random.sample(self.colors, 5) 
         
-        g = [0,1,5,6,7]
+        #g = [0,1,5,6,7]
         
         #print "colors", colors
         
@@ -227,24 +274,51 @@ class Solver(object):
         
         
         print "determined colors in {} guesses".format(len(self.guesses))
-    
+
+    def solve_loc(self, puz):
+
         for g in self.guesses:
             r = g.filter_correct_colors(self)
             fmt = "{: 3}"*5
-            print fmt.format(*g.g) + "   " + fmt.format(*r) + "  {}".format(g.n)
+            print fmt.format(*g.g) + "   " + fmt.format(*r) + "    {}".format(g.n)
+        
+        while len(self.guesses) < 12:
 
-            
+            self.filter_hypos()
+        
+            g = list(random.choice(self.hypos))
 
-puz = [1,0,2,3,4]
+            m,n = self.judge.judge(g)
+        
 
-judge = Judge0(puz)
+            G = Guess(g, self, m, n)
+            self.guesses.append(G)
+
+            if n == 5:
+                break
+
+    def is_solved(self):
+        return self.guesses[-1].n == 5
+
+    def conclusion(self):
+        if S.is_solved():
+            print "==========================="
+            print "solved in {} guesses".format(len(S.guesses))
+            print "==========================="
+        else:
+            print "==========================="
+            print "failed"
+            print "==========================="
+
+
+#judge = Judge0(puz = random.sample(self.colors, 5))
+
+judge = Judge1()
 
 S = Solver(judge)
 
-S.solve_colors(puz)
-
-
-
+S.solve_colors()
+S.solve_loc(puz)
 
 
 
