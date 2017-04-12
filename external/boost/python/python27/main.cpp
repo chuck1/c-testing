@@ -4,12 +4,12 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/python.hpp>
 
-#include <hello.hpp>
+#include "hello.h"
 
 namespace bp = boost::python;
 
-
-class PythonStdIoRedirect {
+class PythonStdIoRedirect
+{
 	public:
 		typedef boost::circular_buffer<std::string> ContainerType;
 
@@ -40,7 +40,7 @@ class PythonStdIoRedirect {
 typedef boost::python::api::object (*func_type)(boost::python::str, boost::python::api::object, boost::python::api::object);
 
 void		mybase(std::string const & str, bp::object& ns, func_type func) {
-	
+
 
 	bp::object o;
 	try
@@ -77,9 +77,9 @@ void	myeval(std::string const & str, bp::object& ns) {
 
 }
 bp::object		myevalexec(std::string const & str, bp::object& ns) {
-	
+
 	std::cout << ">>> " << str << "\n";
-	
+
 
 	bp::object o;
 	try
@@ -124,8 +124,8 @@ bp::object		myevalexec(std::string const & str, bp::object& ns) {
 
 PythonStdIoRedirect::ContainerType PythonStdIoRedirect::m_outputs;
 
-int main() {
-
+int main()
+{
 	try
 	{
 		// startup
@@ -141,7 +141,7 @@ int main() {
 		// expose redirect class
 		main_namespace["PythonStdIoRedirect"] = bp::class_<PythonStdIoRedirect>("PythonStdIoRedirect", bp::init<>())
 			.def("write", &PythonStdIoRedirect::Write);
-		
+
 		// set redirect
 		PythonStdIoRedirect python_stdio_redirector;
 		boost::python::import("sys").attr("stderr") = python_stdio_redirector;
@@ -150,13 +150,13 @@ int main() {
 		// general imports
 		main_namespace["os"] = boost::python::import("os");
 		main_namespace["sys"] = boost::python::import("sys");
-		
+
 		// load my module
 		bp::exec("sys.path.append(os.getcwd())", main_namespace);
 
 		main_namespace["libhello"] = bp::import("libhello");
-		
-		
+
+
 		// example
 		bp::exec(
 				"hello = file('hello.txt', 'w')\n"
@@ -172,18 +172,18 @@ int main() {
 		myevalexec("print 1+1", main_namespace);
 
 		// my module example
-		
+
 		bp::object o = bp::eval("libhello.World()", main_namespace);
-		
+
 		World& w = bp::extract<World&>(o);
 		w.set("howdy");
-		
+
 		main_namespace["w"] = o;
 		myevalexec("w", main_namespace);
 		myevalexec("w.greet()", main_namespace);
 		myevalexec("w.set('bonjour')", main_namespace);
 		myevalexec("w.greet()", main_namespace);
-	
+
 		std::cout << "w = " << &w << std::endl;
 		std::cout << "w.greet() = " << w.greet() << std::endl;
 	}
@@ -194,7 +194,5 @@ int main() {
 	}
 
 	std::cout << PythonStdIoRedirect::GetOutput();
-
-
 }
 
