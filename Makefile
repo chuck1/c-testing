@@ -1,6 +1,5 @@
 CXX_FLAGS = -std=c++0x -g -Wall -Werror
 
-
 all:
 	g++ -o test main.cpp ${CXX_FLAGS}
 asm:
